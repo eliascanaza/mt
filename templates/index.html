@@ -1,0 +1,1834 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>makeTrip — Discover the world, one stop at a time</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap"
+    rel="stylesheet">
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0
+    }
+
+    :root {
+      --white: #ffffff;
+      --black: #111111;
+      --g50: #f9f9f9;
+      --g100: #f2f2f2;
+      --g200: #e5e5e5;
+      --g300: #d0d0d0;
+      --g400: #ababab;
+      --g600: #6b6b6b;
+      --g800: #3d3d3d;
+      --red: #FF385C;
+      --red-d: #d62f4b;
+      --red-bg: #fff0f2;
+      --green: #00b37e;
+      --green-bg: #e6f9f3;
+      --border: #e5e5e5;
+      --sh-sm: 0 1px 4px rgba(0, 0, 0, .07), 0 2px 8px rgba(0, 0, 0, .04);
+      --sh-md: 0 4px 16px rgba(0, 0, 0, .10);
+      --sh-lg: 0 8px 32px rgba(0, 0, 0, .13);
+      --sh-xl: 0 16px 56px rgba(0, 0, 0, .18);
+      --r-sm: 6px;
+      --r-md: 10px;
+      --r-lg: 14px;
+      --r-xl: 22px;
+      --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+
+    html {
+      scroll-behavior: smooth
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--white);
+      color: var(--black);
+      -webkit-font-smoothing: antialiased;
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    /* ── NAV ── */
+    .nav {
+      position: sticky;
+      top: 0;
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 40px;
+      height: 66px;
+      background: rgba(255, 255, 255, .95);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      flex-shrink: 0;
+    }
+
+    .logo-mark {
+      width: 32px;
+      height: 32px;
+      border-radius: 9px;
+      background: var(--red);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .logo-mark svg {
+      width: 18px;
+      height: 18px;
+      fill: #fff
+    }
+
+    .logo-text {
+      font-size: 18px;
+      font-weight: 400;
+      letter-spacing: -.3px;
+      color: var(--black)
+    }
+
+    .logo-text strong {
+      font-weight: 700
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      list-style: none;
+    }
+
+    .nav-links a {
+      text-decoration: none;
+      color: var(--g600);
+      font-size: 13px;
+      font-weight: 500;
+      padding: 7px 14px;
+      border-radius: var(--r-md);
+      transition: color .15s, background .15s;
+    }
+
+    .nav-links a:hover {
+      color: var(--black);
+      background: var(--g50)
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px
+    }
+
+    .btn-ghost {
+      text-decoration: none;
+      color: var(--black);
+      font-size: 13px;
+      font-weight: 600;
+      padding: 8px 16px;
+      border-radius: var(--r-md);
+      border: 1px solid var(--border);
+      background: var(--white);
+      cursor: pointer;
+      font-family: var(--font);
+      transition: background .15s, box-shadow .15s;
+    }
+
+    .btn-ghost:hover {
+      background: var(--g50);
+      box-shadow: var(--sh-sm)
+    }
+
+    .btn-cta {
+      text-decoration: none;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 700;
+      padding: 8px 18px;
+      border-radius: var(--r-md);
+      border: none;
+      background: var(--red);
+      cursor: pointer;
+      font-family: var(--font);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background .15s, transform .15s;
+    }
+
+    .btn-cta:hover {
+      background: var(--red-d);
+      transform: translateY(-1px)
+    }
+
+    .btn-cta svg {
+      width: 13px;
+      height: 13px;
+      stroke: #fff;
+      fill: none;
+      stroke-width: 2.5;
+      stroke-linecap: round;
+      stroke-linejoin: round
+    }
+
+    /* ── HERO ── */
+    .hero {
+      position: relative;
+      overflow: hidden;
+      background: linear-gradient(145deg, #0d1b2a 0%, #1a2f4a 40%, #0f2418 100%);
+      min-height: 90vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 80px 24px;
+    }
+
+    .hero-bg-dots {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      background-image: radial-gradient(rgba(255, 255, 255, .04) 1px, transparent 1px);
+      background-size: 32px 32px;
+    }
+
+    /* floating destination pills */
+    .hero-float {
+      position: absolute;
+      z-index: 1;
+      background: rgba(255, 255, 255, .10);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, .15);
+      border-radius: 99px;
+      padding: 8px 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #fff;
+      animation: floatUp 6s ease-in-out infinite;
+      white-space: nowrap;
+    }
+
+    .hero-float.f1 {
+      top: 18%;
+      left: 8%;
+      animation-delay: 0s
+    }
+
+    .hero-float.f2 {
+      top: 26%;
+      right: 7%;
+      animation-delay: 1.5s
+    }
+
+    .hero-float.f3 {
+      bottom: 22%;
+      left: 10%;
+      animation-delay: 3s
+    }
+
+    .hero-float.f4 {
+      bottom: 28%;
+      right: 9%;
+      animation-delay: 4.5s
+    }
+
+    .hero-float.f5 {
+      top: 52%;
+      left: 5%;
+      animation-delay: 2s
+    }
+
+    .hero-float .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 0 3px rgba(0, 179, 126, .25);
+    }
+
+    @keyframes floatUp {
+
+      0%,
+      100% {
+        transform: translateY(0)
+      }
+
+      50% {
+        transform: translateY(-8px)
+      }
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 2;
+      max-width: 700px
+    }
+
+    .hero-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      background: rgba(255, 56, 92, .18);
+      border: 1px solid rgba(255, 56, 92, .3);
+      border-radius: 99px;
+      padding: 5px 14px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: #ff8fa3;
+      margin-bottom: 22px;
+    }
+
+    .hero-eyebrow svg {
+      width: 11px;
+      height: 11px;
+      fill: #ff8fa3;
+      stroke: none
+    }
+
+    .hero-title {
+      font-size: clamp(36px, 6vw, 64px);
+      font-weight: 800;
+      letter-spacing: -.03em;
+      color: #fff;
+      line-height: 1.1;
+      margin-bottom: 18px;
+    }
+
+    .hero-title em {
+      font-style: normal;
+      color: var(--red)
+    }
+
+    .hero-sub {
+      font-size: clamp(15px, 2vw, 18px);
+      color: rgba(255, 255, 255, .65);
+      max-width: 520px;
+      margin: 0 auto 36px;
+      line-height: 1.65;
+    }
+
+    .hero-actions {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap
+    }
+
+    .hero-btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--red);
+      color: #fff;
+      border: none;
+      padding: 14px 28px;
+      border-radius: var(--r-xl);
+      font-family: var(--font);
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+      box-shadow: 0 6px 24px rgba(255, 56, 92, .40);
+      transition: background .15s, transform .15s, box-shadow .15s;
+    }
+
+    .hero-btn-primary:hover {
+      background: var(--red-d);
+      transform: translateY(-2px);
+      box-shadow: 0 10px 32px rgba(255, 56, 92, .50)
+    }
+
+    .hero-btn-primary svg {
+      width: 16px;
+      height: 16px;
+      stroke: #fff;
+      fill: none;
+      stroke-width: 2.2;
+      stroke-linecap: round;
+      stroke-linejoin: round
+    }
+
+    .hero-btn-ghost {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, .10);
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, .22);
+      backdrop-filter: blur(12px);
+      padding: 14px 24px;
+      border-radius: var(--r-xl);
+      font-family: var(--font);
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background .15s, border-color .15s;
+    }
+
+    .hero-btn-ghost:hover {
+      background: rgba(255, 255, 255, .18);
+      border-color: rgba(255, 255, 255, .38)
+    }
+
+    .hero-btn-ghost svg {
+      width: 15px;
+      height: 15px;
+      stroke: rgba(255, 255, 255, .8);
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round
+    }
+
+    .hero-stats {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 32px;
+      margin-top: 48px;
+      padding-top: 36px;
+      border-top: 1px solid rgba(255, 255, 255, .10);
+    }
+
+    .hst-val {
+      font-size: 26px;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: -.04em
+    }
+
+    .hst-lbl {
+      font-size: 11px;
+      color: rgba(255, 255, 255, .5);
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      margin-top: 2px
+    }
+
+    /* ── SECTION ── */
+    .section {
+      padding: 72px 40px
+    }
+
+    .section-inner {
+      max-width: 1100px;
+      margin: 0 auto
+    }
+
+    .sec-eyebrow {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .09em;
+      color: var(--red);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .sec-eyebrow::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border)
+    }
+
+    .sec-title {
+      font-size: clamp(22px, 3.5vw, 34px);
+      font-weight: 800;
+      letter-spacing: -.03em;
+      color: var(--black);
+      margin-bottom: 6px
+    }
+
+    .sec-sub {
+      font-size: 15px;
+      color: var(--g600);
+      max-width: 540px;
+      line-height: 1.6
+    }
+
+    .sec-hdr {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 20px;
+      margin-bottom: 28px;
+      flex-wrap: wrap
+    }
+
+    .sec-more {
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--black);
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      flex-shrink: 0;
+      border-bottom: 1.5px solid var(--border);
+      padding-bottom: 1px;
+      transition: border-color .15s, color .15s;
+    }
+
+    .sec-more:hover {
+      color: var(--red);
+      border-color: var(--red)
+    }
+
+    .sec-more svg {
+      width: 12px;
+      height: 12px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2.5;
+      stroke-linecap: round;
+      stroke-linejoin: round
+    }
+
+    /* ── NEAR YOU ── */
+    .near-bar {
+      background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+      border: 1px solid #bbf7d0;
+      border-radius: var(--r-xl);
+      padding: 20px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 28px;
+      flex-wrap: wrap;
+    }
+
+    .near-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: var(--green);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      box-shadow: 0 4px 12px rgba(0, 179, 126, .30);
+    }
+
+    .near-icon svg {
+      width: 20px;
+      height: 20px;
+      stroke: #fff;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round
+    }
+
+    .near-text {
+      flex: 1;
+      min-width: 0
+    }
+
+    .near-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #065f46
+    }
+
+    .near-sub {
+      font-size: 12px;
+      color: #059669;
+      margin-top: 2px
+    }
+
+    .near-btn {
+      background: var(--green);
+      color: #fff;
+      border: none;
+      padding: 10px 20px;
+      border-radius: var(--r-md);
+      font-family: var(--font);
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      transition: background .15s;
+    }
+
+    .near-btn:hover {
+      background: #009966
+    }
+
+    .near-btn svg {
+      width: 13px;
+      height: 13px;
+      stroke: #fff;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round
+    }
+
+    #near-result {
+      font-size: 12px;
+      color: #059669;
+      margin-top: 4px;
+      font-weight: 500;
+    }
+
+    /* ── DESTINATION CARDS ── */
+    .dest-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    .dest-card {
+      border-radius: var(--r-xl);
+      overflow: hidden;
+      cursor: pointer;
+      position: relative;
+      box-shadow: var(--sh-sm);
+      transition: transform .2s, box-shadow .2s;
+      text-decoration: none;
+      display: block;
+    }
+
+    .dest-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--sh-lg)
+    }
+
+    .dest-img {
+      height: 220px;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .dest-img-ov {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to bottom, rgba(0, 0, 0, .05) 0%, rgba(0, 0, 0, .55) 100%);
+    }
+
+    .dest-emoji {
+      font-size: 58px;
+      position: relative;
+      z-index: 1;
+      filter: drop-shadow(0 4px 12px rgba(0, 0, 0, .3))
+    }
+
+    .dest-tag {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      z-index: 2;
+      background: rgba(0, 0, 0, .40);
+      backdrop-filter: blur(8px);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .05em;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: 99px;
+    }
+
+    .dest-rating {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      z-index: 2;
+      background: rgba(255, 255, 255, .15);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, .25);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 9px;
+      border-radius: 99px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .dest-rating svg {
+      width: 10px;
+      height: 10px;
+      fill: #fbbf24;
+      stroke: none
+    }
+
+    .dest-body {
+      padding: 14px 16px;
+      background: var(--white)
+    }
+
+    .dest-name {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--black);
+      margin-bottom: 4px
+    }
+
+    .dest-loc {
+      font-size: 12px;
+      color: var(--g600);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .dest-loc svg {
+      width: 11px;
+      height: 11px;
+      stroke: var(--g400);
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      flex-shrink: 0
+    }
+
+    /* ── FEATURED (tall card) ── */
+    .featured-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: auto auto;
+      gap: 16px;
+    }
+
+    .feat-card {
+      border-radius: var(--r-xl);
+      overflow: hidden;
+      cursor: pointer;
+      position: relative;
+      box-shadow: var(--sh-sm);
+      transition: transform .2s, box-shadow .2s;
+      text-decoration: none;
+      display: block;
+    }
+
+    .feat-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--sh-lg)
+    }
+
+    .feat-card.tall {
+      grid-row: span 2
+    }
+
+    .feat-img {
+      height: 100%;
+      min-height: 200px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .feat-card.tall .feat-img {
+      min-height: 440px
+    }
+
+    .feat-ov {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to bottom, rgba(0, 0, 0, .04) 0%, rgba(0, 0, 0, .68) 100%);
+    }
+
+    .feat-content {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 18px 20px;
+      z-index: 2;
+    }
+
+    .feat-tag {
+      display: inline-block;
+      background: var(--red);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .05em;
+      text-transform: uppercase;
+      padding: 3px 10px;
+      border-radius: 99px;
+      margin-bottom: 8px;
+    }
+
+    .feat-name {
+      font-size: 18px;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: -.02em;
+      margin-bottom: 4px
+    }
+
+    .feat-card:not(.tall) .feat-name {
+      font-size: 15px
+    }
+
+    .feat-sub {
+      font-size: 12px;
+      color: rgba(255, 255, 255, .70)
+    }
+
+    .feat-emoji {
+      font-size: 64px;
+      position: relative;
+      z-index: 1;
+      filter: drop-shadow(0 6px 16px rgba(0, 0, 0, .40));
+    }
+
+    .feat-card:not(.tall) .feat-emoji {
+      font-size: 44px
+    }
+
+    /* ── FEATURES ── */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px
+    }
+
+    .feature-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--r-xl);
+      padding: 28px 24px;
+      box-shadow: var(--sh-xs);
+      transition: box-shadow .2s, transform .2s;
+    }
+
+    .feature-card:hover {
+      box-shadow: var(--sh-md);
+      transform: translateY(-2px)
+    }
+
+    .feat-ic {
+      width: 48px;
+      height: 48px;
+      border-radius: var(--r-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 16px;
+      font-size: 24px;
+    }
+
+    .feat-h {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--black);
+      margin-bottom: 8px
+    }
+
+    .feat-p {
+      font-size: 13px;
+      color: var(--g600);
+      line-height: 1.6
+    }
+
+    /* ── CATEGORIES ── */
+    .cat-grid {
+      display: flex;
+      gap: 12px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      padding-bottom: 4px
+    }
+
+    .cat-grid::-webkit-scrollbar {
+      display: none
+    }
+
+    .cat-pill {
+      flex-shrink: 0;
+      cursor: pointer;
+      text-decoration: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid var(--border);
+      border-radius: var(--r-xl);
+      padding: 18px 22px;
+      background: var(--white);
+      box-shadow: var(--sh-xs);
+      min-width: 100px;
+      transition: border-color .15s, box-shadow .15s, transform .15s;
+    }
+
+    .cat-pill:hover {
+      border-color: var(--black);
+      box-shadow: var(--sh-md);
+      transform: translateY(-2px)
+    }
+
+    .cat-pill.active {
+      background: var(--black);
+      border-color: var(--black)
+    }
+
+    .cat-icon {
+      font-size: 28px
+    }
+
+    .cat-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--g600);
+      text-align: center;
+      white-space: nowrap
+    }
+
+    .cat-pill.active .cat-label {
+      color: #fff
+    }
+
+    /* ── TESTIMONIAL ── */
+    .testi-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px
+    }
+
+    .testi-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--r-xl);
+      padding: 22px;
+      box-shadow: var(--sh-xs);
+    }
+
+    .testi-q {
+      font-size: 26px;
+      color: var(--red);
+      line-height: 1;
+      margin-bottom: 10px
+    }
+
+    .testi-text {
+      font-size: 13px;
+      color: var(--g800);
+      line-height: 1.65;
+      margin-bottom: 16px;
+      font-style: italic
+    }
+
+    .testi-aw {
+      display: flex;
+      align-items: center;
+      gap: 10px
+    }
+
+    .testi-av {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+      color: #fff;
+      flex-shrink: 0;
+    }
+
+    .testi-name {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--black)
+    }
+
+    .testi-meta {
+      font-size: 11px;
+      color: var(--g600)
+    }
+
+    .testi-stars {
+      display: flex;
+      gap: 2px;
+      margin-bottom: 12px
+    }
+
+    .testi-stars svg {
+      width: 12px;
+      height: 12px;
+      fill: #f59e0b;
+      stroke: none
+    }
+
+    /* ── CTA BANNER ── */
+    .cta-banner {
+      background: linear-gradient(135deg, #111 0%, #1a2f4a 100%);
+      border-radius: var(--r-xl);
+      padding: 52px 48px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cta-banner::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(rgba(255, 255, 255, .03) 1px, transparent 1px);
+      background-size: 24px 24px;
+    }
+
+    .cta-banner-title {
+      font-size: clamp(24px, 4vw, 42px);
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: -.03em;
+      margin-bottom: 12px;
+      position: relative;
+    }
+
+    .cta-banner-sub {
+      font-size: 15px;
+      color: rgba(255, 255, 255, .6);
+      margin-bottom: 28px;
+      position: relative
+    }
+
+    .cta-banner-btns {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      position: relative
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      background: var(--black);
+      color: rgba(255, 255, 255, .5);
+      padding: 48px 40px 28px;
+    }
+
+    .foot-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 32px;
+      flex-wrap: wrap;
+      margin-bottom: 36px;
+      padding-bottom: 36px;
+      border-bottom: 1px solid rgba(255, 255, 255, .08);
+    }
+
+    .foot-brand .logo-text {
+      color: #fff
+    }
+
+    .foot-tagline {
+      font-size: 13px;
+      color: rgba(255, 255, 255, .4);
+      margin-top: 8px;
+      max-width: 200px;
+      line-height: 1.5
+    }
+
+    .foot-col h4 {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: rgba(255, 255, 255, .5);
+      margin-bottom: 12px
+    }
+
+    .foot-col ul {
+      list-style: none
+    }
+
+    .foot-col ul li {
+      margin-bottom: 8px
+    }
+
+    .foot-col ul a {
+      text-decoration: none;
+      font-size: 13px;
+      color: rgba(255, 255, 255, .45);
+      transition: color .15s
+    }
+
+    .foot-col ul a:hover {
+      color: #fff
+    }
+
+    .foot-bottom {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px
+    }
+
+    .foot-copy {
+      font-size: 12px
+    }
+
+    .foot-legal {
+      display: flex;
+      gap: 16px
+    }
+
+    .foot-legal a {
+      font-size: 12px;
+      color: rgba(255, 255, 255, .35);
+      text-decoration: none;
+      transition: color .15s
+    }
+
+    .foot-legal a:hover {
+      color: rgba(255, 255, 255, .7)
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 900px) {
+      .dest-grid {
+        grid-template-columns: repeat(2, 1fr)
+      }
+
+      .features-grid {
+        grid-template-columns: repeat(2, 1fr)
+      }
+
+      .testi-grid {
+        grid-template-columns: 1fr 1fr
+      }
+
+      .featured-grid {
+        grid-template-columns: 1fr
+      }
+
+      .feat-card.tall {
+        grid-row: span 1
+      }
+
+      .feat-card.tall .feat-img {
+        min-height: 260px
+      }
+    }
+
+    @media (max-width: 600px) {
+      .nav {
+        padding: 0 16px
+      }
+
+      .nav-links {
+        display: none
+      }
+
+      .section {
+        padding: 48px 16px
+      }
+
+      .dest-grid {
+        grid-template-columns: 1fr
+      }
+
+      .features-grid {
+        grid-template-columns: 1fr
+      }
+
+      .testi-grid {
+        grid-template-columns: 1fr
+      }
+
+      .hero {
+        padding: 60px 16px
+      }
+
+      .hero-float {
+        display: none
+      }
+
+      .hero-stats {
+        gap: 20px
+      }
+
+      .cta-banner {
+        padding: 36px 24px
+      }
+
+      footer {
+        padding: 36px 16px 20px
+      }
+
+      .foot-top {
+        flex-direction: column
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ══ NAV ══ -->
+  <nav class="nav">
+    <a class="logo" href="/">
+      <div class="logo-mark">
+        <svg viewBox="0 0 20 20">
+          <path
+            d="M10 1.5C6.41 1.5 3.5 4.41 3.5 8c0 4.9 6.5 10.5 6.5 10.5S16.5 12.9 16.5 8c0-3.59-2.91-6.5-6.5-6.5zm0 8.75a2.25 2.25 0 1 1 0-4.5 2.25 2.25 0 0 1 0 4.5z" />
+        </svg>
+      </div>
+      <span class="logo-text">make<strong>Trip</strong></span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="#discover">Discover</a></li>
+      <li><a href="#features">Features</a></li>
+      <li><a href="#top-picks">Top picks</a></li>
+    </ul>
+    <div class="nav-actions">
+      <a class="btn-ghost" href="/profile">Sign in</a>
+      <a class="btn-cta" href="/home">
+        <svg viewBox="0 0 24 24">
+          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+          <circle cx="12" cy="10" r="3" />
+        </svg>
+        Plan a trip
+      </a>
+    </div>
+  </nav>
+
+  <!-- ══ HERO ══ -->
+  <section class="hero">
+    <div class="hero-bg-dots"></div>
+
+    <!-- floating place pills -->
+    <div class="hero-float f1">
+      <div class="dot"></div>Torres del Paine
+    </div>
+    <div class="hero-float f2">
+      <div class="dot"></div>Kyoto, Japan
+    </div>
+    <div class="hero-float f3">
+      <div class="dot"></div>Santorini, Greece
+    </div>
+    <div class="hero-float f4">
+      <div class="dot"></div>Machu Picchu, Peru
+    </div>
+    <div class="hero-float f5">
+      <div class="dot"></div>Bali, Indonesia
+    </div>
+
+    <div class="hero-content">
+      <div class="hero-eyebrow">
+        <svg viewBox="0 0 24 24">
+          <polygon
+            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+        </svg>
+        Discover · Plan · Explore
+      </div>
+      <h1 class="hero-title">
+        Discover the world,<br>
+        <em>one stop at a time</em>
+      </h1>
+      <p class="hero-sub">
+        Plan breathtaking road trips, uncover hidden gems along the way,
+        and find the most incredible places near you — all in one map.
+      </p>
+      <div class="hero-actions">
+        <a class="hero-btn-primary" href="/home">
+          <svg viewBox="0 0 24 24">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+            <circle cx="12" cy="10" r="3" />
+          </svg>
+          Start exploring
+        </a>
+        <button class="hero-btn-ghost" onclick="detectLocation()">
+          <svg viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="3" />
+            <path
+              d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83" />
+          </svg>
+          Find near me
+        </button>
+      </div>
+      <div class="hero-stats">
+        <div>
+          <div class="hst-val">200+</div>
+          <div class="hst-lbl">Destinations</div>
+        </div>
+        <div style="width:1px;height:32px;background:rgba(255,255,255,.12)"></div>
+        <div>
+          <div class="hst-val">12k+</div>
+          <div class="hst-lbl">Trip plans</div>
+        </div>
+        <div style="width:1px;height:32px;background:rgba(255,255,255,.12)"></div>
+        <div>
+          <div class="hst-val">98%</div>
+          <div class="hst-lbl">Happy travellers</div>
+        </div>
+        <div style="width:1px;height:32px;background:rgba(255,255,255,.12)"></div>
+        <div>
+          <div class="hst-val">50+</div>
+          <div class="hst-lbl">Countries</div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <!-- ══ FEATURED (mosaic) ══ -->
+  <section class="section" style="background:var(--g50);padding-top:0" id="top-picks">
+    <div class="section-inner">
+      <div class="sec-hdr">
+        <div>
+          <div class="sec-eyebrow">Editor's picks</div>
+          <div class="sec-title">Places that stay with you</div>
+          <div class="sec-sub">Destinations our travellers recommend most — and keep coming back to</div>
+        </div>
+      </div>
+
+      <div class="featured-grid">
+
+        <a class="feat-card tall" href="/">
+          <div class="feat-img" style="background:linear-gradient(160deg,#1a2f4a,#0d1b2a,#1a5c4a)">
+            <div class="feat-ov"></div>
+            <span class="feat-emoji">🏔️</span>
+            <div class="feat-content">
+              <span class="feat-tag">#1 worldwide</span>
+              <div class="feat-name">Patagonia, Chile</div>
+              <div class="feat-sub">End-of-the-world wilderness: glaciers, granite towers, unmatched silence</div>
+            </div>
+          </div>
+        </a>
+
+        <a class="feat-card" href="/">
+          <div class="feat-img" style="background:linear-gradient(145deg,#7c3aed,#3b0764)">
+            <div class="feat-ov"></div>
+            <span class="feat-emoji">🧘</span>
+            <div class="feat-content">
+              <span class="feat-tag">Wellness</span>
+              <div class="feat-name">Ubud, Bali</div>
+              <div class="feat-sub">Rice terraces and spiritual calm</div>
+            </div>
+          </div>
+        </a>
+
+        <a class="feat-card" href="/">
+          <div class="feat-img" style="background:linear-gradient(145deg,#1e3a5f,#0a1929)">
+            <div class="feat-ov"></div>
+            <span class="feat-emoji">🧗</span>
+            <div class="feat-content">
+              <span class="feat-tag">Adventure</span>
+              <div class="feat-name">Queenstown, NZ</div>
+              <div class="feat-sub">Adventure capital of the world</div>
+            </div>
+          </div>
+        </a>
+
+        <a class="feat-card" href="/">
+          <div class="feat-img" style="background:linear-gradient(145deg,#9f1239,#4c0519)">
+            <div class="feat-ov"></div>
+            <span class="feat-emoji">🕌</span>
+            <div class="feat-content">
+              <span class="feat-tag">Culture</span>
+              <div class="feat-name">Marrakech, Morocco</div>
+              <div class="feat-sub">Labyrinthine medinas and vibrant souks</div>
+            </div>
+          </div>
+        </a>
+
+        <a class="feat-card" href="/">
+          <div class="feat-img" style="background:linear-gradient(145deg,#1e3a5f,#14532d)">
+            <div class="feat-ov"></div>
+            <span class="feat-emoji">🌊</span>
+            <div class="feat-content">
+              <span class="feat-tag">Scenic</span>
+              <div class="feat-name">Norwegian Fjords</div>
+              <div class="feat-sub">Sheer cliffs, mirror-calm water</div>
+            </div>
+          </div>
+        </a>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ NEAR YOU ══ -->
+  <section class="section" id="discover">
+    <div class="section-inner">
+      <div class="sec-hdr">
+        <div>
+          <div class="sec-eyebrow">Trending now</div>
+          <div class="sec-title">Top destinations this season</div>
+          <div class="sec-sub">The most-planned routes and places on makeTrip right now</div>
+        </div>
+        <a class="sec-more" href="/">
+          View all on map
+          <svg viewBox="0 0 24 24">
+            <line x1="5" y1="12" x2="19" y2="12" />
+            <polyline points="12 5 19 12 12 19" />
+          </svg>
+        </a>
+      </div>
+
+      <div class="dest-grid">
+
+        <a class="dest-card" href="/">
+          <div class="dest-img" style="background:linear-gradient(145deg,#1a5c4a,#0a3a18)">
+            <div class="dest-img-ov"></div>
+            <span class="dest-emoji">🧊</span>
+            <span class="dest-tag">Nature</span>
+            <span class="dest-rating"><svg viewBox="0 0 24 24">
+                <polygon
+                  points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+              </svg>4.97</span>
+          </div>
+          <div class="dest-body">
+            <div class="dest-name">Torres del Paine</div>
+            <div class="dest-loc"><svg viewBox="0 0 24 24">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                <circle cx="12" cy="10" r="3" />
+              </svg>Patagonia, Chile</div>
+          </div>
+        </a>
+
+        <a class="dest-card" href="/">
+          <div class="dest-img" style="background:linear-gradient(145deg,#3730a3,#1e1b4b)">
+            <div class="dest-img-ov"></div>
+            <span class="dest-emoji">🏯</span>
+            <span class="dest-tag">Culture</span>
+            <span class="dest-rating"><svg viewBox="0 0 24 24">
+                <polygon
+                  points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+              </svg>4.95</span>
+          </div>
+          <div class="dest-body">
+            <div class="dest-name">Kyoto</div>
+            <div class="dest-loc"><svg viewBox="0 0 24 24">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                <circle cx="12" cy="10" r="3" />
+              </svg>Japan</div>
+          </div>
+        </a>
+
+        <a class="dest-card" href="/">
+          <div class="dest-img" style="background:linear-gradient(145deg,#0284c7,#0c4a6e)">
+            <div class="dest-img-ov"></div>
+            <span class="dest-emoji">🏛️</span>
+            <span class="dest-tag">Scenic</span>
+            <span class="dest-rating"><svg viewBox="0 0 24 24">
+                <polygon
+                  points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+              </svg>4.91</span>
+          </div>
+          <div class="dest-body">
+            <div class="dest-name">Santorini</div>
+            <div class="dest-loc"><svg viewBox="0 0 24 24">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                <circle cx="12" cy="10" r="3" />
+              </svg>Greece</div>
+          </div>
+        </a>
+
+        <a class="dest-card" href="/">
+          <div class="dest-img" style="background:linear-gradient(145deg,#78350f,#451a03)">
+            <div class="dest-img-ov"></div>
+            <span class="dest-emoji">🗿</span>
+            <span class="dest-tag">History</span>
+            <span class="dest-rating"><svg viewBox="0 0 24 24">
+                <polygon
+                  points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+              </svg>4.90</span>
+          </div>
+          <div class="dest-body">
+            <div class="dest-name">Machu Picchu</div>
+            <div class="dest-loc"><svg viewBox="0 0 24 24">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                <circle cx="12" cy="10" r="3" />
+              </svg>Peru</div>
+          </div>
+        </a>
+
+        <a class="dest-card" href="/">
+          <div class="dest-img" style="background:linear-gradient(145deg,#065f46,#022c22)">
+            <div class="dest-img-ov"></div>
+            <span class="dest-emoji">🐢</span>
+            <span class="dest-tag">Wildlife</span>
+            <span class="dest-rating"><svg viewBox="0 0 24 24">
+                <polygon
+                  points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+              </svg>4.89</span>
+          </div>
+          <div class="dest-body">
+            <div class="dest-name">Galápagos Islands</div>
+            <div class="dest-loc"><svg viewBox="0 0 24 24">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                <circle cx="12" cy="10" r="3" />
+              </svg>Ecuador</div>
+          </div>
+        </a>
+
+        <a class="dest-card" href="/">
+          <div class="dest-img" style="background:linear-gradient(145deg,#b45309,#78350f)">
+            <div class="dest-img-ov"></div>
+            <span class="dest-emoji">🌊</span>
+            <span class="dest-tag">Scenic</span>
+            <span class="dest-rating"><svg viewBox="0 0 24 24">
+                <polygon
+                  points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+              </svg>4.88</span>
+          </div>
+          <div class="dest-body">
+            <div class="dest-name">Amalfi Coast</div>
+            <div class="dest-loc"><svg viewBox="0 0 24 24">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                <circle cx="12" cy="10" r="3" />
+              </svg>Italy</div>
+          </div>
+        </a>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ CATEGORIES ══ -->
+  <section class="section">
+    <div class="section-inner">
+      <div class="sec-hdr">
+        <div>
+          <div class="sec-eyebrow">Browse by type</div>
+          <div class="sec-title">What kind of trip are you planning?</div>
+        </div>
+      </div>
+      <div class="cat-grid">
+        <a class="cat-pill active" href="/">
+          <span class="cat-icon">🌍</span>
+          <span class="cat-label">All trips</span>
+        </a>
+        <a class="cat-pill" href="/">
+          <span class="cat-icon">🌿</span>
+          <span class="cat-label">Nature</span>
+        </a>
+        <a class="cat-pill" href="/">
+          <span class="cat-icon">🏛️</span>
+          <span class="cat-label">Culture</span>
+        </a>
+        <a class="cat-pill" href="/">
+          <span class="cat-icon">🧗</span>
+          <span class="cat-label">Adventure</span>
+        </a>
+        <a class="cat-pill" href="/">
+          <span class="cat-icon">🏖️</span>
+          <span class="cat-label">Beach</span>
+        </a>
+        <a class="cat-pill" href="/">
+          <span class="cat-icon">🍽️</span>
+          <span class="cat-label">Food</span>
+        </a>
+        <a class="cat-pill" href="/">
+          <span class="cat-icon">🏺</span>
+          <span class="cat-label">History</span>
+        </a>
+        <a class="cat-pill" href="/">
+          <span class="cat-icon">🦁</span>
+          <span class="cat-label">Wildlife</span>
+        </a>
+        <a class="cat-pill" href="/">
+          <span class="cat-icon">🔭</span>
+          <span class="cat-label">Stargazing</span>
+        </a>
+        <a class="cat-pill" href="/">
+          <span class="cat-icon">🧘</span>
+          <span class="cat-label">Wellness</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ FEATURES ══ -->
+  <section class="section" style="background:var(--g50)" id="features">
+    <div class="section-inner">
+      <div class="sec-hdr" style="margin-bottom:32px">
+        <div>
+          <div class="sec-eyebrow">Why makeTrip</div>
+          <div class="sec-title">Everything you need to plan the perfect trip</div>
+          <div class="sec-sub">From your first stop to your last, makeTrip keeps you on the best possible route</div>
+        </div>
+      </div>
+
+      <div class="features-grid">
+
+        <div class="feature-card">
+          <div class="feat-ic" style="background:#fff0f2">🗺️</div>
+          <div class="feat-h">Interactive route planner</div>
+          <div class="feat-p">Build your perfect road trip on a live map. Add stops, reorder them, and see your full
+            route with distances and drive times at a glance.</div>
+        </div>
+
+        <div class="feature-card">
+          <div class="feat-ic" style="background:#e6f9f3">📍</div>
+          <div class="feat-h">Discover stops along the way</div>
+          <div class="feat-p">Never miss a hidden gem. makeTrip surfaces rated stops between your origin and destination
+            — filtered by what you love.</div>
+        </div>
+
+        <div class="feature-card">
+          <div class="feat-ic" style="background:#eff6ff">🏆</div>
+          <div class="feat-h">Curated Top 10 lists</div>
+          <div class="feat-p">Browse world-class destinations ranked by our traveller community — by country, city,
+            category, or worldwide popularity.</div>
+        </div>
+
+        <div class="feature-card">
+          <div class="feat-ic" style="background:#fef9c3">📡</div>
+          <div class="feat-h">Find places near you</div>
+          <div class="feat-p">Use your location to instantly surface the highest-rated destinations within reach —
+            perfect for spontaneous weekend getaways.</div>
+        </div>
+
+        <div class="feature-card">
+          <div class="feat-ic" style="background:#fdf4ff">💾</div>
+          <div class="feat-h">Save and share your plans</div>
+          <div class="feat-p">Save your routes, keep a history of completed trips, and share your itinerary with anyone
+            — even without an account.</div>
+        </div>
+
+        <div class="feature-card">
+          <div class="feat-ic" style="background:#fff7ed">⭐</div>
+          <div class="feat-h">Real traveller reviews</div>
+          <div class="feat-p">Every stop is rated by people who've been there. Read honest reviews, see what to expect,
+            and contribute your own experience.</div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ TESTIMONIALS ══ -->
+  <section class="section">
+    <div class="section-inner">
+      <div class="sec-hdr">
+        <div>
+          <div class="sec-eyebrow">From our community</div>
+          <div class="sec-title">Travellers love makeTrip</div>
+        </div>
+      </div>
+
+      <div class="testi-grid">
+
+        <div class="testi-card">
+          <div class="testi-stars">
+            <svg viewBox="0 0 24 24">
+              <polygon
+                points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+            </svg>
+            <svg viewBox="0 0 24 24">
+              <polygon
+                points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+            </svg>
+            <svg viewBox="0 0 24 24">
+              <polygon
+                points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+            </svg>
+            <svg viewBox="0 0 24 24">
+              <polygon
+                points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+            </svg>
+            <svg viewBox="0 0 24 24">
+              <polygon
+                points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+            </svg>
+          </div>
+          <div class="testi-q">"</div>
+          <p class="testi-text">I planned my entire Patagonia trip in 20 minutes. The stop suggestions were spot-on — I
+            discovered a glacier I would have completely missed. makeTrip changed how I travel.</p>
+          <div class="testi-aw">
+            <div class="testi-av" style="background:#c94b0c">MR</div>
+            <div>
+              <div class="testi-name">María Rodríguez</div>
+              <div class="testi-meta">Buenos Aires · 12 trips planned</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="testi-card">
+          <div class="testi-stars">
+            <svg viewBox="0 0 24 24">
+              <polygon
+                points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+            </svg>
+            <svg viewBox="0 0 24 24">
+              <polygon
+                points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+            </svg>
+            <svg viewBox="0 0 24 24">
+              <polygon
+                points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+            </svg>
+            <svg viewBox="0 0 24 24">
+              <polygon
+                points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+            </svg>
+            <svg viewBox="0 0 24 24">
+              <polygon
+                points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+            </svg>
+          </div>
+          <div class="testi-q">"</div>
+          <p class="testi-text">The Top 10 by Country feature is brilliant. I used it to plan a 3-week Japan itinerary —
+            every single recommendation was incredible. Never going back to spreadsheets.</p>
+          <div class="testi-aw">
+            <div class="testi-av" style="background:#1a4a8a">LB</div>
+            <div>
+              <div class="testi-name">Lukas Bauer</div>
+              <div class="testi-meta">Munich · 8 trips planned</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="testi-card">
+          <div class="testi-stars">
+            <svg viewBox="0 0 24 24">
+              <polygon
+                points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+            </svg>
+            <svg viewBox="0 0 24 24">
+              <polygon
+                points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+            </svg>
+            <svg viewBox="0 0 24 24">
+              <polygon
+                points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+            </svg>
+            <svg viewBox="0 0 24 24">
+              <polygon
+                points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+            </svg>
+            <svg viewBox="0 0 24 24">
+              <polygon
+                points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+            </svg>
+          </div>
+          <div class="testi-q">"</div>
+          <p class="testi-text">Used "find near me" on a whim on a Sunday afternoon. Half an hour later I was driving to
+            a hidden waterfall 40 km away I had no idea existed. That's makeTrip in a nutshell.</p>
+          <div class="testi-aw">
+            <div class="testi-av" style="background:#065f46">YT</div>
+            <div>
+              <div class="testi-name">Yuki Tanaka</div>
+              <div class="testi-meta">Tokyo · 21 trips planned</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ CTA BANNER ══ -->
+  <section class="section" style="background:var(--g50)">
+    <div class="section-inner">
+      <div class="cta-banner">
+        <div class="cta-banner-title">Your next adventure<br>starts right here</div>
+        <p class="cta-banner-sub">Plan a route, discover stops along the way, and explore the world one place at a time.
+        </p>
+        <div class="cta-banner-btns">
+          <a class="hero-btn-primary" href="/">
+            <svg viewBox="0 0 24 24">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+              <circle cx="12" cy="10" r="3" />
+            </svg>
+            Open the map
+          </a>
+          <a class="hero-btn-ghost" href="/profile">
+            Create free account
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ FOOTER ══ -->
+  <footer>
+    <div class="foot-top" style="max-width:1100px;margin:0 auto">
+      <div class="foot-brand">
+        <a class="logo" href="/" style="margin-bottom:10px;display:flex">
+          <div class="logo-mark"><svg viewBox="0 0 20 20">
+              <path
+                d="M10 1.5C6.41 1.5 3.5 4.41 3.5 8c0 4.9 6.5 10.5 6.5 10.5S16.5 12.9 16.5 8c0-3.59-2.91-6.5-6.5-6.5zm0 8.75a2.25 2.25 0 1 1 0-4.5 2.25 2.25 0 0 1 0 4.5z" />
+            </svg></div>
+          <span class="logo-text">make<strong>Trip</strong></span>
+        </a>
+        <p class="foot-tagline">Discover the world, one stop at a time. Plan better trips with people who know the way.
+        </p>
+      </div>
+
+      <div class="foot-col">
+        <h4>Explore</h4>
+        <ul>
+          <li><a href="/">Trip planner</a></li>
+          <li><a href="/">Top 10 worldwide</a></li>
+          <li><a href="/">Top 10 by country</a></li>
+          <li><a href="/">Destinations</a></li>
+        </ul>
+      </div>
+
+      <div class="foot-col">
+        <h4>Account</h4>
+        <ul>
+          <li><a href="/profile">Sign in</a></li>
+          <li><a href="/profile?tab=plans">My plans</a></li>
+          <li><a href="/profile?tab=history">Trip history</a></li>
+          <li><a href="/profile?tab=settings">Settings</a></li>
+        </ul>
+      </div>
+
+      <div class="foot-col">
+        <h4>Company</h4>
+        <ul>
+          <li><a href="#">About</a></li>
+          <li><a href="#">Blog</a></li>
+          <li><a href="#">Careers</a></li>
+          <li><a href="#">Press</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="foot-bottom" style="max-width:1100px;margin:0 auto">
+      <div class="foot-copy">© 2025 makeTrip. Built for explorers everywhere.</div>
+      <div class="foot-legal">
+        <a href="#">Privacy</a>
+        <a href="#">Terms</a>
+        <a href="#">Cookies</a>
+      </div>
+    </div>
+  </footer>
+</body>
+
+</html>

@@ -1,0 +1,5390 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>makeTrip — Plan your route</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap"
+    rel="stylesheet">
+  <link href="https://unpkg.com/maplibre-gl@4.0.0/dist/maplibre-gl.css" rel="stylesheet" />
+  <script src="https://unpkg.com/maplibre-gl@4.0.0/dist/maplibre-gl.js"></script>
+  <style>
+    /* ── reset ── */
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0
+    }
+
+    :root {
+      --white: #ffffff;
+      --black: #111111;
+      --g50: #f9f9f9;
+      --g100: #f2f2f2;
+      --g200: #e5e5e5;
+      --g300: #d0d0d0;
+      --g400: #ababab;
+      --g600: #6b6b6b;
+      --g800: #3d3d3d;
+      --red: #ff422f;
+      --red-d: #ff422f;
+      --red-bg: #fff0f2;
+      --green: #00b37e;
+      --green-bg: #e6f9f3;
+      --blue: #0066cc;
+      --blue-bg: #eff6ff;
+      --amber: #b45309;
+      --amber-bg: #fffbeb;
+      --border: #e5e5e5;
+      --sh-xs: 0 1px 2px rgba(0, 0, 0, .05);
+      --sh-sm: 0 1px 4px rgba(0, 0, 0, .07), 0 2px 8px rgba(0, 0, 0, .04);
+      --sh-md: 0 4px 16px rgba(0, 0, 0, .10);
+      --sh-lg: 0 8px 32px rgba(0, 0, 0, .13);
+      --sh-xl: 0 16px 56px rgba(0, 0, 0, .18);
+      --r-sm: 6px;
+      --r-md: 10px;
+      --r-lg: 14px;
+      --r-xl: 22px;
+      --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --nav-h: 72px;
+    }
+
+    html,
+    body {
+      height: 100%;
+      overflow: hidden
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--white);
+      color: var(--black);
+      display: flex;
+      flex-direction: column;
+      -webkit-font-smoothing: antialiased;
+      font-size: 14px;
+      line-height: 1.5
+    }
+
+    /* ══════════ NAVBAR ══════════ */
+    .nav {
+      height: var(--nav-h);
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 28px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(255, 255, 255, .97);
+      backdrop-filter: blur(16px);
+      z-index: 500;
+      gap: 20px
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      text-decoration: none;
+      flex-shrink: 0
+    }
+
+    .logo-mark {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: var(--red);
+      display: flex;
+      align-items: center;
+      justify-content: center
+    }
+
+    .logo-mark svg {
+      width: 18px;
+      height: 18px;
+      fill: #fff
+    }
+
+    .logo-text {
+      font-size: 18px;
+      font-weight: 400;
+      letter-spacing: -.3px;
+      color: var(--black)
+    }
+
+    .logo-text strong {
+      font-weight: 700
+    }
+
+    /* search pill */
+    .search-pill {
+      display: flex;
+      align-items: center;
+      border: 1px solid var(--border);
+      border-radius: 40px;
+      box-shadow: var(--sh-sm);
+      background: var(--white);
+      overflow: visible;
+      flex: 1;
+      max-width: 500px;
+      transition: box-shadow .2s, border-color .2s
+    }
+
+    .search-pill:focus-within {
+      box-shadow: var(--sh-md);
+      border-color: var(--g400)
+    }
+
+    .sp-seg {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 18px;
+      height: 44px;
+      border-right: 1px solid var(--border);
+      flex: 1;
+      min-width: 0;
+      position: relative
+    }
+
+    .sp-seg:last-of-type {
+      border-right: none
+    }
+
+    .sp-dot {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center
+    }
+
+    .sp-dot.g {
+      background: var(--green-bg);
+      border: 1px solid var(--green)
+    }
+
+    .sp-dot.g svg {
+      width: 10px;
+      height: 10px;
+      stroke: var(--green);
+      fill: none;
+      stroke-width: 2.2;
+      stroke-linecap: round
+    }
+
+    .sp-dot.r {
+      background: var(--red-bg);
+      border: 1px solid var(--red)
+    }
+
+    .sp-dot.r svg {
+      width: 10px;
+      height: 10px;
+      fill: var(--red);
+      stroke: none
+    }
+
+    .sp-wrap {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      flex: 1
+    }
+
+    .sp-label {
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--g600);
+      margin-bottom: 1px
+    }
+
+    .sp-input {
+      background: transparent;
+      border: none;
+      outline: none;
+      font-family: var(--font);
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--black);
+      width: 100%;
+      padding: 0
+    }
+
+    .sp-input::placeholder {
+      color: var(--g400);
+      font-weight: 400
+    }
+
+    .sp-clear {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--g300);
+      border: none;
+      cursor: pointer;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      padding: 0;
+      transition: background .15s
+    }
+
+    .sp-clear:hover {
+      background: var(--g400)
+    }
+
+    .sp-clear svg {
+      width: 9px;
+      height: 9px;
+      stroke: var(--white);
+      fill: none;
+      stroke-width: 2.5;
+      stroke-linecap: round
+    }
+
+    .sp-clear.visible {
+      display: flex
+    }
+
+    .ww-marker-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      cursor: pointer
+    }
+
+    .nb-marker-dot {
+      background: #FF385C;
+      box-shadow: 0 3px 10px rgba(255, 56, 92, .40)
+    }
+
+    .ww-marker-dot {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: #1d6ff3;
+      border: 3px solid #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+      color: #fff;
+      font-family: var(--font);
+      box-shadow: 0 3px 10px rgba(29, 111, 243, .40)
+    }
+
+    .ww-marker-lbl {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 2px 8px;
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--black);
+      white-space: nowrap;
+      margin-top: 3px;
+      box-shadow: var(--sh-xs);
+      max-width: 120px;
+      overflow: hidden;
+      text-overflow: ellipsis
+    }
+
+    .sp-swap {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--g100);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      flex-shrink: 0;
+      margin: 0 4px;
+      transition: background .15s;
+      transform: rotate(90deg);
+    }
+
+    .sp-swap:hover {
+      background: var(--g200)
+    }
+
+    .sp-swap svg {
+      width: 11px;
+      height: 11px;
+      stroke: var(--g600);
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round
+    }
+
+    .search-go {
+      background: var(--red);
+      border: none;
+      border-radius: 50%;
+      width: 36px;
+      height: 36px;
+      margin: 0 5px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(255, 56, 92, .35);
+      transition: background .15s, transform .15s
+    }
+
+    .search-go:hover {
+      background: var(--red-d);
+      transform: scale(1.05)
+    }
+
+    .search-go svg {
+      width: 15px;
+      height: 15px;
+      stroke: #fff;
+      fill: none;
+      stroke-width: 2.2;
+      stroke-linecap: round;
+      stroke-linejoin: round
+    }
+
+    /* autocomplete */
+    .ac-list {
+      display: none;
+      position: absolute;
+      top: calc(100% + 8px);
+      left: -18px;
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      box-shadow: var(--sh-lg);
+      min-width: 260px;
+      z-index: 9600;
+      overflow: hidden;
+      animation: dropIn .14s ease
+    }
+
+    .ac-list.open {
+      display: block
+    }
+
+    .ac-header {
+      padding: 8px 14px 5px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      color: var(--g600)
+    }
+
+    .ac-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 14px;
+      cursor: pointer;
+      transition: background .12s
+    }
+
+    .ac-item:hover {
+      background: var(--g50)
+    }
+
+    .ac-icon {
+      width: 30px;
+      height: 30px;
+      border-radius: var(--r-sm);
+      background: var(--g100);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      flex-shrink: 0
+    }
+
+    .ac-info {
+      flex: 1;
+      min-width: 0
+    }
+
+    .ac-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--black)
+    }
+
+    .ac-sub {
+      font-size: 11px;
+      color: var(--g600);
+      margin-top: 1px
+    }
+
+    .ac-match {
+      color: var(--red)
+    }
+
+    /* nav-right */
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+      position: relative;
+      z-index: 600
+    }
+
+    /* top10 */
+    .top10-wrap {
+      position: relative
+    }
+
+    .top10-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      border-radius: var(--r-md);
+      border: 1px solid var(--border);
+      background: var(--white);
+      cursor: pointer;
+      font-family: var(--font);
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--black);
+      white-space: nowrap;
+      transition: background .15s, box-shadow .15s
+    }
+
+    .top10-btn:hover {
+      background: var(--g50);
+      box-shadow: var(--sh-sm)
+    }
+
+    .top10-btn.open {
+      background: var(--black);
+      color: var(--white);
+      border-color: var(--black)
+    }
+
+    .top10-btn svg {
+      width: 14px;
+      height: 14px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round
+    }
+
+    .top10-drop {
+      display: none;
+      position: absolute;
+      top: calc(100% + 10px);
+      right: 0;
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      box-shadow: var(--sh-xl);
+      min-width: 230px;
+      overflow: hidden;
+      z-index: 9500;
+      animation: dropIn .15s ease
+    }
+
+    .top10-drop.open {
+      display: block
+    }
+
+    .top10-hdr {
+      padding: 12px 16px 10px;
+      border-bottom: 1px solid var(--border)
+    }
+
+    .top10-hdr h4 {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--black)
+    }
+
+    .top10-hdr p {
+      font-size: 11px;
+      color: var(--g600);
+      margin-top: 1px
+    }
+
+    .t10-opt {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 11px 16px;
+      cursor: pointer;
+      border-bottom: 1px solid var(--border);
+      transition: background .12s
+    }
+
+    .t10-opt:last-child {
+      border-bottom: none
+    }
+
+    .t10-opt:hover {
+      background: var(--g50)
+    }
+
+    .t10-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: var(--r-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0
+    }
+
+    .t10-icon svg {
+      width: 18px;
+      height: 18px;
+      fill: none;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round
+    }
+
+    .t10-text {
+      flex: 1
+    }
+
+    .t10-text strong {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--black);
+      display: block
+    }
+
+    .t10-text span {
+      font-size: 11px;
+      color: var(--g600)
+    }
+
+    .t10-arr {
+      width: 14px;
+      height: 14px;
+      stroke: var(--g400);
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round
+    }
+
+    /* user pill */
+    .user-wrap {
+      position: relative
+    }
+
+    .user-pill {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      padding: 6px 6px 6px 14px;
+      cursor: pointer;
+      background: var(--white);
+      transition: box-shadow .2s;
+      user-select: none
+    }
+
+    .user-pill:hover {
+      box-shadow: var(--sh-md)
+    }
+
+    .user-pill .hb {
+      width: 14px;
+      height: 14px;
+      stroke: var(--g600);
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round
+    }
+
+    .u-av {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--red);
+      display: flex;
+      align-items: center;
+      justify-content: center
+    }
+
+    .u-av svg {
+      width: 16px;
+      height: 16px;
+      fill: #fff
+    }
+
+    .u-drop {
+      display: none;
+      position: absolute;
+      top: calc(100% + 10px);
+      right: 0;
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      box-shadow: var(--sh-xl);
+      min-width: 210px;
+      overflow: hidden;
+      z-index: 9500;
+      animation: dropIn .16s ease
+    }
+
+    .u-drop.open {
+      display: block
+    }
+
+    .u-info {
+      padding: 13px 16px;
+      border-bottom: 1px solid var(--border)
+    }
+
+    .u-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--black)
+    }
+
+    .u-email {
+      font-size: 11px;
+      color: var(--g600);
+      margin-top: 1px
+    }
+
+    .u-item {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      padding: 11px 16px;
+      font-size: 13px;
+      color: var(--black);
+      cursor: pointer;
+      transition: background .12s
+    }
+
+    .u-item:hover {
+      background: var(--g50)
+    }
+
+    .u-item svg {
+      width: 15px;
+      height: 15px;
+      stroke: var(--g600);
+      fill: none;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      flex-shrink: 0
+    }
+
+    .u-div {
+      height: 1px;
+      background: var(--border);
+      margin: 4px 0
+    }
+
+    .u-item.logout {
+      color: var(--red)
+    }
+
+    .u-item.logout svg {
+      stroke: var(--red)
+    }
+
+    @keyframes dropIn {
+      from {
+        opacity: 0;
+        transform: translateY(-6px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0)
+      }
+    }
+
+    /* ══════════ MAIN ══════════ */
+    .main {
+      display: flex;
+      flex: 1;
+      overflow: hidden
+    }
+
+    /* ══════════ LEFT PANEL ══════════ */
+    .left {
+      width: 35%;
+      min-width: 320px;
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid var(--border);
+      background: var(--white);
+      overflow: hidden;
+      position: relative;
+      transition: width .3s cubic-bezier(.4, 0, .2, 1), min-width .3s
+    }
+
+    .left.collapsed {
+      width: 0 !important;
+      min-width: 0 !important;
+      overflow: hidden
+    }
+
+    .left-scroll {
+      height: 100%;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: var(--g200) transparent
+    }
+
+    .left-scroll::-webkit-scrollbar {
+      width: 4px
+    }
+
+    .left-scroll::-webkit-scrollbar-thumb {
+      background: var(--g200);
+      border-radius: 2px
+    }
+
+    .left-inner {
+      padding: 22px 20px 32px
+    }
+
+    /* ── ranking panel ── */
+    .ranking-panel {
+      position: absolute;
+      inset: 0;
+      background: var(--white);
+      display: flex;
+      flex-direction: column;
+      z-index: 20;
+      transform: translateX(100%);
+      transition: transform .32s cubic-bezier(.4, 0, .2, 1)
+    }
+
+    .ranking-panel.open {
+      transform: translateX(0)
+    }
+
+    .rp-hdr {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0
+    }
+
+    .rp-back {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--g100);
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: background .15s
+    }
+
+    .rp-back:hover {
+      background: var(--g200)
+    }
+
+    .rp-back svg {
+      width: 14px;
+      height: 14px;
+      stroke: var(--g800);
+      fill: none;
+      stroke-width: 2.5;
+      stroke-linecap: round;
+      stroke-linejoin: round
+    }
+
+    .rp-hdr-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: var(--r-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 20px
+    }
+
+    .rp-hdr-text {
+      flex: 1;
+      min-width: 0
+    }
+
+    .rp-hdr-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--black);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis
+    }
+
+    .rp-hdr-sub {
+      font-size: 10px;
+      color: var(--g600);
+      margin-top: 1px
+    }
+
+    .rp-scroll {
+      flex: 1;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: var(--g200) transparent
+    }
+
+    .rp-scroll::-webkit-scrollbar {
+      width: 4px
+    }
+
+    .rp-scroll::-webkit-scrollbar-thumb {
+      background: var(--g200);
+      border-radius: 2px
+    }
+
+    .rp-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 13px 16px;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: background .12s;
+      border-left: 3px solid transparent
+    }
+
+    .rp-item:last-child {
+      border-bottom: none
+    }
+
+    .rp-item:hover {
+      background: var(--g50)
+    }
+
+    .rp-item.rp-gold {
+      background: linear-gradient(to right, rgba(251, 191, 36, .13), transparent);
+      border-left-color: #f59e0b
+    }
+
+    .rp-item.rp-gold:hover {
+      background: linear-gradient(to right, rgba(251, 191, 36, .20), transparent)
+    }
+
+    .rp-item.rp-silver {
+      background: linear-gradient(to right, rgba(148, 163, 184, .11), transparent);
+      border-left-color: #94a3b8
+    }
+
+    .rp-item.rp-silver:hover {
+      background: linear-gradient(to right, rgba(148, 163, 184, .18), transparent)
+    }
+
+    .rp-item.rp-bronze {
+      background: linear-gradient(to right, rgba(217, 119, 6, .09), transparent);
+      border-left-color: #d97706
+    }
+
+    .rp-item.rp-bronze:hover {
+      background: linear-gradient(to right, rgba(217, 119, 6, .16), transparent)
+    }
+
+    .rp-rank {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      font-weight: 700;
+      margin-top: 1px
+    }
+
+    .rp-rank.r1 {
+      width: 40px;
+      height: 40px;
+      font-size: 22px;
+      background: radial-gradient(circle at 40% 35%, #fde68a, #f59e0b);
+      box-shadow: 0 2px 8px rgba(245, 158, 11, .35)
+    }
+
+    .rp-rank.r2 {
+      width: 38px;
+      height: 38px;
+      font-size: 20px;
+      background: radial-gradient(circle at 40% 35%, #e2e8f0, #94a3b8);
+      box-shadow: 0 2px 6px rgba(148, 163, 184, .35)
+    }
+
+    .rp-rank.r3 {
+      width: 36px;
+      height: 36px;
+      font-size: 18px;
+      background: radial-gradient(circle at 40% 35%, #fed7aa, #d97706);
+      box-shadow: 0 2px 6px rgba(217, 119, 6, .30)
+    }
+
+    .rp-rank.rn {
+      background: var(--g50);
+      border: 1px solid var(--border);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--g600)
+    }
+
+    .rp-body {
+      flex: 1;
+      min-width: 0
+    }
+
+    .rp-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--black);
+      margin-bottom: 3px
+    }
+
+    .rp-name-link {
+      color: var(--black);
+      font-weight: 700;
+      cursor: pointer;
+      border-bottom: 1.5px solid transparent;
+      transition: color .15s, border-color .15s;
+      display: inline
+    }
+
+    .rp-name-link:hover {
+      color: var(--red);
+      border-color: var(--red)
+    }
+
+    .rp-item.rp-gold .rp-name-link {
+      font-size: 14px
+    }
+
+    .rp-desc {
+      font-size: 11px;
+      color: var(--g600);
+      line-height: 1.55;
+      margin-bottom: 6px
+    }
+
+    .rp-meta {
+      display: flex;
+      align-items: center;
+      gap: 6px
+    }
+
+    .rp-rating {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--black)
+    }
+
+    .rp-rating svg {
+      width: 10px;
+      height: 10px;
+      fill: var(--black);
+      stroke: none
+    }
+
+    .rp-tag {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--g600);
+      background: var(--g100);
+      border: 1px solid var(--border);
+      border-radius: 99px;
+      padding: 2px 8px
+    }
+
+    /* place blocks */
+    .place-dot-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 7px
+    }
+
+    .p-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      flex-shrink: 0
+    }
+
+    .p-dot.green {
+      background: var(--green);
+      box-shadow: 0 0 0 3px rgba(0, 179, 126, .15)
+    }
+
+    .p-dot.red {
+      background: var(--red);
+      box-shadow: 0 0 0 3px rgba(255, 56, 92, .15)
+    }
+
+    .place-name {
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: -.3px;
+      color: var(--black);
+      cursor: pointer;
+      border-bottom: 1.5px solid transparent;
+      transition: color .15s, border-color .15s;
+      display: inline
+    }
+
+    .place-name:hover {
+      color: var(--red);
+      border-color: var(--red)
+    }
+
+    .star-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding-left: 22px;
+      margin-bottom: 7px
+    }
+
+    .stars {
+      display: flex;
+      gap: 1px
+    }
+
+    .stars svg {
+      width: 12px;
+      height: 12px
+    }
+
+    .stars svg.full {
+      fill: var(--black);
+      stroke: none
+    }
+
+    .stars svg.half {
+      fill: none;
+      stroke: var(--black);
+      stroke-width: 1.5
+    }
+
+    .star-val {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--black)
+    }
+
+    .sep {
+      width: 3px;
+      height: 3px;
+      border-radius: 50%;
+      background: var(--g400);
+      display: inline-block
+    }
+
+    .rev-count {
+      font-size: 12px;
+      color: var(--g600)
+    }
+
+    .place-desc {
+      font-size: 12px;
+      color: var(--g600);
+      line-height: 1.6;
+      padding-left: 22px
+    }
+
+    /* to-divider */
+    .to-divider {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 16px 0
+    }
+
+    .to-divider::before {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border)
+    }
+
+    .to-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border)
+    }
+
+    .to-label {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 15px;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      color: var(--g400);
+      white-space: nowrap
+    }
+
+    .to-label svg {
+      width: 10px;
+      height: 10px;
+      stroke: var(--g400);
+      fill: none;
+      stroke-width: 2.5;
+      stroke-linecap: round;
+      stroke-linejoin: round
+    }
+
+    /* divider */
+    .hr {
+      height: 1px;
+      background: var(--border);
+      margin: 18px 0
+    }
+
+    /* section label */
+    .sec-lbl {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--g600);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px
+    }
+
+    .sec-lbl::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border)
+    }
+
+    /* stats grid */
+    .stats-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 7px;
+      margin-bottom: 18px
+    }
+
+    .stat-box {
+      background: var(--g50);
+      border: 1px solid var(--border);
+      border-radius: var(--r-md);
+      padding: 11px 13px
+    }
+
+    .stat-lbl {
+      font-size: 10px;
+      color: var(--g600);
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      font-weight: 500;
+      margin-bottom: 3px
+    }
+
+    .stat-val {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--black)
+    }
+
+    .stat-note {
+      font-size: 10px;
+      color: var(--g400);
+      margin-top: 2px
+    }
+
+    /* filter tabs */
+    .filter-row {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-bottom: 16px
+    }
+
+    .ftab {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 5px 12px;
+      border-radius: 99px;
+      border: 1px solid var(--border);
+      background: var(--white);
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--g600);
+      cursor: pointer;
+      transition: all .15s;
+      white-space: nowrap
+    }
+
+    .ftab:hover {
+      border-color: var(--black);
+      color: var(--black)
+    }
+
+    .ftab.on {
+      background: var(--black);
+      color: var(--white);
+      border-color: var(--black)
+    }
+
+    .ftab svg {
+      width: 11px;
+      height: 11px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round
+    }
+
+    /* ══════════ TIMELINE ══════════ */
+    .timeline {
+      position: relative;
+      padding-left: 0
+    }
+
+    /* the vertical backbone line */
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 17px;
+      top: 22px;
+      bottom: 22px;
+      width: 2px;
+      background: linear-gradient(to bottom, var(--green) 0%, var(--border) 18%, var(--border) 82%, var(--red) 100%);
+      border-radius: 1px;
+      z-index: 0
+    }
+
+    /* endpoint row */
+    .tl-ep {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 6px 0;
+      position: relative;
+      z-index: 1
+    }
+
+    .tl-ep-dot {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2.5px solid var(--white)
+    }
+
+    .tl-ep-dot.origin {
+      background: var(--green);
+      box-shadow: 0 0 0 3px rgba(0, 179, 126, .18)
+    }
+
+    .tl-ep-dot.origin svg {
+      width: 14px;
+      height: 14px;
+      stroke: #fff;
+      fill: none;
+      stroke-width: 2.2;
+      stroke-linecap: round
+    }
+
+    .tl-ep-dot.dest {
+      background: var(--red);
+      box-shadow: 0 0 0 3px rgba(255, 56, 92, .18)
+    }
+
+    .tl-ep-dot.dest svg {
+      width: 14px;
+      height: 14px;
+      fill: #fff;
+      stroke: none
+    }
+
+    .tl-ep-body {
+      flex: 1;
+      min-width: 0
+    }
+
+    .tl-ep-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--black)
+    }
+
+    .tl-ep-sub {
+      font-size: 11px;
+      color: var(--g400);
+      margin-top: 1px
+    }
+
+    /* drive connector */
+    .tl-drive {
+      display: flex;
+      align-items: center;
+      padding: 5px 0;
+      position: relative;
+      z-index: 1
+    }
+
+    .tl-drive-pill {
+      margin-left: 54px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 10px;
+      color: var(--g600);
+      font-weight: 500;
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 99px;
+      padding: 3px 11px;
+      box-shadow: var(--sh-xs)
+    }
+
+    .tl-drive-pill svg {
+      width: 11px;
+      height: 11px;
+      stroke: var(--g600);
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round
+    }
+
+    /* stop item */
+    .tl-stop {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 5px 0;
+      position: relative;
+      z-index: 1;
+      cursor: pointer
+    }
+
+    /* numbered circle - sits ON the vertical line */
+    .tl-num {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+      font-family: var(--font);
+      background: var(--white);
+      border: 2px solid var(--border);
+      color: var(--g600);
+      box-shadow: 0 1px 4px rgba(0, 0, 0, .08);
+      z-index: 2;
+      transition: background .15s, color .15s, border-color .15s
+    }
+
+    .tl-stop.active .tl-num {
+      background: var(--red);
+      border-color: var(--red);
+      color: var(--white)
+    }
+
+    /* the card part */
+    .tl-card {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: 10px 12px;
+      transition: border-color .15s, box-shadow .15s, background .15s
+    }
+
+    .tl-stop:hover .tl-card {
+      border-color: var(--g400);
+      box-shadow: var(--sh-sm)
+    }
+
+    .tl-stop.active .tl-card {
+      border-color: var(--red);
+      background: var(--red-bg)
+    }
+
+    .tl-emoji {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      background: var(--g100);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0
+    }
+
+    .tl-body {
+      flex: 1;
+      min-width: 0
+    }
+
+    .tl-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--black);
+      margin-bottom: 3px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis
+    }
+
+    .tl-meta {
+      display: flex;
+      align-items: center;
+      gap: 7px
+    }
+
+    .tl-rating {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--black)
+    }
+
+    .tl-rating svg {
+      width: 10px;
+      height: 10px;
+      fill: var(--black);
+      stroke: none
+    }
+
+    .tl-pipe {
+      color: var(--g300);
+      font-size: 11px;
+      line-height: 1
+    }
+
+    .tl-dist {
+      font-size: 11px;
+      color: var(--g600)
+    }
+
+    .tl-arr svg {
+      width: 13px;
+      height: 13px;
+      stroke: var(--g400);
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round
+    }
+
+    /* ══════════ MAP ══════════ */
+    .map-side {
+      flex: 1;
+      position: relative;
+      overflow: hidden
+    }
+
+    #map {
+      width: 100%;
+      height: 100%
+    }
+
+    /* panel toggle */
+    .panel-toggle {
+      position: absolute;
+      top: 50%;
+      left: 0;
+      transform: translateY(-50%);
+      z-index: 200;
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-left: none;
+      border-radius: 0 var(--r-md) var(--r-md) 0;
+      width: 20px;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: var(--sh-sm);
+      transition: background .15s
+    }
+
+    .panel-toggle:hover {
+      background: var(--g50)
+    }
+
+    .panel-toggle svg {
+      width: 10px;
+      height: 10px;
+      stroke: var(--g600);
+      fill: none;
+      stroke-width: 2.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      transition: transform .3s
+    }
+
+    .panel-toggle.flipped svg {
+      transform: rotate(180deg)
+    }
+
+    /* transport box */
+    .transport-box {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      z-index: 10;
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      box-shadow: var(--sh-lg);
+      padding: 12px 12px 10px
+    }
+
+    .transport-title {
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--g600);
+      text-align: center;
+      margin-bottom: 9px
+    }
+
+    .transport-btns {
+      display: flex;
+      gap: 5px
+    }
+
+    .tbtn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      padding: 8px 10px;
+      border-radius: var(--r-md);
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--white);
+      min-width: 48px;
+      transition: all .15s
+    }
+
+    .tbtn:hover {
+      border-color: var(--g400)
+    }
+
+    .tbtn.active {
+      border-color: var(--black);
+      background: var(--black)
+    }
+
+    .tbtn svg {
+      width: 16px;
+      height: 16px;
+      stroke: var(--g400);
+      fill: none;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round
+    }
+
+    .tbtn.active svg {
+      stroke: var(--white)
+    }
+
+    .tbtn span {
+      font-size: 9px;
+      font-weight: 500;
+      color: var(--g600)
+    }
+
+    .tbtn.active span {
+      color: var(--white)
+    }
+
+    /* save btn */
+    .save-btn {
+      position: absolute;
+      top: 14px;
+      right: 50px;
+      z-index: 10;
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--r-md);
+      box-shadow: var(--sh-sm);
+      padding: 7px 14px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      transition: box-shadow .15s
+    }
+
+    .save-btn:hover {
+      box-shadow: var(--sh-md)
+    }
+
+    .save-btn svg {
+      width: 14px;
+      height: 14px;
+      stroke: var(--g600);
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round
+    }
+
+    .save-btn span {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--black)
+    }
+
+    /* zoom */
+    .zoom-box {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      z-index: 10;
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--r-sm);
+      box-shadow: var(--sh-sm);
+      overflow: hidden
+    }
+
+    .zoom-btn {
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      border: none;
+      background: var(--white);
+      font-size: 18px;
+      color: var(--g800);
+      font-weight: 300;
+      transition: background .15s;
+      font-family: var(--font)
+    }
+
+    .zoom-btn:first-child {
+      border-bottom: 1px solid var(--border)
+    }
+
+    .zoom-btn:hover {
+      background: var(--g50)
+    }
+
+    .maplibregl-ctrl-group {
+      border-radius: var(--r-md) !important;
+      border: 1px solid var(--border) !important;
+      box-shadow: var(--sh-sm) !important
+    }
+
+    /* markers */
+    .m-start {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--green);
+      border: 3px solid var(--white);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 8px rgba(0, 179, 126, .4)
+    }
+
+    .m-start svg {
+      width: 13px;
+      height: 13px;
+      stroke: #fff;
+      fill: none;
+      stroke-width: 2.2;
+      stroke-linecap: round
+    }
+
+    .m-end {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--red);
+      border: 3px solid var(--white);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 8px rgba(255, 56, 92, .4)
+    }
+
+    .m-end svg {
+      width: 14px;
+      height: 14px;
+      fill: #fff;
+      stroke: none
+    }
+
+    .m-lbl {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 2px 8px;
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--black);
+      white-space: nowrap;
+      margin-top: 3px;
+      box-shadow: var(--sh-xs)
+    }
+
+    /* ══════════ MODALS ══════════ */
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: scale(.96) translateY(10px)
+      }
+
+      to {
+        opacity: 1;
+        transform: scale(1) translateY(0)
+      }
+    }
+
+    /* ── place detail popup ── */
+    .pp-bg {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .7);
+      z-index: 8500;
+      align-items: center;
+      justify-content: center;
+      padding: 24px
+    }
+
+    .pp-bg.open {
+      display: flex
+    }
+
+    .pp-modal {
+      background: var(--white);
+      border-radius: var(--r-xl);
+      width: 50vw;
+      min-width: 480px;
+      max-width: 720px;
+      max-height: 88vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      animation: slideUp .2s ease
+    }
+
+    .pp-pic {
+      height: 160px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0
+    }
+
+    .pp-pic-track {
+      display: flex;
+      height: 100%;
+      width: 100%;
+      transition: transform .35s ease
+    }
+
+    .pp-pic-slide {
+      flex: 0 0 100%;
+      width: 100%;
+      height: 100%;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: zoom-in
+    }
+
+    .pp-pic-bg {
+      position: absolute;
+      inset: 0
+    }
+
+    .pp-pic-ov {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: linear-gradient(to bottom, rgba(0, 0, 0, .04), rgba(0, 0, 0, .38))
+    }
+
+    .pp-emoji {
+      position: relative;
+      z-index: 2;
+      font-size: 60px;
+      line-height: 1;
+      filter: drop-shadow(0 4px 14px rgba(0, 0, 0, .28))
+    }
+
+    .pp-pic-arrow {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 3;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, .85);
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background .15s
+    }
+
+    .pp-pic-arrow:hover {
+      background: var(--white)
+    }
+
+    .pp-pic-arrow.prev {
+      left: 10px
+    }
+
+    .pp-pic-arrow.next {
+      right: 10px
+    }
+
+    .pp-pic-arrow svg {
+      width: 16px;
+      height: 16px;
+      stroke: var(--g800);
+      fill: none;
+      stroke-width: 2.4;
+      stroke-linecap: round;
+      stroke-linejoin: round
+    }
+
+    .pp-pic-dots {
+      position: absolute;
+      bottom: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 3;
+      display: flex;
+      gap: 5px
+    }
+
+    .pp-pic-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, .55);
+      cursor: pointer;
+      transition: background .15s, width .15s
+    }
+
+    .pp-pic-dot.active {
+      background: var(--white);
+      width: 16px;
+      border-radius: 3px
+    }
+
+    /* ── fullscreen photo viewer ── */
+    .pp-fs-bg {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .92);
+      z-index: 9500;
+      align-items: center;
+      justify-content: center
+    }
+
+    .pp-fs-bg.open {
+      display: flex
+    }
+
+    .pp-fs-slide {
+      width: min(80vw, 720px);
+      height: min(70vh, 560px);
+      border-radius: var(--r-lg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden
+    }
+
+    .pp-fs-emoji {
+      font-size: 120px;
+      line-height: 1;
+      filter: drop-shadow(0 8px 24px rgba(0, 0, 0, .4))
+    }
+
+    .pp-fs-x {
+      position: absolute;
+      top: 20px;
+      right: 24px;
+      z-index: 2;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, .12);
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background .15s
+    }
+
+    .pp-fs-x:hover {
+      background: rgba(255, 255, 255, .22)
+    }
+
+    .pp-fs-arrow {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 2;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, .12);
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background .15s
+    }
+
+    .pp-fs-arrow:hover {
+      background: rgba(255, 255, 255, .22)
+    }
+
+    .pp-fs-arrow.prev {
+      left: 24px
+    }
+
+    .pp-fs-arrow.next {
+      right: 24px
+    }
+
+    .pp-fs-arrow svg {
+      width: 22px;
+      height: 22px;
+      stroke: #fff;
+      fill: none;
+      stroke-width: 2.2;
+      stroke-linecap: round;
+      stroke-linejoin: round
+    }
+
+    .pp-fs-counter {
+      position: absolute;
+      bottom: 22px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: rgba(255, 255, 255, .75);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: .04em
+    }
+
+    /* ── maps choice modal ── */
+    .mc-bg {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .55);
+      z-index: 9700;
+      align-items: center;
+      justify-content: center;
+      padding: 24px
+    }
+
+    .mc-bg.open {
+      display: flex
+    }
+
+    .mc-modal {
+      background: var(--white);
+      border-radius: var(--r-xl);
+      width: 100%;
+      max-width: 320px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      animation: slideUp .2s ease
+    }
+
+    .mc-title {
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--black);
+      text-align: center;
+      margin-bottom: 4px
+    }
+
+    .mc-opt {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: var(--r-md);
+      background: var(--white);
+      cursor: pointer;
+      font-family: var(--font);
+      transition: background .15s
+    }
+
+    .mc-opt:hover {
+      background: var(--g50)
+    }
+
+    .mc-opt-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      flex-shrink: 0
+    }
+
+    .mc-opt-label {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--black)
+    }
+
+    .mc-cancel {
+      margin-top: 4px;
+      padding: 10px;
+      border: none;
+      background: none;
+      border-radius: var(--r-md);
+      font-family: var(--font);
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--g600);
+      cursor: pointer;
+      transition: background .15s
+    }
+
+    .mc-cancel:hover {
+      background: var(--g50)
+    }
+
+    .pp-x {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      z-index: 3;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, .88);
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+      color: var(--g800);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background .15s
+    }
+
+    .pp-x:hover {
+      background: var(--white)
+    }
+
+    .pp-badge {
+      position: absolute;
+      bottom: 12px;
+      left: 12px;
+      z-index: 3;
+      background: rgba(0, 0, 0, .5);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 99px;
+      backdrop-filter: blur(4px)
+    }
+
+    .pp-body {
+      overflow-y: auto;
+      padding: 20px 22px 24px;
+      flex: 1
+    }
+
+    .pp-name-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 6px
+    }
+
+    .pp-name {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--black);
+      letter-spacing: -.4px;
+      line-height: 1.2
+    }
+
+    .pp-dot {
+      width: 3px;
+      height: 3px;
+      border-radius: 50%;
+      background: var(--g400);
+      display: inline-block;
+      flex-shrink: 0
+    }
+
+    .pp-name-rating {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--black)
+    }
+
+    .pp-name-rating svg {
+      width: 14px;
+      height: 14px;
+      fill: var(--black);
+      stroke: none
+    }
+
+    .pp-loc {
+      font-size: 13px;
+      color: var(--g600);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      margin-bottom: 14px
+    }
+
+    .pp-loc svg {
+      width: 13px;
+      height: 13px;
+      stroke: var(--g400);
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round
+    }
+
+    .pp-desc {
+      font-size: 14px;
+      color: var(--g600);
+      line-height: 1.7;
+      margin-bottom: 18px
+    }
+
+    .pp-div {
+      height: 1px;
+      background: var(--border);
+      margin-bottom: 18px
+    }
+
+    .pp-slbl {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--g600);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px
+    }
+
+    .pp-slbl::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border)
+    }
+
+    .pp-climate {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 18px
+    }
+
+    .pp-cc {
+      background: var(--g50);
+      border: 1px solid var(--border);
+      border-radius: var(--r-md);
+      padding: 12px 14px
+    }
+
+    .pp-ci {
+      width: 30px;
+      height: 30px;
+      border-radius: var(--r-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 8px
+    }
+
+    .pp-ci svg {
+      width: 16px;
+      height: 16px
+    }
+
+    .pp-cl {
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--g600);
+      margin-bottom: 4px
+    }
+
+    .pp-cv {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--black)
+    }
+
+    .pp-cn {
+      font-size: 10px;
+      color: var(--g400);
+      margin-top: 2px
+    }
+
+    .pp-review {
+      background: var(--g50);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: 16px;
+      position: relative
+    }
+
+    .pp-rq {
+      font-size: 36px;
+      color: var(--red);
+      opacity: .18;
+      line-height: .8;
+      font-family: Georgia, serif;
+      position: absolute;
+      top: 10px;
+      left: 14px
+    }
+
+    .pp-rt {
+      font-size: 13px;
+      color: var(--g800);
+      line-height: 1.65;
+      font-style: italic;
+      margin-bottom: 14px;
+      padding-top: 6px
+    }
+
+    .pp-rw {
+      display: flex;
+      align-items: center;
+      gap: 10px
+    }
+
+    .pp-av {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 700;
+      color: #fff
+    }
+
+    .pp-rname {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--black)
+    }
+
+    .pp-rmeta {
+      font-size: 11px;
+      color: var(--g600);
+      margin-top: 1px
+    }
+
+    .pp-view-all {
+      background: none;
+      border: none;
+      padding: 0;
+      margin-left: auto;
+      flex-shrink: 0;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--red);
+      cursor: pointer;
+      font-family: var(--font)
+    }
+
+    .pp-view-all:hover {
+      text-decoration: underline
+    }
+
+    .pp-clist {
+      display: none;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 12px
+    }
+
+    .pp-clist.open {
+      display: flex
+    }
+
+    .pp-cmt {
+      display: flex;
+      gap: 10px;
+      padding: 12px;
+      background: var(--g50);
+      border: 1px solid var(--border);
+      border-radius: var(--r-md)
+    }
+
+    .pp-cmt-av {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      color: #fff
+    }
+
+    .pp-cmt-body {
+      flex: 1;
+      min-width: 0
+    }
+
+    .pp-cmt-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 4px
+    }
+
+    .pp-cmt-name {
+      font-size: 12.5px;
+      font-weight: 700;
+      color: var(--black)
+    }
+
+    .pp-cmt-src {
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      padding: 2px 7px;
+      border-radius: 99px;
+      flex-shrink: 0
+    }
+
+    .pp-cmt-src.google {
+      background: #e8f0fe;
+      color: #1a73e8
+    }
+
+    .pp-cmt-src.tripadvisor {
+      background: #e6f4ea;
+      color: #00aa6c
+    }
+
+    .pp-cmt-src.booking {
+      background: #e7f0ff;
+      color: #003580
+    }
+
+    .pp-cmt-body .stars {
+      margin-bottom: 5px
+    }
+
+    .pp-cmt-text {
+      font-size: 12.5px;
+      color: var(--g600);
+      line-height: 1.55
+    }
+
+    .pp-foot {
+      border-top: 1px solid var(--border);
+      padding: 14px 22px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+      gap: 12px
+    }
+
+    .pp-fn {
+      font-size: 13px;
+      color: var(--g600)
+    }
+
+    .pp-fn strong {
+      color: var(--black)
+    }
+
+    .pp-btn {
+      background: var(--red);
+      color: #fff;
+      border: none;
+      border-radius: var(--r-md);
+      padding: 11px 22px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: var(--font);
+      transition: background .15s
+    }
+
+    .pp-btn:hover {
+      background: var(--red-d)
+    }
+
+    /* ── country search overlay ── */
+    .cs-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .52);
+      z-index: 7500;
+      align-items: flex-start;
+      justify-content: center;
+      padding: calc(var(--nav-h) + 28px) 16px 0
+    }
+
+    .cs-overlay.open {
+      display: flex
+    }
+
+    .cs-box {
+      background: var(--white);
+      border-radius: var(--r-xl);
+      width: 100%;
+      max-width: 500px;
+      box-shadow: var(--sh-xl);
+      overflow: hidden;
+      animation: slideUp .2s ease
+    }
+
+    .cs-hdr {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border)
+    }
+
+    .cs-icon-wrap {
+      width: 38px;
+      height: 38px;
+      border-radius: var(--r-sm);
+      background: #eff6ff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0
+    }
+
+    .cs-icon-wrap svg {
+      width: 20px;
+      height: 20px;
+      fill: none;
+      stroke: #1d6ff3;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round
+    }
+
+    .cs-hdr-text {
+      flex: 1;
+      min-width: 0
+    }
+
+    .cs-hdr-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--black)
+    }
+
+    .cs-hdr-sub {
+      font-size: 11px;
+      color: var(--g600);
+      margin-top: 2px
+    }
+
+    .cs-x {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: var(--g100);
+      border: none;
+      cursor: pointer;
+      font-size: 13px;
+      color: var(--g800);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: background .15s
+    }
+
+    .cs-x:hover {
+      background: var(--g200)
+    }
+
+    .cs-input-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border)
+    }
+
+    .cs-input-row>svg {
+      width: 16px;
+      height: 16px;
+      stroke: var(--g400);
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      flex-shrink: 0
+    }
+
+    .cs-input {
+      flex: 1;
+      border: none;
+      outline: none;
+      font-family: var(--font);
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--black);
+      background: transparent
+    }
+
+    .cs-input::placeholder {
+      color: var(--g400);
+      font-weight: 400
+    }
+
+    .cs-clear {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--g300);
+      border: none;
+      cursor: pointer;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      padding: 0;
+      transition: background .15s
+    }
+
+    .cs-clear:hover {
+      background: var(--g400)
+    }
+
+    .cs-clear svg {
+      width: 9px;
+      height: 9px;
+      stroke: var(--white);
+      fill: none;
+      stroke-width: 2.5;
+      stroke-linecap: round
+    }
+
+    .cs-clear.visible {
+      display: flex
+    }
+
+    .cs-results {
+      max-height: 320px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: var(--g200) transparent
+    }
+
+    .cs-results::-webkit-scrollbar {
+      width: 4px
+    }
+
+    .cs-results::-webkit-scrollbar-thumb {
+      background: var(--g200);
+      border-radius: 2px
+    }
+
+    .cs-results-hdr {
+      padding: 8px 16px 4px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      color: var(--g600)
+    }
+
+    .cs-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 16px;
+      cursor: pointer;
+      transition: background .12s
+    }
+
+    .cs-item:hover {
+      background: var(--g50)
+    }
+
+    .cs-flag {
+      width: 34px;
+      height: 34px;
+      border-radius: var(--r-sm);
+      background: var(--g100);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 19px;
+      flex-shrink: 0
+    }
+
+    .cs-info {
+      flex: 1;
+      min-width: 0
+    }
+
+    .cs-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--black)
+    }
+
+    .cs-name .cs-match {
+      color: var(--red)
+    }
+
+    .cs-sub {
+      font-size: 11px;
+      color: var(--g600);
+      margin-top: 1px
+    }
+
+    .cs-arr {
+      width: 14px;
+      height: 14px;
+      stroke: var(--g400);
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      flex-shrink: 0
+    }
+
+    .cs-empty {
+      padding: 28px 16px;
+      text-align: center;
+      color: var(--g600);
+      font-size: 13px
+    }
+
+    /* ── logout confirm dialog ── */
+    .lo-bg {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .6);
+      backdrop-filter: blur(4px);
+      z-index: 9500;
+      align-items: center;
+      justify-content: center;
+      padding: 24px
+    }
+
+    .lo-bg.open {
+      display: flex
+    }
+
+    .lo-dialog {
+      background: var(--white);
+      border-radius: var(--r-xl);
+      width: 100%;
+      max-width: 380px;
+      overflow: hidden;
+      box-shadow: 0 24px 64px rgba(0, 0, 0, .28);
+      animation: loSlideUp .22s cubic-bezier(.4, 0, .2, 1)
+    }
+
+    @keyframes loSlideUp {
+      from {
+        opacity: 0;
+        transform: translateY(16px) scale(.96)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1)
+      }
+    }
+
+    .lo-top {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 32px 28px 24px;
+      text-align: center;
+    }
+
+    .lo-icon-wrap {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: #fff0f2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 18px;
+      border: 1.5px solid #fecdd3;
+    }
+
+    .lo-icon-wrap svg {
+      width: 24px;
+      height: 24px;
+      stroke: var(--red);
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .lo-title {
+      font-size: 17px;
+      font-weight: 800;
+      color: var(--black);
+      letter-spacing: -.02em;
+      margin-bottom: 8px;
+    }
+
+    .lo-sub {
+      font-size: 13px;
+      color: var(--g600);
+      line-height: 1.55;
+      max-width: 280px;
+    }
+
+    .lo-actions {
+      display: flex;
+      border-top: 1px solid var(--border);
+    }
+
+    .lo-cancel {
+      flex: 1;
+      padding: 16px;
+      background: none;
+      border: none;
+      font-family: var(--font);
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--g600);
+      cursor: pointer;
+      border-right: 1px solid var(--border);
+      transition: background .15s, color .15s;
+    }
+
+    .lo-cancel:hover {
+      background: var(--g50);
+      color: var(--black)
+    }
+
+    .lo-confirm {
+      flex: 1;
+      padding: 16px;
+      background: none;
+      border: none;
+      font-family: var(--font);
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--red);
+      cursor: pointer;
+      transition: background .15s;
+    }
+
+    .lo-confirm:hover {
+      background: #fff0f2
+    }
+
+    .sp-icon-wrap {
+      background: #eff6ff;
+      border-color: #bfdbfe;
+    }
+
+    .sp-icon-wrap svg {
+      stroke: #1d6ff3;
+    }
+
+    .sp-input-row {
+      padding: 0 28px 24px;
+    }
+
+    .sp-input-row label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--g600);
+      margin-bottom: 6px;
+      letter-spacing: .02em;
+      text-transform: uppercase;
+    }
+
+    .sp-input-row input {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--r-md);
+      font-family: var(--font);
+      font-size: 14px;
+      color: var(--black);
+      outline: none;
+      box-sizing: border-box;
+      transition: border-color .15s;
+    }
+
+    .sp-input-row input:focus {
+      border-color: #1d6ff3;
+    }
+
+    .sp-confirm {
+      color: #1d6ff3;
+    }
+
+    .sp-confirm:hover {
+      background: #eff6ff;
+    }
+
+    /* ── top10 modal ── */
+    .t10-bg {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .72);
+      z-index: 9100;
+      align-items: center;
+      justify-content: center;
+      padding: 24px
+    }
+
+    .t10-bg.open {
+      display: flex
+    }
+
+    .t10-modal {
+      background: var(--white);
+      border-radius: var(--r-xl);
+      width: 100%;
+      max-width: 560px;
+      max-height: 88vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      animation: slideUp .22s ease
+    }
+
+    .t10-hdr {
+      padding: 20px 24px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      flex-shrink: 0
+    }
+
+    .t10-icon-wrap {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--r-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 10px
+    }
+
+    .t10-icon-wrap svg {
+      width: 20px;
+      height: 20px;
+      fill: none;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round
+    }
+
+    .t10-title {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--black);
+      letter-spacing: -.3px
+    }
+
+    .t10-sub {
+      font-size: 13px;
+      color: var(--g600);
+      margin-top: 3px
+    }
+
+    .t10-x {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--g100);
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      color: var(--g800);
+      flex-shrink: 0;
+      transition: background .15s
+    }
+
+    .t10-x:hover {
+      background: var(--g200)
+    }
+
+    .t10-list {
+      overflow-y: auto;
+      flex: 1;
+      padding: 8px 0 16px
+    }
+
+    .t10-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 24px;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: background .12s
+    }
+
+    .t10-row:last-child {
+      border-bottom: none
+    }
+
+    .t10-row:hover {
+      background: var(--g50)
+    }
+
+    .t10-rank {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 800;
+      font-family: var(--font)
+    }
+
+    .t10-rank.r1 {
+      background: #fef3c7;
+      color: #92400e;
+      border: 1.5px solid #fde68a
+    }
+
+    .t10-rank.r2 {
+      background: #f3f4f6;
+      color: #374151;
+      border: 1.5px solid #d1d5db
+    }
+
+    .t10-rank.r3 {
+      background: #fdf2e9;
+      color: #92400e;
+      border: 1.5px solid #f5cba7
+    }
+
+    .t10-rank.rn {
+      background: var(--g50);
+      color: var(--g600);
+      border: 1px solid var(--border);
+      font-size: 13px
+    }
+
+    .t10-rb {
+      flex: 1;
+      min-width: 0
+    }
+
+    .t10-rname {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--black);
+      margin-bottom: 3px
+    }
+
+    .t10-rdesc {
+      font-size: 12px;
+      color: var(--g600);
+      line-height: 1.5;
+      margin-bottom: 5px
+    }
+
+    .t10-rmeta {
+      display: flex;
+      align-items: center;
+      gap: 8px
+    }
+
+    .t10-rrat {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--black)
+    }
+
+    .t10-rrat svg {
+      width: 11px;
+      height: 11px;
+      fill: var(--black);
+      stroke: none
+    }
+
+    .t10-rtag {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 2px 8px;
+      border-radius: 99px;
+      background: var(--g100);
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--g800)
+    }
+
+    /* ── toast ── */
+    .toast {
+      position: fixed;
+      bottom: 100px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--black);
+      color: #fff;
+      padding: 11px 22px;
+      border-radius: 99px;
+      font-size: 13px;
+      font-weight: 500;
+      z-index: 9999;
+      box-shadow: var(--sh-lg);
+      animation: toastIn .22s ease;
+      pointer-events: none;
+      font-family: var(--font)
+    }
+
+    @keyframes toastIn {
+      from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(8px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0)
+      }
+    }
+
+    /* ══════════ RESPONSIVE ══════════ */
+    @media(max-width:1024px) {
+      .nav {
+        padding: 0 18px;
+        gap: 12px
+      }
+
+      .search-pill {
+        max-width: 380px
+      }
+
+      .sp-input {
+        width: 80px
+      }
+
+      .t10-text-label {
+        display: none
+      }
+    }
+
+    @media(max-width:767px) {
+      :root {
+        --nav-h: auto
+      }
+
+      html,
+      body {
+        overflow: hidden;
+        height: 100%
+      }
+
+      .nav {
+        height: auto;
+        flex-wrap: wrap;
+        padding: 10px 14px 8px;
+        gap: 8px;
+        position: sticky;
+        top: 0;
+        z-index: 500
+      }
+
+      .logo {
+        order: 1
+      }
+
+      .nav-right {
+        order: 2;
+        gap: 6px
+      }
+
+      .search-pill {
+        order: 3;
+        flex: 0 0 100%;
+        max-width: 100%;
+        border-radius: 10px
+      }
+
+      .sp-seg {
+        padding: 0 10px !important;
+        height: 38px !important
+      }
+
+      .sp-label {
+        font-size: 8px
+      }
+
+      .sp-input {
+        font-size: 12px
+      }
+
+      .search-go {
+        width: 32px;
+        height: 32px;
+        margin: 0 3px
+      }
+
+      .logo-text {
+        font-size: 15px
+      }
+
+      .top10-btn {
+        padding: 6px 10px;
+        font-size: 11px;
+        gap: 4px
+      }
+
+      .t10-text-label {
+        display: none
+      }
+
+      .user-pill {
+        padding: 5px 5px 5px 9px
+      }
+
+      .main {
+        position: relative;
+        flex: 1;
+        overflow: hidden
+      }
+
+      .map-side {
+        position: absolute !important;
+        inset: 0 !important;
+        height: 100% !important;
+        width: 100% !important;
+        flex: none;
+        z-index: 0
+      }
+
+      .left {
+        position: absolute !important;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        width: 100% !important;
+        min-width: 100% !important;
+        height: auto;
+        max-height: 52vh;
+        border-right: none;
+        border-top: 1px solid var(--border);
+        border-radius: 20px 20px 0 0;
+        background: var(--white);
+        z-index: 100;
+        overflow: hidden;
+        box-shadow: 0 -6px 28px rgba(0, 0, 0, .14);
+        transition: max-height .32s cubic-bezier(.4, 0, .2, 1), transform .32s cubic-bezier(.4, 0, .2, 1)
+      }
+
+      .left.sheet-expanded {
+        max-height: 86vh
+      }
+
+      .left.collapsed {
+        max-height: 50px !important
+      }
+
+      .left.panel-hidden {
+        transform: translateY(110%)
+      }
+
+      .left::before {
+        content: '';
+        display: block;
+        width: 40px;
+        height: 4px;
+        background: var(--g200);
+        border-radius: 2px;
+        margin: 10px auto 2px
+      }
+
+      .left-scroll {
+        height: 100% !important;
+        overflow-y: auto !important
+      }
+
+      .left-inner {
+        padding: 4px 16px 24px
+      }
+
+      .panel-toggle {
+        display: flex !important;
+        position: absolute;
+        bottom: calc(52vh + 12px);
+        right: 16px;
+        left: auto;
+        top: auto;
+        width: auto;
+        height: 44px;
+        transform: none;
+        border-radius: 99px;
+        border: 1px solid var(--border);
+        border-left: 1px solid var(--border);
+        padding: 0 16px;
+        background: var(--white);
+        box-shadow: var(--sh-md);
+        gap: 5px;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--black);
+        font-family: var(--font);
+        white-space: nowrap;
+        z-index: 101;
+        transition: bottom .32s cubic-bezier(.4, 0, .2, 1)
+      }
+
+      .panel-toggle.flipped {
+        bottom: 16px
+      }
+
+      .panel-toggle::after {
+        content: 'Hide details';
+        font-size: 12px;
+        font-weight: 600
+      }
+
+      .panel-toggle.flipped::after {
+        content: 'Route details'
+      }
+
+      .panel-toggle svg {
+        width: 11px;
+        height: 11px
+      }
+
+      .start-trip-btn {
+        display: none;
+        position: absolute;
+        left: 50%;
+        bottom: 16px;
+        transform: translateX(-50%);
+        z-index: 101;
+        flex-direction: row;
+        align-items: center;
+        white-space: nowrap;
+        gap: 6px;
+        height: 44px;
+        background: var(--red);
+        border: none;
+        border-radius: 99px;
+        padding: 0 26px;
+        box-shadow: var(--sh-lg);
+        cursor: pointer;
+        font-family: var(--font);
+        line-height: 1;
+        transition: background .15s
+      }
+
+      .start-trip-btn:hover {
+        background: var(--red-d)
+      }
+
+      .left.panel-hidden~.map-side .start-trip-btn {
+        display: flex
+      }
+
+      .st-start {
+        font-size: 16px;
+        font-weight: 800;
+        color: #fff;
+        text-transform: uppercase;
+        letter-spacing: .3px
+      }
+
+      .st-trip {
+        font-size: 11px;
+        font-weight: 500;
+        color: rgba(255, 255, 255, .85);
+        text-transform: lowercase
+      }
+
+      .transport-box {
+        top: 10px;
+        left: 10px;
+        padding: 8px 8px 6px
+      }
+
+      .transport-title {
+        font-size: 8px;
+        margin-bottom: 5px
+      }
+
+      .tbtn {
+        padding: 5px 7px;
+        min-width: 36px
+      }
+
+      .tbtn svg {
+        width: 13px;
+        height: 13px
+      }
+
+      .tbtn span {
+        font-size: 8px
+      }
+
+      .save-btn {
+        top: 10px;
+        right: 42px;
+        padding: 5px 9px
+      }
+
+      .save-btn span {
+        display: none
+      }
+
+      .zoom-box {
+        top: 10px;
+        right: 10px
+      }
+
+      .stats-row {
+        gap: 5px
+      }
+
+      .stat-val {
+        font-size: 13px
+      }
+
+      .filter-row {
+        gap: 4px
+      }
+
+      .ftab {
+        padding: 4px 9px;
+        font-size: 10px
+      }
+
+      .pp-bg {
+        padding: 16px;
+        align-items: center
+      }
+
+      .t10-bg {
+        padding: 0;
+        align-items: flex-end
+      }
+
+      .pp-modal {
+        width: 100%;
+        min-width: 0;
+        max-width: 480px;
+        max-height: 85vh;
+        border-radius: 20px
+      }
+
+      .t10-modal {
+        width: 100%;
+        min-width: 0;
+        max-width: 100%;
+        border-radius: 20px 20px 0 0;
+        max-height: 90vh
+      }
+
+      .ac-list {
+        width: calc(100vw - 28px);
+        left: 0
+      }
+
+      .top10-drop,
+      .u-drop {
+        right: 0;
+        left: auto;
+        max-width: 88vw
+      }
+
+      .place-name {
+        font-size: 15px
+      }
+    }
+
+    @media(max-width:400px) {
+      .nav {
+        padding: 8px 12px 6px
+      }
+
+      .left-inner {
+        padding: 4px 12px 20px
+      }
+    }
+
+    ::-webkit-scrollbar {
+      width: 4px
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--g200);
+      border-radius: 2px
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ══ NAVBAR ══ -->
+  <nav class="nav">
+    <a class="logo" href="/">
+      <div class="logo-mark">
+        <svg viewBox="0 0 20 20">
+          <path
+            d="M10 1.5C6.41 1.5 3.5 4.41 3.5 8c0 4.9 6.5 10.5 6.5 10.5S16.5 12.9 16.5 8c0-3.59-2.91-6.5-6.5-6.5zm0 8.75a2.25 2.25 0 1 1 0-4.5 2.25 2.25 0 0 1 0 4.5z" />
+        </svg>
+      </div>
+      <span class="logo-text">make<strong>Trip</strong></span>
+    </a>
+
+    <div class="search-pill">
+      <div class="sp-seg">
+        <div class="sp-dot g"><svg viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="4" />
+            <path d="M12 2v4M12 18v4M2 12h4M18 12h4" />
+          </svg></div>
+        <div class="sp-wrap">
+          <span class="sp-label">From</span>
+          <input class="sp-input" id="from-input" type="text" value="Santiago, Chile" placeholder="City or place…"
+            oninput="handleAC('from',this.value);updateClear('from',this.value)"
+            onfocus="handleAC('from',this.value);showClear('from')" onblur="setTimeout(()=>hideClear('from'),150)"
+            autocomplete="off" />
+        </div>
+        <button class="sp-clear" id="from-clear" onclick="clearInput('from')" tabindex="-1">
+          <svg viewBox="0 0 24 24">
+            <path d="M18 6 6 18M6 6l12 12" />
+          </svg>
+        </button>
+        <div class="ac-list" id="from-ac"></div>
+      </div>
+      <div class="sp-swap" onclick="swapRoute()" title="Swap">
+        <svg viewBox="0 0 24 24">
+          <path d="M7 16V4m0 0L4 7m3-3l3 3M17 8v12m0 0l3-3m-3 3l-3-3" />
+        </svg>
+      </div>
+      <div class="sp-seg">
+        <div class="sp-dot r"><svg viewBox="0 0 24 24">
+            <path
+              d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z" />
+          </svg></div>
+        <div class="sp-wrap">
+          <span class="sp-label">To</span>
+          <input class="sp-input" id="to-input" type="text" value="Puerto Natales" placeholder="Destination…"
+            oninput="handleAC('to',this.value);updateClear('to',this.value)"
+            onfocus="handleAC('to',this.value);showClear('to')" onblur="setTimeout(()=>hideClear('to'),150)"
+            autocomplete="off" />
+        </div>
+        <button class="sp-clear" id="to-clear" onclick="clearInput('to')" tabindex="-1">
+          <svg viewBox="0 0 24 24">
+            <path d="M18 6 6 18M6 6l12 12" />
+          </svg>
+        </button>
+        <div class="ac-list" id="to-ac"></div>
+      </div>
+      <button class="search-go" onclick="doSearch()">
+        <svg viewBox="0 0 24 24">
+          <circle cx="11" cy="11" r="8" />
+          <path d="m21 21-4.35-4.35" />
+        </svg>
+      </button>
+    </div>
+
+    <div class="nav-right">
+      <!-- Top 10 -->
+      <div class="top10-wrap">
+        <button class="top10-btn" id="t10-btn" onclick="toggleTop10()">
+          <svg viewBox="0 0 24 24">
+            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
+              stroke="currentColor" />
+          </svg>
+          <span class="t10-text-label">Top 10</span>
+          <svg viewBox="0 0 24 24" style="width:12px;height:12px;">
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
+        </button>
+        <div class="top10-drop" id="t10-drop">
+          <div class="top10-hdr">
+            <h4>Top 10 destinations</h4>
+            <p>Curated lists by our travellers</p>
+          </div>
+          <div class="t10-opt" onclick="showWorldwideOnMap()">
+            <div class="t10-icon" style="background:#eff6ff;"><svg viewBox="0 0 24 24" stroke="#1d6ff3">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="2" y1="12" x2="22" y2="12" />
+                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+              </svg></div>
+            <div class="t10-text"><strong>World Wide</strong><span>Best places on the planet</span></div>
+            <svg class="t10-arr" viewBox="0 0 24 24">
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
+          </div>
+          <div class="t10-opt" onclick="openCountrySearch()">
+            <div class="t10-icon" style="background:#f0fff4;"><svg viewBox="0 0 24 24" stroke="#16a34a">
+                <path d="M3 11l19-9-9 19-2-8-8-2z" />
+              </svg></div>
+            <div class="t10-text"><strong>By Country</strong><span>Top picks per nation</span></div>
+            <svg class="t10-arr" viewBox="0 0 24 24">
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
+          </div>
+          <div class="t10-opt" onclick="openT10Modal('category')">
+            <div class="t10-icon" style="background:#fff7ed;"><svg viewBox="0 0 24 24" stroke="#ea580c">
+                <path d="M4 6h16M4 12h16M4 18h7" />
+                <circle cx="18" cy="18" r="3" />
+              </svg></div>
+            <div class="t10-text"><strong>By Category</strong><span>Beaches, mountains, culture…</span></div>
+            <svg class="t10-arr" viewBox="0 0 24 24">
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- User -->
+      <div class="user-wrap">
+        <div class="user-pill" id="u-pill" onclick="toggleDropdown()">
+          <svg class="hb" viewBox="0 0 24 24">
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <line x1="3" y1="12" x2="21" y2="12" />
+            <line x1="3" y1="18" x2="21" y2="18" />
+          </svg>
+          <div class="u-av"><svg viewBox="0 0 24 24">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+              <circle cx="12" cy="7" r="4" />
+            </svg></div>
+        </div>
+        <div class="u-drop" id="u-drop">
+          <div class="u-info">
+            <div class="u-name">Alex Traveller</div>
+            <div class="u-email">alex@maketrip.app</div>
+          </div>
+          <a class="u-item" href="/profile?tab=profile" style="text-decoration:none;color:inherit"><svg
+              viewBox="0 0 24 24">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+              <circle cx="12" cy="7" r="4" />
+            </svg>Profile</a>
+          <div class="u-div"></div>
+          <div class="u-item logout" onclick="confirmLogout()"><svg viewBox="0 0 24 24">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+              <polyline points="16 17 21 12 16 7" />
+              <line x1="21" y1="12" x2="9" y2="12" />
+            </svg>Log out</div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ══ MAIN ══ -->
+  <div class="main">
+
+    <!-- LEFT PANEL -->
+    <div class="left" id="left-panel">
+
+      <!-- ranking panel — slides in over the route content -->
+      <div class="ranking-panel" id="ranking-panel">
+        <div class="rp-hdr">
+          <button class="rp-back" onclick="closeRankingPanel()" title="Back to route">
+            <svg viewBox="0 0 24 24">
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
+          </button>
+          <div class="rp-hdr-icon" id="rp-icon"></div>
+          <div class="rp-hdr-text">
+            <div class="rp-hdr-title" id="rp-title"></div>
+            <div class="rp-hdr-sub" id="rp-sub"></div>
+          </div>
+        </div>
+        <div class="rp-scroll">
+          <div id="rp-list"></div>
+        </div>
+      </div>
+
+      <div class="left-scroll">
+        <div class="left-inner" id="left-inner">
+
+          <!-- FROM -->
+          <div class="place-dot-row">
+            <div class="p-dot green"></div>
+            <div class="place-name" onclick="openPlacePopup('from')">Santiago, Chile</div>
+          </div>
+          <div class="star-row">
+            <div class="stars">
+              <svg viewBox="0 0 24 24" class="full">
+                <polygon
+                  points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+              </svg>
+              <svg viewBox="0 0 24 24" class="full">
+                <polygon
+                  points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+              </svg>
+              <svg viewBox="0 0 24 24" class="full">
+                <polygon
+                  points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+              </svg>
+              <svg viewBox="0 0 24 24" class="full">
+                <polygon
+                  points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+              </svg>
+              <svg viewBox="0 0 24 24" class="half">
+                <polygon
+                  points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+              </svg>
+            </div>
+            <span class="star-val">4.5</span><span class="sep"></span><span class="rev-count">2,140 reviews</span>
+          </div>
+          <p class="place-desc">Chile's vibrant capital between the Andes and the Pacific. A world-class cultural hub
+            and gateway to the country.</p>
+
+          <!-- TO divider -->
+          <div class="to-divider">
+            <div class="to-label">
+              <svg viewBox="0 0 24 24">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <polyline points="19 12 12 19 5 12" />
+              </svg>
+              to
+            </div>
+          </div>
+
+          <!-- TO -->
+          <div class="place-dot-row">
+            <div class="p-dot red"></div>
+            <div class="place-name" onclick="openPlacePopup('to')">Puerto Natales, Chile</div>
+          </div>
+          <div class="star-row">
+            <div class="stars">
+              <svg viewBox="0 0 24 24" class="full">
+                <polygon
+                  points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+              </svg>
+              <svg viewBox="0 0 24 24" class="full">
+                <polygon
+                  points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+              </svg>
+              <svg viewBox="0 0 24 24" class="full">
+                <polygon
+                  points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+              </svg>
+              <svg viewBox="0 0 24 24" class="full">
+                <polygon
+                  points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+              </svg>
+              <svg viewBox="0 0 24 24" class="full">
+                <polygon
+                  points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+              </svg>
+            </div>
+            <span class="star-val">4.9</span><span class="sep"></span><span class="rev-count">987 reviews</span>
+          </div>
+          <p class="place-desc">Gateway to Patagonia and Torres del Paine. A small town at the end of the world with
+            wild scenery in every direction.</p>
+
+          <div class="hr"></div>
+
+          <!-- Route overview -->
+          <div class="sec-lbl">Route overview</div>
+          <div class="stats-row">
+            <div class="stat-box">
+              <div class="stat-lbl">Distance</div>
+              <div class="stat-val">2,460 km</div>
+              <div class="stat-note">total route</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-lbl">Total driving</div>
+              <div class="stat-val">26 h</div>
+              <div class="stat-note">non-stop est.</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-lbl">Stops</div>
+              <div class="stat-val">3 places</div>
+              <div class="stat-note">recommended</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-lbl">Trip length</div>
+              <div class="stat-val">8–10 days</div>
+              <div class="stat-note">ideal duration</div>
+            </div>
+          </div>
+
+          <div class="hr"></div>
+
+          <!-- Filter + stops -->
+          <div class="filter-row">
+            <div class="ftab on" onclick="filterStop(this,'all')">All stops</div>
+            <div class="ftab" onclick="filterStop(this,'trek')"><svg viewBox="0 0 24 24">
+                <path d="M3 17l4-8 5 6 3-3 4 5" />
+              </svg>Trekking</div>
+            <div class="ftab" onclick="filterStop(this,'lake')"><svg viewBox="0 0 24 24">
+                <path d="M2 12s3-6 10-6 10 6 10 6-3 6-10 6-10-6-10-6z" />
+              </svg>Lakes</div>
+            <div class="ftab" onclick="filterStop(this,'town')"><svg viewBox="0 0 24 24">
+                <rect x="2" y="7" width="20" height="14" rx="2" />
+                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+              </svg>Towns</div>
+            <div class="ftab" onclick="filterStop(this,'trail')"><svg viewBox="0 0 24 24">
+                <path d="M3 12h18M3 6h18M3 18h18" />
+              </svg>Trails</div>
+          </div>
+
+          <div class="timeline" id="stops-list"></div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- MAP -->
+    <div class="map-side">
+      <div class="panel-toggle" id="panel-toggle" onclick="togglePanel()">
+        <svg viewBox="0 0 24 24">
+          <polyline points="15 18 9 12 15 6" />
+        </svg>
+      </div>
+      <button class="start-trip-btn" id="start-trip-btn" onclick="startTrip()">
+        <span class="st-start">Start</span><span class="st-trip">trip</span>
+      </button>
+      <div id="map"></div>
+      <div class="transport-box">
+        <div class="transport-title">Travel by</div>
+        <div class="transport-btns">
+          <div class="tbtn active" onclick="setTransport(this,'Car')"><svg viewBox="0 0 24 24">
+              <path d="M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v9a2 2 0 0 1-2 2h-3" />
+              <circle cx="7.5" cy="17.5" r="2.5" />
+              <circle cx="17.5" cy="17.5" r="2.5" />
+            </svg><span>Car</span></div>
+          <div class="tbtn" onclick="setTransport(this,'Walk')"><svg viewBox="0 0 24 24">
+              <circle cx="12" cy="5" r="2" />
+              <path d="m19 13-4.5-4-3.5 7-3-4H5" />
+            </svg><span>Walk</span></div>
+          <div class="tbtn" onclick="setTransport(this,'Plane')"><svg viewBox="0 0 24 24">
+              <path d="M17.8 19.2 16 11l3.5-3.5C21 6 21 4 19 2c-2-2-4-2-5.5-.5L10 5H3l-1 1 3 2 1 5 3 1 1 3 5 3 1-1z" />
+            </svg><span>Plane</span></div>
+          <div class="tbtn" onclick="setTransport(this,'Train')"><svg viewBox="0 0 24 24">
+              <rect x="4" y="3" width="16" height="16" rx="2" />
+              <path d="M4 11h16M12 3v8M8 19l-2 3M16 19l2 3M8 15h.01M16 15h.01" />
+            </svg><span>Train</span></div>
+        </div>
+      </div>
+      <div class="save-btn" onclick="openSavePlan()">
+        <svg viewBox="0 0 24 24">
+          <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+        </svg>
+        <span>Save plan</span>
+      </div>
+      <div class="zoom-box">
+        <button class="zoom-btn" onclick="map.zoomIn()">+</button>
+        <button class="zoom-btn" onclick="map.zoomOut()">−</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ COUNTRY SEARCH OVERLAY ══ -->
+  <div class="cs-overlay" id="cs-overlay" onclick="if(event.target===this)closeCountrySearch()">
+    <div class="cs-box">
+      <div class="cs-hdr">
+        <div class="cs-icon-wrap">
+          <svg viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10" />
+            <line x1="2" y1="12" x2="22" y2="12" />
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+          </svg>
+        </div>
+        <div class="cs-hdr-text">
+          <div class="cs-hdr-title">Top 10 by Country</div>
+          <div class="cs-hdr-sub">Search a country to explore its best destinations</div>
+        </div>
+        <button class="cs-x" onclick="closeCountrySearch()">✕</button>
+      </div>
+      <div class="cs-input-row">
+        <svg viewBox="0 0 24 24">
+          <circle cx="11" cy="11" r="8" />
+          <path d="m21 21-4.35-4.35" />
+        </svg>
+        <input class="cs-input" id="cs-input" type="text" placeholder="e.g. Japan, France, Chile…"
+          oninput="handleCountryAC(this.value)" autocomplete="off" />
+        <button class="cs-clear" id="cs-clear-btn" onclick="clearCountryInput()" tabindex="-1">
+          <svg viewBox="0 0 24 24">
+            <path d="M18 6 6 18M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <div class="cs-results" id="cs-results"></div>
+    </div>
+  </div>
+
+  <!-- ══ TOP 10 MODAL ══ -->
+  <!-- ══ LOGOUT CONFIRM ══ -->
+  <div class="lo-bg" id="lo-modal" onclick="if(event.target===this)closeLo()">
+    <div class="lo-dialog">
+      <div class="lo-top">
+        <div class="lo-icon-wrap">
+          <svg viewBox="0 0 24 24">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+            <polyline points="16 17 21 12 16 7" />
+            <line x1="21" y1="12" x2="9" y2="12" />
+          </svg>
+        </div>
+        <div class="lo-title">Log out?</div>
+        <div class="lo-sub">You'll be taken to the home page. Any unsaved changes to your current trip will be lost.
+        </div>
+      </div>
+      <div class="lo-actions">
+        <button class="lo-cancel" onclick="closeLo()">Stay</button>
+        <button class="lo-confirm" onclick="window.location.href='/'">Log out</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SAVE PLAN ══ -->
+  <div class="lo-bg" id="sp-modal" onclick="if(event.target===this)closeSavePlan()">
+    <div class="lo-dialog">
+      <div class="lo-top">
+        <div class="lo-icon-wrap sp-icon-wrap">
+          <svg viewBox="0 0 24 24">
+            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+          </svg>
+        </div>
+        <div class="lo-title">Save this plan</div>
+        <div class="lo-sub">Give your trip a name so you can find it later.</div>
+      </div>
+      <div class="sp-input-row">
+        <label for="sp-name-input">Plan name</label>
+        <input id="sp-name-input" type="text" placeholder="e.g. Patagonia road trip" maxlength="60"
+          onkeydown="if(event.key==='Enter')confirmSavePlan()" />
+      </div>
+      <div class="lo-actions">
+        <button class="lo-cancel" onclick="closeSavePlan()">Cancel</button>
+        <button class="lo-confirm sp-confirm" onclick="confirmSavePlan()">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="t10-bg" id="t10-modal" onclick="if(event.target===this)closeT10Modal()">
+    <div class="t10-modal">
+      <div class="t10-hdr">
+        <div>
+          <div class="t10-icon-wrap" id="t10-icon"></div>
+          <div class="t10-title" id="t10-title">Top 10</div>
+          <div class="t10-sub" id="t10-sub"></div>
+        </div>
+        <button class="t10-x" onclick="closeT10Modal()">✕</button>
+      </div>
+      <div class="t10-list" id="t10-list"></div>
+    </div>
+  </div>
+
+  <!-- ══ PLACE DETAIL POPUP ══ -->
+  <div class="pp-bg" id="pp-modal" onclick="if(event.target===this)closePP()">
+    <div class="pp-modal">
+      <div class="pp-pic">
+        <div class="pp-pic-track" id="pp-pic-track"></div>
+        <div class="pp-pic-ov"></div>
+        <button class="pp-pic-arrow prev" id="pp-pic-prev" onclick="ppPrevImage(event)" aria-label="Previous photo">
+          <svg viewBox="0 0 24 24">
+            <path d="M15 18l-6-6 6-6" />
+          </svg>
+        </button>
+        <button class="pp-pic-arrow next" id="pp-pic-next" onclick="ppNextImage(event)" aria-label="Next photo">
+          <svg viewBox="0 0 24 24">
+            <path d="M9 18l6-6-6-6" />
+          </svg>
+        </button>
+        <div class="pp-pic-dots" id="pp-pic-dots"></div>
+        <button class="pp-x" onclick="closePP()">✕</button>
+        <div class="pp-badge" id="pp-badge">Starting point</div>
+      </div>
+      <div class="pp-body">
+        <div class="pp-name-row">
+          <span class="pp-name" id="pp-name">Santiago, Chile</span>
+          <span class="pp-dot"></span>
+          <span class="pp-name-rating">
+            <svg viewBox="0 0 24 24">
+              <polygon
+                points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+            </svg>
+            <span id="pp-rn">4.5</span>
+          </span>
+        </div>
+        <div class="pp-loc"><svg viewBox="0 0 24 24">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+            <circle cx="12" cy="10" r="3" />
+          </svg><span id="pp-loc">South America · Chile</span></div>
+        <p class="pp-desc" id="pp-desc"></p>
+        <div class="pp-div"></div>
+        <div class="pp-slbl">Climate</div>
+        <div class="pp-climate">
+          <div class="pp-cc">
+            <div class="pp-ci" style="background:#fff3ed;"><svg viewBox="0 0 24 24" fill="none" stroke="#e8621a"
+                stroke-width="2" stroke-linecap="round">
+                <path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z" />
+              </svg></div>
+            <div class="pp-cl">Temperature</div>
+            <div class="pp-cv" id="pp-temp">8°–28°C</div>
+            <div class="pp-cn" id="pp-tnote">Warm summers</div>
+          </div>
+          <div class="pp-cc">
+            <div class="pp-ci" style="background:#f0f7ff;"><svg viewBox="0 0 24 24" fill="none" stroke="#1a7ad4"
+                stroke-width="2" stroke-linecap="round">
+                <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z" />
+              </svg></div>
+            <div class="pp-cl">Best season</div>
+            <div class="pp-cv" id="pp-season">Oct – Apr</div>
+            <div class="pp-cn" id="pp-snote">Southern summer</div>
+          </div>
+          <div class="pp-cc">
+            <div class="pp-ci" style="background:#f0fff1;"><svg viewBox="0 0 24 24" fill="none" stroke="#008a05"
+                stroke-width="2" stroke-linecap="round">
+                <path d="M8 3v4M12 3v4M16 3v4M4 11h16" />
+              </svg></div>
+            <div class="pp-cl">Altitude</div>
+            <div class="pp-cv" id="pp-alt">520 m</div>
+            <div class="pp-cn" id="pp-anote">Central valley</div>
+          </div>
+        </div>
+        <div class="pp-div"></div>
+        <div class="pp-slbl">AI recommendation based on travelers</div>
+        <div class="pp-review">
+          <div class="pp-rq">"</div>
+          <p class="pp-rt" id="pp-rtxt"></p>
+          <div class="pp-rw">
+            <div class="pp-av" id="pp-av" style="background:linear-gradient(135deg,#7c3aed,#2563eb);">✨</div>
+            <div>
+              <div class="pp-rname" id="pp-rname">AI Summary</div>
+              <div class="pp-rmeta" id="pp-rmeta">Based on 2,140 traveler reviews</div>
+            </div>
+            <button class="pp-view-all" id="pp-view-all" onclick="ppToggleComments()">View all reviews</button>
+          </div>
+        </div>
+        <div class="pp-clist" id="pp-clist"></div>
+      </div>
+      <div class="pp-foot">
+        <div class="pp-fn" id="pp-fn"></div><button class="pp-btn" onclick="closePP()">Got
+          it</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ PLACE PHOTO FULLSCREEN VIEWER ══ -->
+  <div class="pp-fs-bg" id="pp-fs-modal" onclick="if(event.target===this)closePPFullscreen()">
+    <button class="pp-fs-x" onclick="closePPFullscreen()">✕</button>
+    <button class="pp-fs-arrow prev" id="pp-fs-prev" onclick="ppFsPrev()" aria-label="Previous photo">
+      <svg viewBox="0 0 24 24">
+        <path d="M15 18l-6-6 6-6" />
+      </svg>
+    </button>
+    <div class="pp-fs-slide" id="pp-fs-img">
+      <span class="pp-fs-emoji" id="pp-fs-emoji">🏙️</span>
+    </div>
+    <button class="pp-fs-arrow next" id="pp-fs-next" onclick="ppFsNext()" aria-label="Next photo">
+      <svg viewBox="0 0 24 24">
+        <path d="M9 18l6-6-6-6" />
+      </svg>
+    </button>
+    <div class="pp-fs-counter" id="pp-fs-counter">1 / 1</div>
+  </div>
+
+  <!-- ══ MAPS CHOICE MODAL ══ -->
+  <div class="mc-bg" id="mc-modal" onclick="if(event.target===this)closeModal('mc-modal')">
+    <div class="mc-modal">
+      <div class="mc-title">Open directions in</div>
+      <button class="mc-opt" onclick="confirmStartTrip('google')">
+        <span class="mc-opt-icon" style="background:#1a73e8">🗺️</span>
+        <span class="mc-opt-label">Google Maps</span>
+      </button>
+      <button class="mc-opt" onclick="confirmStartTrip('apple')">
+        <span class="mc-opt-icon" style="background:#000">🧭</span>
+        <span class="mc-opt-label">Apple Maps</span>
+      </button>
+      <button class="mc-cancel" onclick="closeModal('mc-modal')">Cancel</button>
+    </div>
+  </div>
+
+  <script>
+    /* ══ DATA ══ */
+    const FROM = { name: 'Santiago, Chile', coord: [-70.6693, -33.4489] };
+    const TO = { name: 'Puerto Natales, Chile', coord: [-72.5083, -51.7319] };
+
+    const STOPS = [
+      {
+        id: 1, emoji: '🌋', name: 'Chillán — Hot Springs', cat: 'trek',
+        desc: 'Volcanic hot springs and ski resort at 1,800 m. The perfect first overnight stop — soak in thermal pools after the drive south.',
+        rating: '4.6', reviews: '1,240', loc: 'Biobío Region · 400 km from Santiago',
+        alt: '1,800 m', altNote: 'Mountain terrain', temp: '5°–16°C', time: '2 h 30 min',
+        distance: '400 km', distFrom: 'Santiago',
+        bg: 'linear-gradient(135deg,#c94b0c,#7b2d0a)',
+        coord: [-71.4067, -36.9167],
+        tags: ['Hot Springs', 'Volcano', 'Ski Resort']
+      },
+      {
+        id: 2, emoji: '⛵', name: 'Puerto Montt — Lake District', cat: 'lake',
+        desc: 'Gateway to Chile\'s magnificent lake district. Ferries to Chiloé Island, exceptional seafood, and dramatic fjord views.',
+        rating: '4.7', reviews: '3,812', loc: 'Los Lagos Region · 1,050 km from Santiago',
+        alt: '55 m', altNote: 'Sea level coastal', temp: '8°–18°C', time: '4 h',
+        distance: '650 km', distFrom: 'Chillán',
+        bg: 'linear-gradient(135deg,#0a4a7b,#0d2b52)',
+        coord: [-72.9395, -41.4693],
+        tags: ['Ferries', 'Seafood', 'Fjords']
+      },
+      {
+        id: 3, emoji: '🏄', name: 'Futaleufú — Whitewater', cat: 'trail',
+        desc: 'World-class river rafting on turquoise glacial water. A remote and extraordinary adventure via the Carretera Austral.',
+        rating: '4.9', reviews: '892', loc: 'Los Lagos Region · 1,380 km from Santiago',
+        alt: '320 m', altNote: 'River valley', temp: '6°–22°C', time: '3 h 30 min',
+        distance: '330 km', distFrom: 'Puerto Montt',
+        bg: 'linear-gradient(135deg,#0a5c4a,#052e25)',
+        coord: [-71.8698, -43.1863],
+        tags: ['Rafting', 'River', 'Adventure']
+      },
+    ];
+
+    const PLACE_DATA = {
+      from: {
+        emoji: '🏙️', badge: 'Starting point', bg: 'linear-gradient(135deg,#1a4a8a,#0d2b5e)',
+        photos: [
+          { emoji: '🏙️', bg: 'linear-gradient(135deg,#1a4a8a,#0d2b5e)' },
+          { emoji: '🌆', bg: 'linear-gradient(135deg,#7c3aed,#1a4a8a)' },
+          { emoji: '⛰️', bg: 'linear-gradient(135deg,#0d2b5e,#1a7ad4)' },
+          { emoji: '🍷', bg: 'linear-gradient(135deg,#8a1a3a,#3a0d1e)' },
+        ],
+        name: 'Santiago, Chile', rn: '4.5', rv: '2,140 reviews', loc: 'South America · Central Chile',
+        desc: 'Chile\'s vibrant capital nestled between the Andes and the Pacific. World-class restaurants, street art, and mountain views from every corner.',
+        temp: '8°–28°C', tnote: 'Warm dry summers', season: 'Oct – Apr', snote: 'Southern summer', alt: '520 m', anote: 'Central valley',
+        rtxt: 'An incredible city — the food scene is world-class and the Andes backdrop on a clear day is breathtaking. Don\'t miss Barrio Italia and Cajón del Maipo.',
+        fn: 'Starting point of your route',
+        comments: [
+          { name: 'Sofia Martínez', av: 'SM', ac: '#c94b0c', rating: 5, source: 'google', text: 'Amazing city to start the trip. The food scene blew us away and the Andes views are unreal on a clear day.' },
+          { name: 'James Okafor', av: 'JO', ac: '#0a5c4a', rating: 4.5, source: 'tripadvisor', text: 'Great base for a few days before heading south. Loved Barrio Italia, traffic can be heavy though.' },
+          { name: 'Yuki Tanaka', av: 'YT', ac: '#1a4a8a', rating: 4.5, source: 'booking', text: 'Comfortable, walkable, and surprisingly green. The funicular up San Cristóbal hill is a must.' },
+        ]
+      },
+      to: {
+        emoji: '🧊', badge: 'Final destination', bg: 'linear-gradient(135deg,#1a5c4a,#052e25)',
+        photos: [
+          { emoji: '🧊', bg: 'linear-gradient(135deg,#1a5c4a,#052e25)' },
+          { emoji: '🏔️', bg: 'linear-gradient(135deg,#0a5c4a,#1a4a8a)' },
+          { emoji: '🦙', bg: 'linear-gradient(135deg,#3a5c1a,#052e25)' },
+          { emoji: '🌌', bg: 'linear-gradient(135deg,#0d1b3a,#000)' },
+        ],
+        name: 'Puerto Natales, Chile', rn: '4.9', rv: '987 reviews', loc: 'Patagonia · Magallanes Region',
+        desc: 'The legendary gateway to Patagonia and Torres del Paine. A small windswept town where warm locals, great food, and wild wilderness converge.',
+        temp: '2°–14°C', tnote: 'Cold and windy', season: 'Nov – Feb', snote: 'Patagonian summer', alt: '6 m', anote: 'Sea level fjord',
+        rtxt: 'I arrived thinking it was just a stopover — I stayed three extra days. The silence, the stars, the guanacos roaming at dawn. This place changed me.',
+        fn: 'Final destination of your route',
+        comments: [
+          { name: 'Lukas Bauer', av: 'LB', ac: '#0a5c4a', rating: 5, source: 'google', text: 'Gateway to Torres del Paine. Stayed three extra days just to soak it in — guanacos everywhere at dawn.' },
+          { name: 'Amélie Rousseau', av: 'AR', ac: '#7c3aed', rating: 5, source: 'tripadvisor', text: 'Small town, huge views. Every restaurant overlooks the fjord. Wrap up warm, the wind is relentless.' },
+          { name: 'Carlos Vega', av: 'CV', ac: '#065f46', rating: 4.5, source: 'booking', text: 'Perfect last stop before the park. Book your bus to the towers a day ahead, it fills up fast.' },
+        ]
+      },
+    };
+
+    const TOP10 = {
+      worldwide: {
+        list: [{ n: 'Patagonia, Chile', d: 'End-of-the-world wilderness: glaciers, granite towers, and unmatched silence.', r: '4.97', t: 'Nature' }, { n: 'Kyoto, Japan', d: 'Ancient temples, bamboo forests, and the world\'s most refined tea culture.', r: '4.94', t: 'Culture' }, { n: 'Santorini, Greece', d: 'Volcanic island with iconic white-domed architecture above a deep-blue caldera.', r: '4.91', t: 'Scenic' }, { n: 'Machu Picchu, Peru', d: '15th-century Inca citadel perched in the Andes at 2,430 m above sea level.', r: '4.90', t: 'History' }, { n: 'Galápagos Islands', d: 'Darwin\'s living laboratory: wildlife found nowhere else on earth.', r: '4.89', t: 'Wildlife' }, { n: 'Amalfi Coast, Italy', d: 'Vertical cliffs, turquoise sea, and villages draped in lemon groves.', r: '4.88', t: 'Scenic' }, { n: 'Bali, Indonesia', d: 'Rice terraces, sacred temples, surf breaks, and some of Asia\'s best sunsets.', r: '4.86', t: 'Culture' }, { n: 'Queenstown, NZ', d: 'Adventure capital of the world set against fjords and the Remarkables range.', r: '4.85', t: 'Adventure' }, { n: 'Marrakech, Morocco', d: 'Labyrinthine medinas, vibrant souks, and rooftop views over the Koutoubia.', r: '4.83', t: 'Culture' }, { n: 'Norwegian Fjords', d: 'Sheer cliffs, cascading waterfalls, and mirror-calm water into the distance.', r: '4.82', t: 'Nature' }]
+      },
+      category: {
+        title: 'Top 10 by Category', sub: 'Best destinations for every traveller type',
+        iconBg: '#fff7ed', icon: `<svg viewBox="0 0 24 24" fill="none" stroke="#ea580c" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h7"/><circle cx="18" cy="18" r="3"/></svg>`,
+        list: [{ n: 'Maldives', d: 'Overwater bungalows above the clearest lagoons on the planet.', r: '4.95', t: 'Beach' }, { n: 'Patagonia, Chile', d: 'The world\'s finest trekking through raw, uncrowded wilderness.', r: '4.97', t: 'Trekking' }, { n: 'Kyoto, Japan', d: 'The single best destination for immersing in traditional culture.', r: '4.94', t: 'Culture' }, { n: 'Swiss Alps', d: 'Skiing, hiking, and mountain railways through Europe\'s dramatic peaks.', r: '4.92', t: 'Mountains' }, { n: 'Galápagos Islands', d: 'Snorkelling with sea lions and penguins in an untouched ocean ecosystem.', r: '4.91', t: 'Wildlife' }, { n: 'Cartagena, Colombia', d: 'Romantic walled city with vibrant street life and perfect Caribbean evenings.', r: '4.87', t: 'Romantic' }, { n: 'Queenstown, NZ', d: 'Bungee, skydive, ski, raft — the greatest concentration of adventure on earth.', r: '4.85', t: 'Adventure' }, { n: 'Florence, Italy', d: 'Renaissance art, architecture, and food that justify every art history class.', r: '4.84', t: 'Art & Food' }, { n: 'Atacama Desert, Chile', d: 'Stargazing at the world\'s driest desert where the Milky Way is unobscured.', r: '4.83', t: 'Stargazing' }, { n: 'Bali, Indonesia', d: 'Yoga retreats, surf schools, and wellness culture set among rice terraces.', r: '4.82', t: 'Wellness' }]
+      },
+    };
+
+    const AC_PLACES = [
+      { n: 'Santiago, Chile', s: 'Capital · South America', e: '🏙️' }, { n: 'Buenos Aires, Argentina', s: 'Capital · South America', e: '🎭' },
+      { n: 'Lima, Peru', s: 'Capital · South America', e: '🏛️' }, { n: 'Bogotá, Colombia', s: 'Capital · South America', e: '☁️' },
+      { n: 'Rio de Janeiro, Brazil', s: 'Coastal city · South America', e: '🌊' }, { n: 'Cusco, Peru', s: 'Inca capital · South America', e: '🏔️' },
+      { n: 'Patagonia, Chile', s: 'Region · Southern Chile', e: '🧊' }, { n: 'Puerto Natales, Chile', s: 'Patagonia gateway · Chile', e: '🏔️' },
+      { n: 'Torres del Paine, Chile', s: 'National park · Patagonia', e: '⛰️' }, { n: 'Puerto Montt, Chile', s: 'Lake district · Chile', e: '⛵' },
+      { n: 'Futaleufú, Chile', s: 'Whitewater · Patagonia', e: '🏄' }, { n: 'Ushuaia, Argentina', s: 'End of the world · Argentina', e: '🌨️' },
+      { n: 'Mendoza, Argentina', s: 'Wine country · Argentina', e: '🍷' }, { n: 'Cartagena, Colombia', s: 'Walled city · Caribbean', e: '🏰' },
+      { n: 'Medellín, Colombia', s: 'City of eternal spring', e: '🌸' }, { n: 'Machu Picchu, Peru', s: 'Inca ruins · UNESCO site', e: '🗿' },
+      { n: 'Galapagos Islands', s: 'Ecuador · Pacific Ocean', e: '🐢' }, { n: 'Atacama Desert, Chile', s: 'World\'s driest desert', e: '🌵' },
+      { n: 'Bariloche, Argentina', s: 'Lakes district · Patagonia', e: '🏔️' }, { n: 'Montevideo, Uruguay', s: 'Capital · South America', e: '🎶' },
+    ];
+
+    const NEARBY_PLACES = [
+      { emoji: '🏔️', name: 'Cajón del Maipo', desc: 'A dramatic Andean canyon with glaciers, hot springs, and dark skies perfect for stargazing.', rating: '4.7', reviews: '892', tag: 'Nature', dist: '65 km', time: '1 h 15 min', cat: 'trek', coord: [-70.47, -33.60] },
+      { emoji: '🎭', name: 'Valparaíso', desc: 'Bohemian port city on Pacific hills, famous for street art, colorful houses, and funiculars.', rating: '4.8', reviews: '3,210', tag: 'Culture', dist: '120 km', time: '1 h 30 min', cat: 'town', coord: [-71.63, -33.05] },
+      { emoji: '🍷', name: 'Maipo Valley', desc: 'Chile\'s most famous wine region just 30 minutes south of the city. World-class Cabernet Sauvignon.', rating: '4.6', reviews: '1,540', tag: 'Gastronomy', dist: '50 km', time: '45 min', cat: 'town', coord: [-70.59, -33.72] },
+      { emoji: '🏞️', name: 'Laguna de Aculeo', desc: 'A beautiful natural lake surrounded by hills, popular for swimming, kayaking, and relaxed picnics.', rating: '4.3', reviews: '760', tag: 'Lake', dist: '70 km', time: '1 h 10 min', cat: 'lake', coord: [-70.93, -33.97] },
+      { emoji: '⛷️', name: 'Valle Nevado', desc: 'Top ski resort in the Andes at 3,025 m with incredible views and powder snow from June to October.', rating: '4.5', reviews: '654', tag: 'Adventure', dist: '95 km', time: '1 h 30 min', cat: 'trail', coord: [-70.32, -33.38] },
+      { emoji: '🌊', name: 'Viña del Mar', desc: 'Chile\'s Garden City — a beach resort with casinos, flower clocks, and warm Pacific summers.', rating: '4.4', reviews: '1,876', tag: 'Beach', dist: '125 km', time: '1 h 45 min', cat: 'town', coord: [-71.55, -33.02] },
+      { emoji: '🏔️', name: 'Farellones', desc: 'Mountainside village at the edge of Santiago with access to Andean trails and winter sports.', rating: '4.5', reviews: '420', tag: 'Adventure', dist: '35 km', time: '1 h', cat: 'trail', coord: [-70.34, -33.36] },
+      { emoji: '💧', name: 'Embalse el Yeso', desc: 'Stunning high-altitude reservoir at 2,475 m with crystal-clear turquoise waters deep in the Andes.', rating: '4.6', reviews: '380', tag: 'Lake', dist: '100 km', time: '2 h', cat: 'lake', coord: [-70.09, -33.64] },
+    ];
+
+    const SVG_STAR = `<svg viewBox="0 0 24 24" style="width:10px;height:10px;fill:var(--black);stroke:none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`;
+    const SVG_STAR_MD = `<svg viewBox="0 0 24 24" style="width:11px;height:11px;fill:var(--black);stroke:none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`;
+    const SVG_STAR_FULL = `<svg viewBox="0 0 24 24" class="full"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`;
+    const SVG_STAR_HALF = `<svg viewBox="0 0 24 24" class="half"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`;
+    const SVG_CAR = `<svg viewBox="0 0 24 24" style="width:11px;height:11px;stroke:var(--g600);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v9a2 2 0 0 1-2 2h-3"/><circle cx="7.5" cy="17.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>`;
+    const SVG_PIN = `<svg viewBox="0 0 24 24" style="width:10px;height:10px;stroke:var(--g600);fill:none;stroke-width:2;stroke-linecap:round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>`;
+
+    let selectedId = 1, panelOpen_ = true;
+    let currentFrom = 'Santiago, Chile', currentTo = 'Puerto Natales, Chile';
+    const markers = {};
+
+    /* ══ MAP ══ */
+    const map = new maplibregl.Map({
+      container: 'map', style: 'https://tiles.openfreemap.org/styles/liberty',
+      center: [-71.8, -39.5], zoom: 7.2, attributionControl: false,
+    });
+    map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-right');
+
+    map.on('load', () => {
+      const coords = [FROM.coord, ...STOPS.map(s => s.coord), TO.coord];
+      map.addSource('route', { type: 'geojson', data: { type: 'Feature', geometry: { type: 'LineString', coordinates: coords } } });
+      map.addLayer({ id: 'route-halo', type: 'line', source: 'route', layout: { 'line-join': 'round', 'line-cap': 'round' }, paint: { 'line-color': '#FF385C', 'line-width': 10, 'line-opacity': .10 } });
+      map.addLayer({ id: 'route-white', type: 'line', source: 'route', layout: { 'line-join': 'round', 'line-cap': 'round' }, paint: { 'line-color': '#ffffff', 'line-width': 5, 'line-opacity': .9 } });
+      map.addLayer({ id: 'route-main', type: 'line', source: 'route', layout: { 'line-join': 'round', 'line-cap': 'round' }, paint: { 'line-color': '#FF385C', 'line-width': 2.5, 'line-dasharray': [2, 2] } });
+
+      // FROM marker
+      const fe = document.createElement('div');
+      fe.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;"><div class="m-start"><svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:#fff;fill:none;stroke-width:2.2;stroke-linecap:round"><circle cx="12" cy="12" r="4"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg></div><div class="m-lbl">Santiago</div></div>`;
+      new maplibregl.Marker({ element: fe, anchor: 'bottom' }).setLngLat(FROM.coord).addTo(map);
+
+      // TO marker
+      const te = document.createElement('div');
+      te.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;"><div class="m-end"><svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:#fff;stroke:none"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z"/></svg></div><div class="m-lbl">Puerto Natales</div></div>`;
+      new maplibregl.Marker({ element: te, anchor: 'bottom' }).setLngLat(TO.coord).addTo(map);
+
+      // STOP markers
+      STOPS.forEach((s, i) => {
+        const el = document.createElement('div');
+        el.className = 'ww-marker-wrap';
+        const shortName = s.name.split('—')[0].trim();
+        el.innerHTML = `<div class="ww-marker-dot">${i + 1}</div><div class="ww-marker-lbl">${shortName}</div>`;
+
+        let marker = new maplibregl.Marker({ element: el, anchor: 'bottom' }).setLngLat(s.coord).addTo(map);
+
+        el.addEventListener('click', e => {
+          e.stopPropagation();
+          selectStop(s.id, false);
+          openPlacePopupFromStop(s.id);
+        });
+        markers[s.id] = { marker };
+      });
+
+      renderStops(STOPS);
+    });
+
+    /* ══ RENDER STOPS TIMELINE ══ */
+    function renderStops(list) {
+      syncStopMarkers(list);
+
+      let html = `
+    <div class="tl-ep">
+      <div class="tl-ep-dot origin"><svg viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg></div>
+      <div class="tl-ep-body"><div class="tl-ep-name">${currentFrom}</div><div class="tl-ep-sub">Origin · Departure point</div></div>
+    </div>`;
+
+      list.forEach((s, i) => {
+        html += `
+      <div class="tl-drive">
+        <div class="tl-drive-pill">${SVG_CAR} ${s.time} drive</div>
+      </div>
+      <div class="tl-stop${s.id === selectedId ? ' active' : ''}" data-id="${s.id}" onclick="selectStop(${s.id})">
+        <div class="tl-num">${s.id}</div>
+        <div class="tl-card">
+          <div class="tl-emoji">${s.emoji}</div>
+          <div class="tl-body">
+            <div class="tl-name">${s.name}</div>
+            <div class="tl-meta">
+              <div class="tl-rating">${SVG_STAR} ${s.rating}</div>
+              <span class="tl-pipe">|</span>
+              <span class="tl-dist">${SVG_CAR} ${s.distance} from ${s.distFrom}</span>
+            </div>
+          </div>
+          <div class="tl-arr"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
+        </div>
+      </div>`;
+      });
+
+      html += `
+    <div class="tl-drive">
+      <div class="tl-drive-pill">${SVG_CAR} 14 h · Carretera Austral</div>
+    </div>
+    <div class="tl-ep">
+      <div class="tl-ep-dot dest"><svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z"/></svg></div>
+      <div class="tl-ep-body"><div class="tl-ep-name">${currentTo}</div><div class="tl-ep-sub">Destination · End of route</div></div>
+    </div>`;
+
+      document.getElementById('stops-list').innerHTML = html;
+    }
+
+    /* ══ SELECT STOP ══ */
+    function selectStop(id, flyMap = true) {
+      selectedId = id;
+      const s = STOPS.find(x => x.id === id);
+      document.querySelectorAll('.tl-stop').forEach(c => c.classList.toggle('active', +c.dataset.id === id));
+      document.querySelector(`.tl-stop[data-id="${id}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      if (flyMap) {
+        map.flyTo({ center: s.coord, zoom: 9, duration: 1000, essential: true });
+      }
+    }
+
+    function openPlacePopupFromStop(id) {
+      const s = STOPS.find(x => x.id === id);
+      if (!s) return;
+      const rev = MOCK_REVIEWS[(id - 1) % MOCK_REVIEWS.length];
+      document.getElementById('pp-badge').textContent = `Stop ${s.id} of ${STOPS.length}`;
+      document.getElementById('pp-name').textContent = s.name;
+      document.getElementById('pp-rn').textContent = s.rating;
+      document.getElementById('pp-loc').textContent = s.loc;
+      document.getElementById('pp-desc').textContent = s.desc;
+      document.getElementById('pp-temp').textContent = s.temp;
+      document.getElementById('pp-tnote').textContent = 'Pack layers';
+      document.getElementById('pp-season').textContent = 'Year-round';
+      document.getElementById('pp-snote').textContent = 'Check local calendar';
+      document.getElementById('pp-alt').textContent = s.alt;
+      document.getElementById('pp-anote').textContent = s.altNote;
+      document.getElementById('pp-rtxt').textContent = rev.rtxt;
+      document.getElementById('pp-rname').textContent = 'AI Summary';
+      document.getElementById('pp-rmeta').textContent = `Based on ${s.reviews} traveler reviews`;
+      document.getElementById('pp-av').textContent = '✨';
+      document.getElementById('pp-av').style.background = 'linear-gradient(135deg,#7c3aed,#2563eb)';
+      document.getElementById('pp-fn').textContent = `Stop ${s.id} on your route · ${s.time} from ${s.distFrom}`;
+      ppPhotos = [{ bg: s.bg, emoji: s.emoji }];
+      ppPhotoIndex = 0;
+      ppRenderCarousel();
+      const sources = ['google', 'tripadvisor', 'booking'];
+      const comments = [0, 1, 2].map(i => {
+        const r = MOCK_REVIEWS[(id - 1 + i) % MOCK_REVIEWS.length];
+        return { name: r.rname, av: r.av, ac: r.ac, rating: i % 2 ? 4.5 : 5, source: sources[i], text: r.rtxt };
+      });
+      ppRenderComments(comments);
+      openModal('pp-modal');
+    }
+
+    /* ══ PLACE POPUP ══ */
+    function openPlacePopup(type) {
+      const d = PLACE_DATA[type];
+      document.getElementById('pp-badge').textContent = d.badge;
+      document.getElementById('pp-name').textContent = d.name;
+      document.getElementById('pp-rn').textContent = d.rn;
+      document.getElementById('pp-loc').textContent = d.loc;
+      document.getElementById('pp-desc').textContent = d.desc;
+      document.getElementById('pp-temp').textContent = d.temp;
+      document.getElementById('pp-tnote').textContent = d.tnote;
+      document.getElementById('pp-season').textContent = d.season;
+      document.getElementById('pp-snote').textContent = d.snote;
+      document.getElementById('pp-alt').textContent = d.alt;
+      document.getElementById('pp-anote').textContent = d.anote;
+      document.getElementById('pp-rtxt').textContent = d.rtxt;
+      document.getElementById('pp-rname').textContent = 'AI Summary';
+      document.getElementById('pp-rmeta').textContent = `Based on ${d.rv}`;
+      document.getElementById('pp-av').textContent = '✨';
+      document.getElementById('pp-av').style.background = 'linear-gradient(135deg,#7c3aed,#2563eb)';
+      document.getElementById('pp-fn').textContent = d.fn;
+      ppPhotos = d.photos && d.photos.length ? d.photos : [{ bg: d.bg, emoji: d.emoji }];
+      ppPhotoIndex = 0;
+      ppRenderCarousel();
+      ppRenderComments(d.comments || []);
+      openModal('pp-modal');
+    }
+    function closePP() { closeModal('pp-modal'); }
+
+    const PP_SOURCE_LABEL = { google: 'Google', tripadvisor: 'TripAdvisor', booking: 'Booking.com' };
+
+    function ppStarsHtml(rating) {
+      const full = Math.floor(rating);
+      const half = rating - full >= 0.5;
+      let html = SVG_STAR_FULL.repeat(full);
+      if (half) html += SVG_STAR_HALF;
+      return `<div class="stars">${html}</div>`;
+    }
+
+    function ppRenderComments(list) {
+      document.getElementById('pp-clist').innerHTML = list.map(c => `
+        <div class="pp-cmt">
+          <div class="pp-cmt-av" style="background:${c.ac}">${c.av}</div>
+          <div class="pp-cmt-body">
+            <div class="pp-cmt-top">
+              <span class="pp-cmt-name">${c.name}</span>
+              <span class="pp-cmt-src ${c.source}">${PP_SOURCE_LABEL[c.source]}</span>
+            </div>
+            ${ppStarsHtml(c.rating)}
+            <p class="pp-cmt-text">${c.text}</p>
+          </div>
+        </div>`).join('');
+      document.getElementById('pp-clist').classList.remove('open');
+      document.getElementById('pp-view-all').textContent = 'View all reviews';
+    }
+
+    function ppToggleComments() {
+      const open = document.getElementById('pp-clist').classList.toggle('open');
+      document.getElementById('pp-view-all').textContent = open ? 'Hide reviews' : 'View all reviews';
+    }
+
+    let ppPhotos = [];
+    let ppPhotoIndex = 0;
+
+    function ppSlideHTML(p) {
+      return `<div class="pp-pic-slide" onclick="ppOpenFullscreen()"><div class="pp-pic-bg" style="background:${p.bg}"></div><span class="pp-emoji">${p.emoji}</span></div>`;
+    }
+
+    function ppRenderCarousel() {
+      document.getElementById('pp-pic-track').innerHTML = ppPhotos.map(ppSlideHTML).join('');
+      document.getElementById('pp-pic-dots').innerHTML = ppPhotos.map((_, i) =>
+        `<span class="pp-pic-dot${i === 0 ? ' active' : ''}" onclick="event.stopPropagation();ppGoToImage(${i})"></span>`
+      ).join('');
+      const multi = ppPhotos.length > 1;
+      document.getElementById('pp-pic-prev').style.display = multi ? 'flex' : 'none';
+      document.getElementById('pp-pic-next').style.display = multi ? 'flex' : 'none';
+      document.getElementById('pp-pic-dots').style.display = multi ? 'flex' : 'none';
+      ppUpdateCarouselPosition();
+    }
+
+    function ppUpdateCarouselPosition() {
+      document.getElementById('pp-pic-track').style.transform = `translateX(-${ppPhotoIndex * 100}%)`;
+      document.querySelectorAll('#pp-pic-dots .pp-pic-dot').forEach((dot, i) => dot.classList.toggle('active', i === ppPhotoIndex));
+    }
+
+    function ppGoToImage(i) {
+      ppPhotoIndex = i;
+      ppUpdateCarouselPosition();
+    }
+
+    function ppPrevImage(e) {
+      if (e) e.stopPropagation();
+      ppPhotoIndex = (ppPhotoIndex - 1 + ppPhotos.length) % ppPhotos.length;
+      ppUpdateCarouselPosition();
+    }
+
+    function ppNextImage(e) {
+      if (e) e.stopPropagation();
+      ppPhotoIndex = (ppPhotoIndex + 1) % ppPhotos.length;
+      ppUpdateCarouselPosition();
+    }
+
+    function ppFsRender() {
+      const p = ppPhotos[ppPhotoIndex];
+      document.getElementById('pp-fs-img').style.background = p.bg;
+      document.getElementById('pp-fs-emoji').textContent = p.emoji;
+      document.getElementById('pp-fs-counter').textContent = `${ppPhotoIndex + 1} / ${ppPhotos.length}`;
+      const multi = ppPhotos.length > 1;
+      document.getElementById('pp-fs-prev').style.display = multi ? 'flex' : 'none';
+      document.getElementById('pp-fs-next').style.display = multi ? 'flex' : 'none';
+    }
+
+    function ppOpenFullscreen() {
+      ppFsRender();
+      openModal('pp-fs-modal');
+    }
+
+    function closePPFullscreen() {
+      document.getElementById('pp-fs-modal').classList.remove('open');
+    }
+
+    function ppFsPrev() {
+      ppPhotoIndex = (ppPhotoIndex - 1 + ppPhotos.length) % ppPhotos.length;
+      ppFsRender();
+      ppUpdateCarouselPosition();
+    }
+
+    function ppFsNext() {
+      ppPhotoIndex = (ppPhotoIndex + 1) % ppPhotos.length;
+      ppFsRender();
+      ppUpdateCarouselPosition();
+    }
+
+    /* ══ TOP 10 ══ */
+    function openT10Modal(type) {
+      closeTop10();
+      const d = TOP10[type];
+      const iconEl = document.getElementById('t10-icon');
+      iconEl.style.background = d.iconBg;
+      iconEl.innerHTML = d.icon;
+      document.getElementById('t10-title').textContent = d.title;
+      document.getElementById('t10-sub').textContent = d.sub;
+      document.getElementById('t10-list').innerHTML = d.list.map((item, i) => {
+        const rank = i + 1;
+        const rClass = rank === 1 ? 'r1' : rank === 2 ? 'r2' : rank === 3 ? 'r3' : 'rn';
+        const rLabel = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `#${rank}`;
+        return `<div class="t10-row">
+      <div class="t10-rank ${rClass}">${rLabel}</div>
+      <div class="t10-rb">
+        <div class="t10-rname">${item.n}</div>
+        <div class="t10-rdesc">${item.d}</div>
+        <div class="t10-rmeta"><div class="t10-rrat">${SVG_STAR_MD} ${item.r}</div><span class="t10-rtag">${item.t}</span></div>
+      </div>
+    </div>`;
+      }).join('');
+      openModal('t10-modal');
+    }
+    function closeT10Modal() { closeModal('t10-modal'); }
+
+    /* ══ MODAL HELPERS ══ */
+    function openModal(id) { document.getElementById(id).classList.add('open'); document.body.style.overflow = 'hidden'; }
+    function closeModal(id) { document.getElementById(id).classList.remove('open'); document.body.style.overflow = ''; }
+
+    /* ══ DROPDOWNS ══ */
+    function toggleDropdown() {
+      const dd = document.getElementById('u-drop');
+      const isOpen = dd.classList.toggle('open');
+      if (isOpen) { closeTop10(); closeAllAC(); }
+    }
+    function closeDropdown() { document.getElementById('u-drop').classList.remove('open'); }
+
+    /* ══ COUNTRY TOP 10 DATA ══ */
+    const COUNTRY_TOP10 = {
+      'Chile': {
+        flag: '🇨🇱', sub: 'South America · 10 destinations', center: [-70.6, -33.5], zoom: 4,
+        list: [
+          { n: 'Torres del Paine', d: 'Granite spires above Patagonian steppe framed by glacial lakes.', r: '4.97', t: 'Nature', coord: [-72.93, -51.03] },
+          { n: 'Atacama Desert', d: 'Surreal altiplanic landscapes and the clearest skies on the planet.', r: '4.93', t: 'Nature', coord: [-68.20, -22.91] },
+          { n: 'Easter Island', d: 'Mysterious moai statues in the middle of the Pacific Ocean.', r: '4.91', t: 'History', coord: [-109.37, -27.12] },
+          { n: 'Valparaíso', d: 'Colorful hillside city with street art and bohemian culture.', r: '4.87', t: 'Culture', coord: [-71.63, -33.05] },
+          { n: 'Pucón & Lake District', d: 'Volcano-studded lakes district perfect for trekking and kayaking.', r: '4.86', t: 'Nature', coord: [-71.97, -39.28] },
+          { n: 'Chiloé Island', d: 'Stilted churches, mythology, and wild southern coastline.', r: '4.84', t: 'Culture', coord: [-73.62, -42.62] },
+          { n: 'Carretera Austral', d: 'One of the world\'s great road trips through Patagonian wilderness.', r: '4.83', t: 'Adventure', coord: [-72.07, -45.57] },
+          { n: 'Marble Caves', d: 'Azure caverns carved into marble above glacial General Carrera Lake.', r: '4.82', t: 'Scenic', coord: [-72.67, -46.65] },
+          { n: 'Viña del Mar', d: 'Pacific beaches, gardens and vineyards near the capital.', r: '4.79', t: 'Beach', coord: [-71.55, -33.02] },
+          { n: 'Punta Arenas', d: 'Southern-most city on earth, gateway to Patagonia and Antarctica.', r: '4.78', t: 'Nature', coord: [-70.92, -53.16] },
+        ]
+      },
+      'Argentina': {
+        flag: '🇦🇷', sub: 'South America · 10 destinations', center: [-63.6, -38.4], zoom: 4,
+        list: [
+          { n: 'Iguazú Falls', d: 'The world\'s widest waterfall system set in subtropical jungle.', r: '4.96', t: 'Nature', coord: [-54.44, -25.70] },
+          { n: 'Perito Moreno Glacier', d: 'A moving wall of ice 5 km wide that constantly calves into a lake.', r: '4.94', t: 'Nature', coord: [-73.04, -50.49] },
+          { n: 'Buenos Aires', d: 'The Paris of South America: tango, steak, and endless boulevards.', r: '4.88', t: 'Culture', coord: [-58.38, -34.61] },
+          { n: 'Mendoza', d: 'Wine country at the foot of the Andes, world-class Malbec.', r: '4.86', t: 'Gastronomy', coord: [-68.83, -32.89] },
+          { n: 'Bariloche', d: 'Alpine-style town on a Patagonian lake with world-class skiing.', r: '4.85', t: 'Adventure', coord: [-71.31, -41.13] },
+          { n: 'Salta', d: 'Colonial architecture meets dramatic Andean landscapes.', r: '4.84', t: 'Culture', coord: [-65.41, -24.79] },
+          { n: 'Quebrada de Humahuaca', d: 'UNESCO World Heritage Andean valley with ancient ruins.', r: '4.83', t: 'History', coord: [-65.35, -23.20] },
+          { n: 'Tierra del Fuego', d: 'End-of-the-world wilderness: glaciers, trekking and penguins.', r: '4.82', t: 'Nature', coord: [-68.30, -54.81] },
+          { n: 'Cafayate', d: 'Wine region in a highland valley with red canyon landscapes.', r: '4.80', t: 'Gastronomy', coord: [-65.97, -26.07] },
+          { n: 'Córdoba', d: 'Student city with Jesuit heritage and a vibrant arts scene.', r: '4.76', t: 'Culture', coord: [-64.18, -31.42] },
+        ]
+      },
+      'Peru': {
+        flag: '🇵🇪', sub: 'South America · 10 destinations', center: [-75.0, -9.2], zoom: 5,
+        list: [
+          { n: 'Machu Picchu', d: '15th-century Inca citadel perched in the cloud-forest Andes.', r: '4.97', t: 'History', coord: [-72.54, -13.16] },
+          { n: 'Cusco', d: 'Inca capital turned vibrant city, gateway to the Sacred Valley.', r: '4.91', t: 'History', coord: [-71.98, -13.53] },
+          { n: 'Amazon Rainforest', d: 'Iquitos: the largest city in the world accessible only by air or river.', r: '4.89', t: 'Wildlife', coord: [-73.25, -3.75] },
+          { n: 'Lake Titicaca', d: 'Highest navigable lake on earth, with floating Uros reed islands.', r: '4.87', t: 'Culture', coord: [-69.33, -15.84] },
+          { n: 'Nazca Lines', d: 'Mysterious giant geoglyphs etched into the desert 2,000 years ago.', r: '4.85', t: 'History', coord: [-74.91, -14.74] },
+          { n: 'Arequipa', d: 'White colonial city backed by three majestic volcanoes.', r: '4.84', t: 'Culture', coord: [-71.54, -16.41] },
+          { n: 'Colca Canyon', d: 'One of the world\'s deepest canyons, home to the Andean condor.', r: '4.83', t: 'Nature', coord: [-71.92, -15.53] },
+          { n: 'Paracas', d: 'Desert peninsula with extraordinary Pacific marine wildlife.', r: '4.80', t: 'Wildlife', coord: [-76.25, -13.85] },
+          { n: 'Huacachina', d: 'An oasis lagoon surrounded by giant sand dunes in the coastal desert.', r: '4.79', t: 'Adventure', coord: [-75.77, -14.09] },
+          { n: 'Máncora', d: 'Year-round surf and sun on Peru\'s northern Pacific coast.', r: '4.75', t: 'Beach', coord: [-81.05, -4.11] },
+        ]
+      },
+      'Japan': {
+        flag: '🇯🇵', sub: 'East Asia · 10 destinations', center: [138.0, 36.2], zoom: 5,
+        list: [
+          { n: 'Kyoto', d: 'Ancient temples, bamboo forests, and the world\'s most refined tea culture.', r: '4.95', t: 'Culture', coord: [135.77, 35.01] },
+          { n: 'Tokyo', d: 'Hyper-efficient, hyper-delicious, utterly unlike anywhere else on earth.', r: '4.93', t: 'City', coord: [139.69, 35.68] },
+          { n: 'Mount Fuji', d: 'Japan\'s sacred volcano and iconic silhouette on the world\'s skyline.', r: '4.91', t: 'Nature', coord: [138.73, 35.36] },
+          { n: 'Osaka', d: 'Japan\'s kitchen: street food, neon and a wonderfully loud personality.', r: '4.89', t: 'Gastronomy', coord: [135.50, 34.69] },
+          { n: 'Hiroshima', d: 'A city reborn; the Peace Memorial is one of humanity\'s most moving places.', r: '4.88', t: 'History', coord: [132.45, 34.39] },
+          { n: 'Nara', d: 'Free-roaming deer and thousand-year-old temples in a compact city.', r: '4.86', t: 'Culture', coord: [135.84, 34.69] },
+          { n: 'Hakone', d: 'Volcanic hot springs and views of Fuji from steaming open-air baths.', r: '4.85', t: 'Nature', coord: [139.07, 35.23] },
+          { n: 'Nikko', d: 'Ornate shrines and waterfalls in cedar forests north of Tokyo.', r: '4.83', t: 'Culture', coord: [139.60, 36.75] },
+          { n: 'Hokkaido', d: 'Japan\'s wild north: lavender fields, powder snow and fresh seafood.', r: '4.82', t: 'Nature', coord: [141.34, 43.06] },
+          { n: 'Okinawa', d: 'Tropical islands with turquoise reefs, unique culture and WWII history.', r: '4.80', t: 'Beach', coord: [127.68, 26.21] },
+        ]
+      },
+      'Greece': {
+        flag: '🇬🇷', sub: 'Southern Europe · 10 destinations', center: [21.8, 39.1], zoom: 6,
+        list: [
+          { n: 'Santorini', d: 'Volcanic island with iconic white-domed architecture above a deep-blue caldera.', r: '4.94', t: 'Scenic', coord: [25.43, 36.40] },
+          { n: 'Athens', d: 'Cradle of Western civilization; the Acropolis needs no introduction.', r: '4.90', t: 'History', coord: [23.73, 37.98] },
+          { n: 'Mykonos', d: 'Windmills, whitewash and the Aegean\'s most vibrant party island.', r: '4.87', t: 'Beach', coord: [25.33, 37.45] },
+          { n: 'Crete', d: 'Greece\'s largest island: Minoan palaces, gorges and incredible food.', r: '4.86', t: 'Culture', coord: [25.14, 35.34] },
+          { n: 'Rhodes', d: 'A medieval walled city within a sun-drenched island gateway to Turkey.', r: '4.84', t: 'History', coord: [28.23, 36.43] },
+          { n: 'Meteora', d: 'Byzantine monasteries perched on impossible pinnacles of rock.', r: '4.93', t: 'Scenic', coord: [21.63, 39.72] },
+          { n: 'Delphi', d: 'Oracle of the ancient world set on the slopes of Mount Parnassus.', r: '4.83', t: 'History', coord: [22.50, 38.48] },
+          { n: 'Thessaloniki', d: 'Byzantine mosaics, vibrant café culture and the best food in Greece.', r: '4.81', t: 'Culture', coord: [22.94, 40.64] },
+          { n: 'Corfu', d: 'Lush Ionian island with Venetian architecture and crystal-clear coves.', r: '4.80', t: 'Beach', coord: [19.92, 39.62] },
+          { n: 'Olympia', d: 'Birthplace of the Olympic Games, surrounded by ancient ruins and pine forests.', r: '4.78', t: 'History', coord: [21.63, 37.64] },
+        ]
+      },
+      'Italy': {
+        flag: '🇮🇹', sub: 'Southern Europe · 10 destinations', center: [12.6, 42.5], zoom: 5,
+        list: [
+          { n: 'Rome', d: 'Two millennia of empire, art and the world\'s best espresso.', r: '4.94', t: 'History', coord: [12.49, 41.89] },
+          { n: 'Florence', d: 'Renaissance masterpieces at every corner: Uffizi, Duomo, Ponte Vecchio.', r: '4.93', t: 'Art', coord: [11.26, 43.77] },
+          { n: 'Venice', d: 'A city of canals defying logic, gravity and the passage of time.', r: '4.91', t: 'Scenic', coord: [12.33, 45.44] },
+          { n: 'Amalfi Coast', d: 'Vertical cliffs, turquoise sea and villages draped in lemon groves.', r: '4.90', t: 'Scenic', coord: [14.60, 40.63] },
+          { n: 'Cinque Terre', d: 'Five pastel fishing villages clinging to Ligurian sea cliffs.', r: '4.88', t: 'Scenic', coord: [9.73, 44.12] },
+          { n: 'Sicily', d: 'Ancient temples, volcanic landscapes and Italy\'s finest street food.', r: '4.86', t: 'Culture', coord: [13.36, 38.12] },
+          { n: 'Milan', d: 'Fashion capital with Leonardo\'s Last Supper and a world-class Duomo.', r: '4.84', t: 'Culture', coord: [9.19, 45.46] },
+          { n: 'Naples', d: 'Chaotic, delicious and home to the world\'s original pizza.', r: '4.83', t: 'Gastronomy', coord: [14.27, 40.85] },
+          { n: 'Pompeii', d: 'A Roman city frozen in time by the eruption of Vesuvius in AD 79.', r: '4.82', t: 'History', coord: [14.49, 40.75] },
+          { n: 'Tuscany', d: 'Cypress avenues, rolling vineyards and hilltop towns like Siena and Pienza.', r: '4.81', t: 'Scenic', coord: [11.33, 43.32] },
+        ]
+      },
+      'France': {
+        flag: '🇫🇷', sub: 'Western Europe · 10 destinations', center: [2.2, 46.2], zoom: 5,
+        list: [
+          { n: 'Paris', d: 'The City of Light: Eiffel Tower, Louvre, and the world\'s finest café culture.', r: '4.92', t: 'Culture', coord: [2.35, 48.86] },
+          { n: 'Provence', d: 'Lavender fields, Roman aqueducts and sun-soaked Provençal villages.', r: '4.89', t: 'Scenic', coord: [4.81, 43.95] },
+          { n: 'Mont Saint-Michel', d: 'A tidal abbey-island that rises from the sea like a fairy-tale fortress.', r: '4.93', t: 'Scenic', coord: [-1.51, 48.64] },
+          { n: 'Loire Valley', d: 'The Garden of France: Renaissance châteaux among vineyards and rivers.', r: '4.87', t: 'History', coord: [0.68, 47.39] },
+          { n: 'French Riviera', d: 'Azure Coast of glamour, art and brilliant Mediterranean light.', r: '4.86', t: 'Scenic', coord: [7.27, 43.70] },
+          { n: 'Normandy', d: 'D-Day beaches, half-timbered villages and the world\'s creamiest cuisine.', r: '4.84', t: 'History', coord: [-0.70, 49.27] },
+          { n: 'Alsace', d: 'Wine route through half-timbered villages straight out of a storybook.', r: '4.83', t: 'Culture', coord: [7.75, 48.57] },
+          { n: 'Bordeaux', d: 'World wine capital with grand 18th-century architecture along the Garonne.', r: '4.82', t: 'Gastronomy', coord: [-0.58, 44.84] },
+          { n: 'Chamonix', d: 'Mountain-town at the foot of Mont Blanc with legendary Alpine skiing.', r: '4.81', t: 'Adventure', coord: [6.87, 45.92] },
+          { n: 'Corsica', d: 'The Island of Beauty: maquis-covered mountains plunging into turquoise sea.', r: '4.80', t: 'Nature', coord: [8.74, 41.92] },
+        ]
+      },
+      'USA': {
+        flag: '🇺🇸', sub: 'North America · 10 destinations', center: [-95.7, 37.1], zoom: 4,
+        list: [
+          { n: 'New York City', d: 'Culture, food and skyline in every direction. The city that never sleeps.', r: '4.92', t: 'City', coord: [-74.01, 40.71] },
+          { n: 'Grand Canyon', d: 'A mile-deep gorge carved over 5 million years by the Colorado River.', r: '4.95', t: 'Nature', coord: [-112.11, 36.06] },
+          { n: 'Yellowstone', d: 'America\'s first national park: geysers, hot springs and bison herds.', r: '4.91', t: 'Nature', coord: [-110.59, 44.43] },
+          { n: 'San Francisco', d: 'Golden Gate, cable cars, Alcatraz and some of America\'s best food.', r: '4.89', t: 'City', coord: [-122.42, 37.77] },
+          { n: 'New Orleans', d: 'Jazz birthplace with French Quarter architecture and legendary Creole cuisine.', r: '4.88', t: 'Culture', coord: [-90.08, 29.95] },
+          { n: 'Hawaii', d: 'Volcanic islands with world-class surfing, lush rainforests and coral reefs.', r: '4.90', t: 'Beach', coord: [-157.82, 21.30] },
+          { n: 'Yosemite', d: 'Cathedral-like granite valleys, ancient sequoias and iconic waterfalls.', r: '4.93', t: 'Nature', coord: [-119.54, 37.75] },
+          { n: 'Miami', d: 'Art Deco beaches, vibrant nightlife and the best Cuban food outside Havana.', r: '4.85', t: 'Beach', coord: [-80.19, 25.77] },
+          { n: 'Chicago', d: 'Lakefront skyline, deep-dish pizza and world-class architecture.', r: '4.87', t: 'City', coord: [-87.63, 41.88] },
+          { n: 'Los Angeles', d: 'Hollywood, Pacific Coast Highway and the world\'s most diverse food scene.', r: '4.83', t: 'City', coord: [-118.24, 34.05] },
+        ]
+      },
+      'Australia': {
+        flag: '🇦🇺', sub: 'Oceania · 10 destinations', center: [133.8, -25.3], zoom: 4,
+        list: [
+          { n: 'Sydney', d: 'Opera House, Harbour Bridge and some of the world\'s best beaches.', r: '4.93', t: 'City', coord: [151.21, -33.87] },
+          { n: 'Great Barrier Reef', d: 'The world\'s largest coral reef system, visible from space.', r: '4.95', t: 'Wildlife', coord: [145.77, -16.92] },
+          { n: 'Uluru', d: 'A sacred monolith rising 348 m from the flat red centre of the continent.', r: '4.91', t: 'Culture', coord: [131.04, -25.35] },
+          { n: 'Melbourne', d: 'Laneways, coffee culture, street art and Australia\'s best restaurant scene.', r: '4.90', t: 'City', coord: [144.96, -37.81] },
+          { n: 'Tasmania', d: 'Wild, unspoiled wilderness at the edge of the world with world-class MONA.', r: '4.88', t: 'Nature', coord: [147.33, -42.88] },
+          { n: 'Whitsundays', d: '74 islands of turquoise water and the dazzling white Whitehaven Beach.', r: '4.87', t: 'Beach', coord: [148.96, -20.27] },
+          { n: 'Blue Mountains', d: 'Ancient sandstone escarpments with waterfalls and the iconic Three Sisters.', r: '4.85', t: 'Nature', coord: [150.31, -33.72] },
+          { n: 'Byron Bay', d: 'Laid-back surf town with the most easterly lighthouse on the continent.', r: '4.83', t: 'Beach', coord: [153.61, -28.65] },
+          { n: 'Kangaroo Island', d: 'An ark of unspoilt nature: koalas, sea lions and remarkable rock formations.', r: '4.82', t: 'Wildlife', coord: [137.17, -35.86] },
+          { n: 'Darwin', d: 'Tropical gateway to Kakadu, one of the oldest living cultures on earth.', r: '4.79', t: 'Culture', coord: [130.84, -12.46] },
+        ]
+      },
+      'Morocco': {
+        flag: '🇲🇦', sub: 'North Africa · 10 destinations', center: [-7.1, 31.8], zoom: 6,
+        list: [
+          { n: 'Marrakech', d: 'Labyrinthine medinas, vibrant souks and rooftop views over the Koutoubia.', r: '4.90', t: 'Culture', coord: [-7.99, 31.63] },
+          { n: 'Fes', d: 'The world\'s oldest living medieval city with a 9,000-alley medina.', r: '4.89', t: 'History', coord: [-4.99, 34.03] },
+          { n: 'Chefchaouen', d: 'The Blue City: an extraordinary mountain town painted in shades of cobalt.', r: '4.92', t: 'Scenic', coord: [-5.27, 35.17] },
+          { n: 'Sahara Desert', d: 'Erg Chebbi: towering orange dunes and camel treks under a dome of stars.', r: '4.93', t: 'Nature', coord: [-3.98, 31.10] },
+          { n: 'Essaouira', d: 'Atlantic-swept coastal ramparts, blue fishing boats and wind-swept beaches.', r: '4.86', t: 'Scenic', coord: [-9.76, 31.51] },
+          { n: 'Aït Benhaddou', d: 'UNESCO-listed ksar — mud-brick citadel immortalized in countless films.', r: '4.88', t: 'History', coord: [-7.13, 31.05] },
+          { n: 'Ouarzazate', d: 'Gateway to the Sahara and the Draa Valley of kasbahs and palm groves.', r: '4.84', t: 'Culture', coord: [-6.89, 30.93] },
+          { n: 'Casablanca', d: 'Art Deco grandeur, Hassan II Mosque and Morocco\'s cosmopolitan heart.', r: '4.82', t: 'Culture', coord: [-7.59, 33.57] },
+          { n: 'Rabat', d: 'Morocco\'s tranquil capital with UNESCO medina and the unfinished Hassan Tower.', r: '4.80', t: 'History', coord: [-6.84, 34.02] },
+          { n: 'Tangier', d: 'Mythic port city at the meeting point of Atlantic and Mediterranean.', r: '4.79', t: 'Culture', coord: [-5.80, 35.77] },
+        ]
+      },
+      'Indonesia': {
+        flag: '🇮🇩', sub: 'Southeast Asia · 10 destinations', center: [113.9, -0.8], zoom: 5,
+        list: [
+          { n: 'Ubud, Bali', d: 'Rice terraces, sacred temples, healers and a world-class wellness scene.', r: '4.92', t: 'Culture', coord: [115.26, -8.51] },
+          { n: 'Komodo Island', d: 'The only place on earth to witness Komodo dragons in the wild.', r: '4.91', t: 'Wildlife', coord: [119.49, -8.55] },
+          { n: 'Raja Ampat', d: 'The most biodiverse marine ecosystem on the planet, utterly pristine.', r: '4.95', t: 'Wildlife', coord: [130.52, -0.51] },
+          { n: 'Yogyakarta', d: 'Cultural heart of Java with Borobudur and Prambanan temples nearby.', r: '4.89', t: 'Culture', coord: [110.36, -7.80] },
+          { n: 'Lombok', d: 'Rinjani volcano, empty beaches and a quieter alternative to Bali.', r: '4.86', t: 'Nature', coord: [116.10, -8.65] },
+          { n: 'Gili Islands', d: 'Car-free coral-fringed islands with hammock-chic and sea turtles.', r: '4.85', t: 'Beach', coord: [116.05, -8.35] },
+          { n: 'Labuan Bajo', d: 'Dramatic pink-sand beaches and the gateway to Komodo National Park.', r: '4.84', t: 'Scenic', coord: [119.89, -8.52] },
+          { n: 'Mount Bromo', d: 'An active volcano set in a vast caldera — sunrise here is unforgettable.', r: '4.83', t: 'Nature', coord: [112.95, -7.94] },
+          { n: 'Lake Toba', d: 'The world\'s largest volcanic lake on Sumatra, with the island of Samosir.', r: '4.81', t: 'Nature', coord: [98.82, 2.68] },
+          { n: 'Jakarta', d: 'Mega-city melting pot of colonial history, ultra-modern malls and street food.', r: '4.75', t: 'City', coord: [106.85, -6.21] },
+        ]
+      },
+      'New Zealand': {
+        flag: '🇳🇿', sub: 'Oceania · 10 destinations', center: [172.0, -41.3], zoom: 5,
+        list: [
+          { n: 'Queenstown', d: 'Adventure capital of the world set against fjords and the Remarkables.', r: '4.94', t: 'Adventure', coord: [168.66, -45.03] },
+          { n: 'Milford Sound', d: 'Sheer 1,200 m fiord walls and cascading waterfalls in Fiordland.', r: '4.96', t: 'Scenic', coord: [167.93, -44.67] },
+          { n: 'Bay of Islands', d: 'Subtropical paradise of 144 islands in the birthplace of New Zealand.', r: '4.88', t: 'Nature', coord: [174.08, -35.26] },
+          { n: 'Rotorua', d: 'Geothermal wonderland and living Māori culture in the volcanic heartland.', r: '4.87', t: 'Culture', coord: [176.25, -38.14] },
+          { n: 'Franz Josef Glacier', d: 'A rare temperate rainforest glacier that descends almost to sea level.', r: '4.90', t: 'Nature', coord: [170.18, -43.39] },
+          { n: 'Abel Tasman', d: 'Golden sand beaches and clear-water coves in a coastal national park.', r: '4.86', t: 'Beach', coord: [172.99, -40.85] },
+          { n: 'Tongariro Alpine Crossing', d: 'New Zealand\'s greatest day hike past active craters and emerald lakes.', r: '4.93', t: 'Adventure', coord: [175.67, -39.20] },
+          { n: 'Coromandel Peninsula', d: 'Cathedral Cove sea cave and the iconic dig-your-own Hot Water Beach.', r: '4.84', t: 'Scenic', coord: [175.88, -37.02] },
+          { n: 'Kaikōura', d: 'Whale watching, sperm whales and a dramatic snowy mountain backdrop.', r: '4.83', t: 'Wildlife', coord: [173.68, -42.40] },
+          { n: 'Wellington', d: 'Compact capital with Te Papa museum, craft beer and epic windy character.', r: '4.82', t: 'Culture', coord: [174.78, -41.29] },
+        ]
+      },
+    };
+
+    /* ══ COUNTRY SEARCH FUNCTIONS ══ */
+    function openCountrySearch() {
+      closeTop10();
+      const overlay = document.getElementById('cs-overlay');
+      overlay.classList.add('open');
+      const input = document.getElementById('cs-input');
+      input.value = '';
+      document.getElementById('cs-clear-btn').classList.remove('visible');
+      renderCountryResults('');
+      setTimeout(() => input.focus(), 60);
+    }
+
+    function closeCountrySearch() {
+      document.getElementById('cs-overlay').classList.remove('open');
+    }
+
+    function clearCountryInput() {
+      const input = document.getElementById('cs-input');
+      input.value = '';
+      document.getElementById('cs-clear-btn').classList.remove('visible');
+      renderCountryResults('');
+      input.focus();
+    }
+
+    function handleCountryAC(q) {
+      const btn = document.getElementById('cs-clear-btn');
+      q ? btn.classList.add('visible') : btn.classList.remove('visible');
+      renderCountryResults(q);
+    }
+
+    function renderCountryResults(q) {
+      const container = document.getElementById('cs-results');
+      const all = Object.keys(COUNTRY_TOP10);
+      const matches = q.trim()
+        ? all.filter(c => c.toLowerCase().includes(q.trim().toLowerCase()))
+        : all;
+
+      if (!matches.length) {
+        container.innerHTML = `<div class="cs-empty">No countries found for "<strong>${q}</strong>"</div>`;
+        return;
+      }
+
+      const ARR = `<svg class="cs-arr" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>`;
+      const hl = (name) => q.trim()
+        ? name.replace(new RegExp(`(${q.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi'), '<span class="cs-match">$1</span>')
+        : name;
+
+      container.innerHTML = `<div class="cs-results-hdr">${q.trim() ? 'Results' : 'All countries'}</div>` +
+        matches.map(c => {
+          const d = COUNTRY_TOP10[c];
+          return `<div class="cs-item" onclick="selectCountry('${c.replace(/'/g, "\\'")}')">
+            <div class="cs-flag">${d.flag}</div>
+            <div class="cs-info">
+              <div class="cs-name">${hl(c)}</div>
+              <div class="cs-sub">${d.sub}</div>
+            </div>
+            ${ARR}
+          </div>`;
+        }).join('');
+    }
+
+    /* ══ RANKING PANEL ══ */
+    let currentRankingList = [];
+
+    const CAT_EMOJI = {
+      'Nature': '🌿', 'Culture': '🏛️', 'Scenic': '🌅', 'History': '🏺', 'Wildlife': '🦁',
+      'Adventure': '🧗', 'Beach': '🏖️', 'Gastronomy': '🍽️', 'Art': '🎨', 'City': '🏙️',
+      'Trekking': '🥾', 'Mountains': '⛰️', 'Romantic': '💒', 'Wellness': '🧘',
+      'Art & Food': '🍷', 'Stargazing': '🔭', 'Science': '🔬', 'default': '🌍'
+    };
+    const CAT_BG = {
+      'Nature': 'linear-gradient(135deg,#1a5c2a,#0a3a18)',
+      'Culture': 'linear-gradient(135deg,#3730a3,#1e1b4b)',
+      'Scenic': 'linear-gradient(135deg,#b45309,#78350f)',
+      'History': 'linear-gradient(135deg,#78350f,#451a03)',
+      'Wildlife': 'linear-gradient(135deg,#065f46,#022c22)',
+      'Adventure': 'linear-gradient(135deg,#1e3a5f,#0a1929)',
+      'Beach': 'linear-gradient(135deg,#0284c7,#0c4a6e)',
+      'Gastronomy': 'linear-gradient(135deg,#9f1239,#4c0519)',
+      'Art': 'linear-gradient(135deg,#7c3aed,#3b0764)',
+      'City': 'linear-gradient(135deg,#1d4ed8,#1e3a8a)',
+      'Trekking': 'linear-gradient(135deg,#15803d,#052e16)',
+      'Mountains': 'linear-gradient(135deg,#475569,#1e293b)',
+      'Romantic': 'linear-gradient(135deg,#be185d,#500724)',
+      'Wellness': 'linear-gradient(135deg,#0f766e,#042f2e)',
+      'Art & Food': 'linear-gradient(135deg,#9f1239,#3b0764)',
+      'Stargazing': 'linear-gradient(135deg,#1e1b4b,#0a0a1a)',
+      'default': 'linear-gradient(135deg,#1a4a8a,#0d2b5e)'
+    };
+    const MOCK_REVIEWS = [
+      { rtxt: 'An absolute must. The landscapes are breathtaking and the people are incredibly warm. Changed the way I see travel forever.', rname: 'Sofia Martínez', rmeta: 'Mexico City · April 2024', av: 'SM', ac: '#c94b0c' },
+      { rtxt: 'I\'ve been to over 40 countries and this is still the place I think about most. Nothing compares to the scale and beauty here.', rname: 'James Okafor', rmeta: 'London · February 2024', av: 'JO', ac: '#0a5c4a' },
+      { rtxt: 'Arrived with high expectations and left completely overwhelmed. Do yourself a favour and spend twice as long as you planned.', rname: 'Yuki Tanaka', rmeta: 'Tokyo · December 2023', av: 'YT', ac: '#1a4a8a' },
+      { rtxt: 'Every photo I\'ve seen does not do it justice. The atmosphere, the food, the people — it all comes together perfectly.', rname: 'Amélie Rousseau', rmeta: 'Paris · March 2024', av: 'AR', ac: '#7c3aed' },
+      { rtxt: 'This place humbles you. Whatever stress you carried there dissolves in about ten minutes. Pure, raw, magnificent.', rname: 'Carlos Vega', rmeta: 'Buenos Aires · January 2024', av: 'CV', ac: '#065f46' },
+    ];
+
+    function openRankingPanel(title, sub, iconHtml, list) {
+      currentRankingList = list;
+      document.getElementById('rp-title').textContent = title;
+      document.getElementById('rp-sub').textContent = sub;
+      document.getElementById('rp-icon').innerHTML = iconHtml;
+
+      const medals = ['🥇', '🥈', '🥉'];
+      const rowTint = ['rp-gold', 'rp-silver', 'rp-bronze'];
+
+      document.getElementById('rp-list').innerHTML = list.map((item, i) => {
+        const rank = i + 1;
+        const rClass = rank <= 3 ? `r${rank}` : 'rn';
+        const rowClass = rank <= 3 ? rowTint[i] : '';
+        const badge = rank <= 3 ? medals[i] : `#${rank}`;
+        return `<div class="rp-item ${rowClass}" onclick="flyToMarker(${i})">
+          <div class="rp-rank ${rClass}">${badge}</div>
+          <div class="rp-body">
+            <div class="rp-name">
+              <span class="rp-name-link" onclick="event.stopPropagation();openPlacePopupFromRanking(${i})">${item.n}</span>
+            </div>
+            <div class="rp-desc">${item.d}</div>
+            <div class="rp-meta">
+              <div class="rp-rating">${SVG_STAR} ${item.r}</div>
+              <span class="rp-tag">${item.t}</span>
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+
+      // Ensure left panel is open
+      const panel = document.getElementById('left-panel');
+      const toggle = document.getElementById('panel-toggle');
+      panel.classList.remove('collapsed', 'panel-hidden');
+      toggle.classList.remove('flipped');
+      panelOpen_ = true;
+      setTimeout(() => map.resize(), 340);
+
+      document.getElementById('ranking-panel').classList.add('open');
+    }
+
+    function openPlacePopupFromRanking(index) {
+      const item = currentRankingList[index];
+      if (!item) return;
+      const emoji = CAT_EMOJI[item.t] || CAT_EMOJI.default;
+      const bg = CAT_BG[item.t] || CAT_BG.default;
+      const rev = MOCK_REVIEWS[index % MOCK_REVIEWS.length];
+      const fakeReviews = (1200 + index * 317).toLocaleString();
+      document.getElementById('pp-badge').textContent = `Ranked #${index + 1}`;
+      document.getElementById('pp-name').textContent = item.n;
+      document.getElementById('pp-rn').textContent = item.r;
+      document.getElementById('pp-loc').textContent = item.t + ' destination';
+      document.getElementById('pp-desc').textContent = item.d;
+      document.getElementById('pp-temp').textContent = '—';
+      document.getElementById('pp-tnote').textContent = 'Varies by season';
+      document.getElementById('pp-season').textContent = 'Year-round';
+      document.getElementById('pp-snote').textContent = 'Check local calendar';
+      document.getElementById('pp-alt').textContent = '—';
+      document.getElementById('pp-anote').textContent = item.t;
+      document.getElementById('pp-rtxt').textContent = rev.rtxt;
+      document.getElementById('pp-rname').textContent = 'AI Summary';
+      document.getElementById('pp-rmeta').textContent = `Based on ${fakeReviews} traveler reviews`;
+      document.getElementById('pp-av').textContent = '✨';
+      document.getElementById('pp-av').style.background = 'linear-gradient(135deg,#7c3aed,#2563eb)';
+      document.getElementById('pp-fn').textContent = `Top ${index + 1} worldwide destination`;
+      ppPhotos = [{ bg, emoji }];
+      ppPhotoIndex = 0;
+      ppRenderCarousel();
+      const sources = ['google', 'tripadvisor', 'booking'];
+      const comments = [0, 1, 2].map(i => {
+        const r = MOCK_REVIEWS[(index + i) % MOCK_REVIEWS.length];
+        return { name: r.rname, av: r.av, ac: r.ac, rating: i % 2 ? 4.5 : 5, source: sources[i], text: r.rtxt };
+      });
+      ppRenderComments(comments);
+      openModal('pp-modal');
+    }
+
+    function openPlacePopupFromNearby(p) {
+      const idx = NEARBY_PLACES.indexOf(p);
+      const bg = CAT_BG[p.tag] || CAT_BG.default;
+      const rev = MOCK_REVIEWS[idx % MOCK_REVIEWS.length];
+      document.getElementById('pp-badge').textContent = p.tag;
+      document.getElementById('pp-name').textContent = p.name;
+      document.getElementById('pp-rn').textContent = p.rating;
+      document.getElementById('pp-loc').textContent = `${p.dist} from Santiago`;
+      document.getElementById('pp-desc').textContent = p.desc;
+      document.getElementById('pp-temp').textContent = '—';
+      document.getElementById('pp-tnote').textContent = 'Varies by season';
+      document.getElementById('pp-season').textContent = 'Year-round';
+      document.getElementById('pp-snote').textContent = 'Check local calendar';
+      document.getElementById('pp-alt').textContent = '—';
+      document.getElementById('pp-anote').textContent = p.tag;
+      document.getElementById('pp-rtxt').textContent = rev.rtxt;
+      document.getElementById('pp-rname').textContent = 'AI Summary';
+      document.getElementById('pp-rmeta').textContent = `Based on ${p.reviews} traveler reviews`;
+      document.getElementById('pp-av').textContent = '✨';
+      document.getElementById('pp-av').style.background = 'linear-gradient(135deg,#7c3aed,#2563eb)';
+      document.getElementById('pp-fn').textContent = `${p.time} from Santiago`;
+      ppPhotos = [{ bg, emoji: p.emoji }];
+      ppPhotoIndex = 0;
+      ppRenderCarousel();
+      const sources = ['google', 'tripadvisor', 'booking'];
+      const comments = [0, 1, 2].map(i => {
+        const r = MOCK_REVIEWS[(idx + i) % MOCK_REVIEWS.length];
+        return { name: r.rname, av: r.av, ac: r.ac, rating: i % 2 ? 4.5 : 5, source: sources[i], text: r.rtxt };
+      });
+      ppRenderComments(comments);
+      openModal('pp-modal');
+    }
+
+    function closeRankingPanel() {
+      document.getElementById('ranking-panel').classList.remove('open');
+      cleanMap();
+    }
+
+    function flyToMarker(index) {
+      if (worldwideMarkers[index]) {
+        const lngLat = worldwideMarkers[index].getLngLat();
+        map.flyTo({ center: lngLat, zoom: 6, duration: 700 });
+      }
+    }
+
+    function selectCountry(country) {
+      closeCountrySearch();
+      const d = COUNTRY_TOP10[country];
+      if (!d) return;
+
+      cleanMap();
+
+      d.list.forEach((item, i) => {
+        const el = document.createElement('div');
+        el.className = 'ww-marker-wrap';
+        const shortName = item.n.split(',')[0].split('·')[0].trim();
+        el.innerHTML = `<div class="ww-marker-dot">${i + 1}</div><div class="ww-marker-lbl">${shortName}</div>`;
+        el.addEventListener('click', e => {
+          e.stopPropagation();
+          openPlacePopupFromRanking(i);
+        });
+        const m = new maplibregl.Marker({ element: el, anchor: 'bottom' })
+          .setLngLat(item.coord)
+          .addTo(map);
+        worldwideMarkers.push(m);
+      });
+
+      const bounds = d.list.reduce(
+        (b, item) => b.extend(item.coord),
+        new maplibregl.LngLatBounds(d.list[0].coord, d.list[0].coord)
+      );
+      map.fitBounds(bounds, { padding: 70, duration: 900 });
+
+      openRankingPanel(
+        `Top 10 · ${country}`,
+        d.sub,
+        `<span style="font-size:22px">${d.flag}</span>`,
+        d.list
+      );
+    }
+
+    let worldwideMarkers = [];
+    let nearbyMarkers = [];
+
+    function cleanMap() {
+      Object.values(markers).forEach(({ marker, popup }) => {
+        if (popup && popup.isOpen()) popup.remove();
+        marker.remove();
+      });
+      Object.keys(markers).forEach(k => delete markers[k]);
+      worldwideMarkers.forEach(m => m.remove());
+      worldwideMarkers = [];
+      nearbyMarkers.forEach(m => m.remove());
+      nearbyMarkers = [];
+    }
+
+    function plotNearbyOnMap(list) {
+      nearbyMarkers.forEach(m => m.remove());
+      nearbyMarkers = [];
+      if (!list.length) return;
+      list.forEach((p, i) => {
+        const el = document.createElement('div');
+        el.className = 'ww-marker-wrap';
+        el.innerHTML = `<div class="ww-marker-dot nb-marker-dot">${p.emoji}</div><div class="ww-marker-lbl">${p.name}</div>`;
+        el.addEventListener('click', e => {
+          e.stopPropagation();
+          openPlacePopupFromNearby(p);
+        });
+        const m = new maplibregl.Marker({ element: el, anchor: 'bottom' })
+          .setLngLat(p.coord)
+          .addTo(map);
+        nearbyMarkers.push(m);
+      });
+      const allCoords = [FROM.coord, ...list.map(p => p.coord)];
+      const bounds = allCoords.reduce(
+        (b, c) => b.extend(c),
+        new maplibregl.LngLatBounds(allCoords[0], allCoords[0])
+      );
+      map.fitBounds(bounds, { padding: 60, duration: 900 });
+    }
+
+    function showWorldwideOnMap() {
+      closeTop10();
+      cleanMap();
+
+      const WW_COORDS = [
+        [-72.00, -50.90],
+        [135.75, 35.01],
+        [25.43, 36.40],
+        [-72.54, -13.16],
+        [-90.38, -0.95],
+        [14.60, 40.63],
+        [115.19, -8.41],
+        [168.66, -45.03],
+        [-7.99, 31.63],
+        [6.83, 60.47],
+      ];
+
+      TOP10.worldwide.list.forEach((item, i) => {
+        const el = document.createElement('div');
+        el.className = 'ww-marker-wrap';
+        const shortName = item.n.split(',')[0].split('·')[0].trim();
+        el.innerHTML = `<div class="ww-marker-dot">${i + 1}</div><div class="ww-marker-lbl">${shortName}</div>`;
+        el.addEventListener('click', e => {
+          e.stopPropagation();
+          openPlacePopupFromRanking(i);
+        });
+        const m = new maplibregl.Marker({ element: el, anchor: 'bottom' })
+          .setLngLat(WW_COORDS[i])
+          .addTo(map);
+        worldwideMarkers.push(m);
+      });
+
+      const bounds = WW_COORDS.reduce(
+        (b, c) => b.extend(c),
+        new maplibregl.LngLatBounds(WW_COORDS[0], WW_COORDS[0])
+      );
+      map.fitBounds(bounds, { padding: 60, duration: 900 });
+
+      const wwData = TOP10.worldwide.list.map((item, i) => ({ ...item, coord: WW_COORDS[i] }));
+      openRankingPanel(
+        'Top 10 World Wide',
+        'The planet\'s most celebrated destinations',
+        `<svg viewBox="0 0 24 24" style="width:22px;height:22px;fill:none;stroke:#1d6ff3;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>`,
+        wwData
+      );
+    }
+
+    function toggleTop10() {
+      const dd = document.getElementById('t10-drop');
+      const btn = document.getElementById('t10-btn');
+      const isOpen = dd.classList.toggle('open');
+      btn.classList.toggle('open', isOpen);
+      if (isOpen) { closeDropdown(); closeAllAC(); }
+    }
+    function closeTop10() {
+      document.getElementById('t10-drop').classList.remove('open');
+      document.getElementById('t10-btn').classList.remove('open');
+    }
+
+    /* ══ AUTOCOMPLETE ══ */
+    function handleAC(side, query) {
+      const listEl = document.getElementById(side + '-ac');
+      const q = query.trim().toLowerCase();
+      if (!q) { listEl.classList.remove('open'); return; }
+      const matches = AC_PLACES.filter(p => p.n.toLowerCase().includes(q) || p.s.toLowerCase().includes(q)).slice(0, 6);
+      if (!matches.length) { listEl.classList.remove('open'); return; }
+      listEl.innerHTML = `<div class="ac-header">Suggestions</div>` +
+        matches.map(p => {
+          const hl = p.n.replace(new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi'), '<span class="ac-match">$1</span>');
+          return `<div class="ac-item" onclick="selectAC('${side}','${p.n.replace(/'/g, "\\'")}')">
+        <div class="ac-icon">${p.e}</div>
+        <div class="ac-info"><div class="ac-name">${hl}</div><div class="ac-sub">${p.s}</div></div>
+      </div>`;
+        }).join('');
+      listEl.classList.add('open');
+    }
+    function selectAC(side, name) { document.getElementById(side + '-input').value = name; closeAllAC(); hideClear(side); }
+    function closeAllAC() { document.getElementById('from-ac').classList.remove('open'); document.getElementById('to-ac').classList.remove('open'); }
+    function showClear(side) { const inp = document.getElementById(side + '-input'); if (inp.value) document.getElementById(side + '-clear').classList.add('visible'); }
+    function hideClear(side) { document.getElementById(side + '-clear').classList.remove('visible'); }
+    function updateClear(side, val) { val ? document.getElementById(side + '-clear').classList.add('visible') : document.getElementById(side + '-clear').classList.remove('visible'); }
+    function clearInput(side) { const inp = document.getElementById(side + '-input'); inp.value = ''; document.getElementById(side + '-clear').classList.remove('visible'); document.getElementById(side + '-ac').classList.remove('open'); inp.focus(); }
+
+    /* ══ FILTER ══ */
+    function syncStopMarkers(list) {
+      if (!Object.keys(markers).length) return;
+      const visibleIds = new Set(list.map(s => s.id));
+      STOPS.forEach(s => {
+        const m = markers[s.id];
+        if (!m) return;
+        if (visibleIds.has(s.id)) {
+          m.marker.addTo(map);
+        } else {
+          m.marker.remove();
+        }
+      });
+      const coords = [FROM.coord, ...list.map(s => s.coord)];
+      if (list.length) {
+        const bounds = coords.reduce(
+          (b, c) => b.extend(c),
+          new maplibregl.LngLatBounds(coords[0], coords[0])
+        );
+        map.fitBounds(bounds, { padding: 80, duration: 800 });
+      }
+    }
+
+    function filterStop(el, cat) {
+      document.querySelectorAll('.ftab').forEach(t => t.classList.remove('on'));
+      el.classList.add('on');
+      renderStops(cat === 'all' ? STOPS : STOPS.filter(s => s.cat === cat));
+    }
+
+    /* ══ TRANSPORT ══ */
+    function setTransport(el, mode) {
+      document.querySelectorAll('.tbtn').forEach(b => b.classList.remove('active'));
+      el.classList.add('active');
+      const msgs = { Car: 'Showing car route', Walk: 'Walking route (very long!)', Plane: 'Showing flight routes', Train: 'Showing train options' };
+      showToast(msgs[mode] || 'Route updated');
+    }
+
+    /* ══ PANEL TOGGLE ══ */
+    function togglePanel() {
+      const isMobile = window.innerWidth <= 767;
+      const panel = document.getElementById('left-panel');
+      const toggle = document.getElementById('panel-toggle');
+      panelOpen_ = !panelOpen_;
+      if (isMobile) {
+        panel.classList.toggle('panel-hidden', !panelOpen_);
+        panel.classList.remove('collapsed');
+        toggle.classList.toggle('flipped', !panelOpen_);
+      } else {
+        panel.classList.toggle('collapsed', !panelOpen_);
+        toggle.classList.toggle('flipped', !panelOpen_);
+        setTimeout(() => map.resize(), 310);
+      }
+    }
+
+    /* ══ START TRIP (open in Google/Apple Maps) ══ */
+    function startTrip() {
+      openModal('mc-modal');
+    }
+
+    function confirmStartTrip(provider) {
+      closeModal('mc-modal');
+      const toLatLng = c => `${c[1]},${c[0]}`;
+      const origin = toLatLng(FROM.coord);
+      const destination = toLatLng(TO.coord);
+      const waypoints = STOPS.map(s => toLatLng(s.coord));
+
+      const url = provider === 'apple'
+        ? `https://maps.apple.com/?saddr=${origin}&daddr=${[...waypoints, destination].join('+to:')}&dirflg=d`
+        : `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&waypoints=${waypoints.join('|')}&travelmode=driving`;
+
+      window.open(url, '_blank');
+    }
+
+    /* ══ SWAP ══ */
+    function swapRoute() {
+      const fi = document.getElementById('from-input'), ti = document.getElementById('to-input');
+      [fi.value, ti.value] = [ti.value, fi.value];
+      showToast('Route swapped');
+    }
+    function doSearch() {
+      closeAllAC();
+      const fromVal = document.getElementById('from-input').value.trim();
+      const toVal = document.getElementById('to-input').value.trim();
+      if (!fromVal) { showToast('Please enter a starting location'); return; }
+      currentFrom = fromVal;
+      currentTo = toVal;
+      if (toVal) {
+        renderRouteMode(fromVal, toVal);
+        showToast(`Finding route: ${fromVal} → ${toVal}`);
+      } else {
+        renderExploreMode(fromVal);
+        showToast(`Exploring around ${fromVal}`);
+      }
+    }
+
+    function renderExploreMode(fromVal) {
+      cleanMap();
+      const d = PLACE_DATA.from;
+
+      document.getElementById('left-inner').innerHTML = `
+        <div class="place-dot-row">
+          <div class="p-dot green"></div>
+          <div class="place-name" onclick="openPlacePopup('from')">${fromVal}</div>
+        </div>
+        <div class="star-row">
+          <div class="stars">${SVG_STAR_FULL}${SVG_STAR_FULL}${SVG_STAR_FULL}${SVG_STAR_FULL}${SVG_STAR_HALF}</div>
+          <span class="star-val">4.5</span><span class="sep"></span><span class="rev-count">2,140 reviews</span>
+        </div>
+        <p class="place-desc">${d.desc}</p>
+        <div class="hr"></div>
+        <div class="filter-row">
+          <div class="ftab on" onclick="filterNearby(this,'all')">All</div>
+          <div class="ftab" onclick="filterNearby(this,'trek')"><svg viewBox="0 0 24 24"><path d="M3 17l4-8 5 6 3-3 4 5"/></svg>Trekking</div>
+          <div class="ftab" onclick="filterNearby(this,'lake')"><svg viewBox="0 0 24 24"><path d="M2 12s3-6 10-6 10 6 10 6-3 6-10 6-10-6-10-6z"/></svg>Lakes</div>
+          <div class="ftab" onclick="filterNearby(this,'town')"><svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>Towns</div>
+          <div class="ftab" onclick="filterNearby(this,'trail')"><svg viewBox="0 0 24 24"><path d="M3 12h18M3 6h18M3 18h18"/></svg>Trails</div>
+        </div>
+        <div id="nearby-list"></div>`;
+
+      renderNearbyList(NEARBY_PLACES);
+    }
+
+    function renderNearbyList(list) {
+      plotNearbyOnMap(list);
+      const container = document.getElementById('nearby-list');
+      if (!container) return;
+      if (!list.length) {
+        container.innerHTML = `<p style="font-size:13px;color:var(--g600);padding:20px 0;text-align:center;">No places in this category.</p>`;
+        return;
+      }
+      container.innerHTML = list.map(p => `
+        <div style="display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);">
+          <div class="tl-emoji" style="flex-shrink:0;">${p.emoji}</div>
+          <div style="flex:1;min-width:0;">
+            <div class="tl-name">${p.name}</div>
+            <div class="tl-meta" style="margin-bottom:4px;">
+              <div class="tl-rating">${SVG_STAR} ${p.rating}</div>
+              <span class="tl-pipe">|</span>
+              <span class="tl-dist">${SVG_PIN} ${p.dist}</span>
+              <span class="tl-pipe">|</span>
+              <span class="tl-dist">${SVG_CAR} ${p.time}</span>
+            </div>
+            <p style="font-size:11px;color:var(--g600);line-height:1.5;margin:0;">${p.desc}</p>
+          </div>
+          <span class="rp-tag" style="flex-shrink:0;margin-top:2px;">${p.tag}</span>
+        </div>`).join('');
+    }
+
+    function filterNearby(el, cat) {
+      document.querySelectorAll('#left-inner .filter-row .ftab').forEach(t => t.classList.remove('on'));
+      el.classList.add('on');
+      renderNearbyList(cat === 'all' ? NEARBY_PLACES : NEARBY_PLACES.filter(p => p.cat === cat));
+    }
+
+    function renderRouteMode(fromVal, toVal) {
+      const fd = PLACE_DATA.from;
+      const td = PLACE_DATA.to;
+
+      document.getElementById('left-inner').innerHTML = `
+        <div class="place-dot-row">
+          <div class="p-dot green"></div>
+          <div class="place-name" onclick="openPlacePopup('from')">${fromVal}</div>
+        </div>
+        <div class="star-row">
+          <div class="stars">${SVG_STAR_FULL}${SVG_STAR_FULL}${SVG_STAR_FULL}${SVG_STAR_FULL}${SVG_STAR_HALF}</div>
+          <span class="star-val">4.5</span><span class="sep"></span><span class="rev-count">2,140 reviews</span>
+        </div>
+        <p class="place-desc">${fd.desc}</p>
+        <div class="to-divider">
+          <div class="to-label">
+            <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+            to
+          </div>
+        </div>
+        <div class="place-dot-row">
+          <div class="p-dot red"></div>
+          <div class="place-name" onclick="openPlacePopup('to')">${toVal}</div>
+        </div>
+        <div class="star-row">
+          <div class="stars">${SVG_STAR_FULL}${SVG_STAR_FULL}${SVG_STAR_FULL}${SVG_STAR_FULL}${SVG_STAR_FULL}</div>
+          <span class="star-val">4.9</span><span class="sep"></span><span class="rev-count">987 reviews</span>
+        </div>
+        <p class="place-desc">${td.desc}</p>
+        <div class="hr"></div>
+        <div class="sec-lbl">Route overview</div>
+        <div class="stats-row">
+          <div class="stat-box"><div class="stat-lbl">Distance</div><div class="stat-val">2,460 km</div><div class="stat-note">total route</div></div>
+          <div class="stat-box"><div class="stat-lbl">Total driving</div><div class="stat-val">26 h</div><div class="stat-note">non-stop est.</div></div>
+          <div class="stat-box"><div class="stat-lbl">Stops</div><div class="stat-val">3 places</div><div class="stat-note">recommended</div></div>
+          <div class="stat-box"><div class="stat-lbl">Trip length</div><div class="stat-val">8–10 days</div><div class="stat-note">ideal duration</div></div>
+        </div>
+        <div class="hr"></div>
+        <div class="filter-row">
+          <div class="ftab on" onclick="filterStop(this,'all')">All stops</div>
+          <div class="ftab" onclick="filterStop(this,'trek')"><svg viewBox="0 0 24 24"><path d="M3 17l4-8 5 6 3-3 4 5"/></svg>Trekking</div>
+          <div class="ftab" onclick="filterStop(this,'lake')"><svg viewBox="0 0 24 24"><path d="M2 12s3-6 10-6 10 6 10 6-3 6-10 6-10-6-10-6z"/></svg>Lakes</div>
+          <div class="ftab" onclick="filterStop(this,'town')"><svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>Towns</div>
+          <div class="ftab" onclick="filterStop(this,'trail')"><svg viewBox="0 0 24 24"><path d="M3 12h18M3 6h18M3 18h18"/></svg>Trails</div>
+        </div>
+        <div class="timeline" id="stops-list"></div>`;
+
+      renderStops(STOPS);
+    }
+
+    /* ══ MOBILE DRAG SHEET ══ */
+    document.addEventListener('DOMContentLoaded', () => {
+      const panel = document.getElementById('left-panel');
+      let startY = 0, startH = 0, dragging = false;
+      panel.addEventListener('touchstart', e => {
+        if (window.innerWidth > 767) return;
+        startY = e.touches[0].clientY; startH = panel.getBoundingClientRect().height; dragging = true;
+      }, { passive: true });
+      panel.addEventListener('touchmove', e => {
+        if (!dragging || window.innerWidth > 767) return;
+        const dy = startY - e.touches[0].clientY;
+        panel.style.maxHeight = Math.min(Math.max(startH + dy, 50), window.innerHeight * .86) + 'px';
+      }, { passive: true });
+      panel.addEventListener('touchend', () => {
+        if (window.innerWidth > 767) return;
+        dragging = false;
+        const h = panel.getBoundingClientRect().height, vh = window.innerHeight;
+        panel.style.maxHeight = '';
+        panel.classList.toggle('sheet-expanded', h > vh * .40);
+      });
+    });
+
+    /* ══ OUTSIDE CLICK ══ */
+    document.addEventListener('click', e => {
+      if (!document.getElementById('u-pill')?.contains(e.target)) closeDropdown();
+      if (!document.getElementById('t10-btn')?.contains(e.target) && !document.getElementById('t10-drop')?.contains(e.target)) closeTop10();
+      if (!e.target.closest('.sp-seg')) closeAllAC();
+    });
+
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') closeCountrySearch();
+    });
+
+    /* ══ TOAST ══ */
+    let _tt;
+    function showToast(msg) {
+      clearTimeout(_tt);
+      let t = document.querySelector('.toast');
+      if (t) t.remove();
+      t = document.createElement('div'); t.className = 'toast'; t.textContent = msg;
+      document.body.appendChild(t);
+      _tt = setTimeout(() => t && t.remove(), 2800);
+    }
+
+    renderStops(STOPS);
+
+    function openSavePlan() {
+      document.getElementById('sp-name-input').value = '';
+      document.getElementById('sp-modal').classList.add('open');
+      document.body.style.overflow = 'hidden';
+      setTimeout(() => document.getElementById('sp-name-input').focus(), 50);
+    }
+    function closeSavePlan() {
+      document.getElementById('sp-modal').classList.remove('open');
+      document.body.style.overflow = '';
+    }
+    function confirmSavePlan() {
+      const name = document.getElementById('sp-name-input').value.trim();
+      if (!name) { document.getElementById('sp-name-input').focus(); return; }
+      closeSavePlan();
+      showToast(`Plan "${name}" saved!`);
+    }
+
+    function confirmLogout() {
+      document.getElementById('lo-modal').classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeLo() {
+      document.getElementById('lo-modal').classList.remove('open');
+      document.body.style.overflow = '';
+    }
+  </script>
+</body>
+
+</html>

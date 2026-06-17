@@ -1,0 +1,1862 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>makeTrip — Profile</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap"
+    rel="stylesheet">
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0
+    }
+
+    :root {
+      --white: #ffffff;
+      --black: #111111;
+      --g50: #f9f9f9;
+      --g100: #f2f2f2;
+      --g200: #e5e5e5;
+      --g300: #d0d0d0;
+      --g400: #ababab;
+      --g600: #6b6b6b;
+      --g800: #3d3d3d;
+      --red: #FF385C;
+      --red-d: #d62f4b;
+      --red-bg: #fff0f2;
+      --green: #00b37e;
+      --green-bg: #e6f9f3;
+      --blue: #0066cc;
+      --blue-bg: #eff6ff;
+      --amber: #b45309;
+      --amber-bg: #fffbeb;
+      --border: #e5e5e5;
+      --sh-xs: 0 1px 2px rgba(0, 0, 0, .05);
+      --sh-sm: 0 1px 4px rgba(0, 0, 0, .07), 0 2px 8px rgba(0, 0, 0, .04);
+      --sh-md: 0 4px 16px rgba(0, 0, 0, .10);
+      --sh-lg: 0 8px 32px rgba(0, 0, 0, .13);
+      --r-sm: 6px;
+      --r-md: 10px;
+      --r-lg: 14px;
+      --r-xl: 22px;
+      --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --nav-h: 64px;
+    }
+
+    html,
+    body {
+      height: 100%;
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--g50);
+      color: var(--black);
+      -webkit-font-smoothing: antialiased;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    /* ── NAV ── */
+    .nav {
+      height: var(--nav-h);
+      position: sticky;
+      top: 0;
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 28px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(255, 255, 255, .97);
+      backdrop-filter: blur(16px);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      text-decoration: none;
+    }
+
+    .logo-mark {
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+      background: var(--red);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .logo-mark svg {
+      width: 16px;
+      height: 16px;
+      fill: #fff
+    }
+
+    .logo-text {
+      font-size: 17px;
+      font-weight: 400;
+      letter-spacing: -.3px;
+      color: var(--black)
+    }
+
+    .logo-text strong {
+      font-weight: 700
+    }
+
+    .nav-back {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      text-decoration: none;
+      color: var(--g600);
+      font-size: 13px;
+      font-weight: 500;
+      padding: 6px 12px;
+      border-radius: var(--r-md);
+      border: 1px solid var(--border);
+      background: var(--white);
+      transition: background .15s, box-shadow .15s;
+    }
+
+    .nav-back:hover {
+      background: var(--g50);
+      box-shadow: var(--sh-xs)
+    }
+
+    .nav-back svg {
+      width: 14px;
+      height: 14px;
+      stroke: var(--g600);
+      fill: none;
+      stroke-width: 2.2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    /* ── PAGE ── */
+    .page {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 32px 20px 60px;
+    }
+
+    /* ── HERO ── */
+    .hero {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--r-xl);
+      box-shadow: var(--sh-sm);
+      padding: 28px;
+      display: flex;
+      align-items: center;
+      gap: 22px;
+      margin-bottom: 20px;
+    }
+
+    .hero-av {
+      width: 76px;
+      height: 76px;
+      border-radius: 50%;
+      background: var(--red);
+      color: #fff;
+      font-size: 26px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      box-shadow: 0 4px 14px rgba(255, 56, 92, .30);
+      position: relative;
+    }
+
+    .hero-av-edit {
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--white);
+      border: 1.5px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: var(--sh-xs);
+    }
+
+    .hero-av-edit svg {
+      width: 11px;
+      height: 11px;
+      stroke: var(--g800);
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+    }
+
+    .hero-info {
+      flex: 1;
+      min-width: 0
+    }
+
+    .hero-name {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -.3px;
+      color: var(--black);
+      margin-bottom: 3px;
+    }
+
+    .hero-email {
+      font-size: 13px;
+      color: var(--g600);
+      margin-bottom: 6px
+    }
+
+    .hero-since {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      color: var(--g600);
+      background: var(--g50);
+      border: 1px solid var(--border);
+      border-radius: 99px;
+      padding: 3px 10px;
+    }
+
+    .hero-since svg {
+      width: 11px;
+      height: 11px;
+      stroke: var(--g400);
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+    }
+
+    .hero-stats {
+      display: flex;
+      gap: 0;
+      margin-left: auto;
+      flex-shrink: 0;
+    }
+
+    .hstat {
+      text-align: center;
+      padding: 0 20px;
+      border-right: 1px solid var(--border);
+    }
+
+    .hstat:last-child {
+      border-right: none
+    }
+
+    .hstat-val {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--black);
+      letter-spacing: -.5px;
+    }
+
+    .hstat-lbl {
+      font-size: 10px;
+      color: var(--g600);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      margin-top: 2px
+    }
+
+    /* ── TABS ── */
+    .tabs-bar {
+      display: flex;
+      gap: 2px;
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: 4px;
+      box-shadow: var(--sh-xs);
+      margin-bottom: 20px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+
+    .tabs-bar::-webkit-scrollbar {
+      display: none
+    }
+
+    .tab-btn {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 9px 18px;
+      border-radius: var(--r-md);
+      border: none;
+      background: transparent;
+      font-family: var(--font);
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--g600);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background .15s, color .15s;
+    }
+
+    .tab-btn:hover {
+      background: var(--g50);
+      color: var(--black)
+    }
+
+    .tab-btn.active {
+      background: var(--black);
+      color: var(--white);
+      font-weight: 600;
+    }
+
+    .tab-btn svg {
+      width: 14px;
+      height: 14px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    /* ── PANEL ── */
+    .tab-panel {
+      display: none
+    }
+
+    .tab-panel.active {
+      display: block
+    }
+
+    /* ── CARD ── */
+    .card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      box-shadow: var(--sh-xs);
+      margin-bottom: 14px;
+    }
+
+    .card-hdr {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .card-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--black);
+    }
+
+    .card-sub {
+      font-size: 11px;
+      color: var(--g600);
+      margin-top: 2px;
+    }
+
+    .card-body {
+      padding: 20px
+    }
+
+    /* ── FORM ── */
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px
+    }
+
+    .form-full {
+      grid-column: span 2
+    }
+
+    .form-field {
+      display: flex;
+      flex-direction: column;
+      gap: 5px
+    }
+
+    .form-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--g600);
+    }
+
+    .form-input,
+    .form-select,
+    .form-textarea {
+      border: 1px solid var(--border);
+      border-radius: var(--r-sm);
+      padding: 9px 12px;
+      font-family: var(--font);
+      font-size: 13px;
+      color: var(--black);
+      background: var(--white);
+      outline: none;
+      transition: border-color .15s, box-shadow .15s;
+      width: 100%;
+    }
+
+    .form-input:focus,
+    .form-select:focus,
+    .form-textarea:focus {
+      border-color: var(--black);
+      box-shadow: 0 0 0 3px rgba(0, 0, 0, .06);
+    }
+
+    .form-textarea {
+      resize: vertical;
+      min-height: 80px;
+      line-height: 1.5
+    }
+
+    .form-hint {
+      font-size: 11px;
+      color: var(--g400)
+    }
+
+    .form-footer {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+      padding: 14px 20px;
+      border-top: 1px solid var(--border);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 9px 18px;
+      border-radius: var(--r-md);
+      border: none;
+      cursor: pointer;
+      font-family: var(--font);
+      font-size: 13px;
+      font-weight: 600;
+      transition: background .15s, box-shadow .15s;
+    }
+
+    .btn-primary {
+      background: var(--black);
+      color: var(--white)
+    }
+
+    .btn-primary:hover {
+      background: #222
+    }
+
+    .btn-secondary {
+      background: var(--white);
+      color: var(--black);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      background: var(--g50)
+    }
+
+    .btn-danger {
+      background: var(--red);
+      color: var(--white)
+    }
+
+    .btn-danger:hover {
+      background: var(--red-d)
+    }
+
+    .btn svg {
+      width: 13px;
+      height: 13px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    /* ── TOGGLE ── */
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 13px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .toggle-row:last-child {
+      border-bottom: none
+    }
+
+    .toggle-info {
+      flex: 1;
+      min-width: 0;
+      padding-right: 16px
+    }
+
+    .toggle-name {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--black)
+    }
+
+    .toggle-desc {
+      font-size: 11px;
+      color: var(--g600);
+      margin-top: 2px
+    }
+
+    .toggle {
+      position: relative;
+      width: 40px;
+      height: 22px;
+      flex-shrink: 0;
+    }
+
+    .toggle input {
+      opacity: 0;
+      width: 0;
+      height: 0
+    }
+
+    .toggle-track {
+      position: absolute;
+      inset: 0;
+      background: var(--g200);
+      border-radius: 99px;
+      cursor: pointer;
+      transition: background .2s;
+    }
+
+    .toggle-track::after {
+      content: '';
+      position: absolute;
+      left: 3px;
+      top: 3px;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, .2);
+      transition: transform .2s;
+    }
+
+    .toggle input:checked+.toggle-track {
+      background: var(--green)
+    }
+
+    .toggle input:checked+.toggle-track::after {
+      transform: translateX(18px)
+    }
+
+    /* ── SELECT ROW ── */
+    .pref-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 11px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .pref-row:last-child {
+      border-bottom: none
+    }
+
+    .pref-lbl {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--black)
+    }
+
+    .pref-select {
+      border: 1px solid var(--border);
+      border-radius: var(--r-sm);
+      padding: 6px 10px;
+      font-family: var(--font);
+      font-size: 12px;
+      color: var(--black);
+      background: var(--white);
+      outline: none;
+      cursor: pointer;
+      min-width: 130px;
+    }
+
+    /* ── PLANS ── */
+    .plans-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px
+    }
+
+    .plan-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      box-shadow: var(--sh-xs);
+      overflow: hidden;
+      cursor: pointer;
+      transition: box-shadow .15s, border-color .15s;
+    }
+
+    .plan-card:hover {
+      box-shadow: var(--sh-md);
+      border-color: var(--g300)
+    }
+
+    .plan-cover {
+      height: 100px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      font-size: 44px;
+    }
+
+    .plan-cover-ov {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to bottom, rgba(0, 0, 0, .04), rgba(0, 0, 0, .28));
+    }
+
+    .plan-badge {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 99px;
+    }
+
+    .plan-badge.active {
+      background: var(--green-bg);
+      color: var(--green)
+    }
+
+    .plan-badge.completed {
+      background: var(--blue-bg);
+      color: var(--blue)
+    }
+
+    .plan-badge.draft {
+      background: var(--g100);
+      color: var(--g600)
+    }
+
+    .plan-body {
+      padding: 13px 14px
+    }
+
+    .plan-route {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--black);
+      margin-bottom: 5px;
+    }
+
+    .plan-route svg {
+      width: 11px;
+      height: 11px;
+      stroke: var(--g400);
+      fill: none;
+      stroke-width: 2.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      flex-shrink: 0;
+    }
+
+    .plan-meta {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 11px;
+      color: var(--g600);
+    }
+
+    .plan-meta span {
+      display: flex;
+      align-items: center;
+      gap: 4px
+    }
+
+    .plan-meta svg {
+      width: 11px;
+      height: 11px;
+      stroke: var(--g400);
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+    }
+
+    .new-plan-card {
+      background: var(--white);
+      border: 2px dashed var(--border);
+      border-radius: var(--r-lg);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 170px;
+      cursor: pointer;
+      color: var(--g400);
+      font-size: 13px;
+      font-weight: 500;
+      transition: border-color .15s, color .15s, background .15s;
+    }
+
+    .new-plan-card:hover {
+      border-color: var(--black);
+      color: var(--black);
+      background: var(--g50);
+    }
+
+    .new-plan-card svg {
+      width: 26px;
+      height: 26px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 1.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    /* ── HISTORY ── */
+    .hist-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .hbox {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: 16px;
+      text-align: center;
+      box-shadow: var(--sh-xs);
+    }
+
+    .hbox-val {
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--black);
+      letter-spacing: -.5px
+    }
+
+    .hbox-lbl {
+      font-size: 11px;
+      color: var(--g600);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      margin-top: 3px
+    }
+
+    .hbox-icon {
+      font-size: 20px;
+      margin-bottom: 6px
+    }
+
+    .timeline-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      box-shadow: var(--sh-xs);
+      overflow: hidden;
+    }
+
+    .trip-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 15px 20px;
+      border-bottom: 1px solid var(--border);
+      transition: background .12s;
+      cursor: pointer;
+    }
+
+    .trip-row:last-child {
+      border-bottom: none
+    }
+
+    .trip-row:hover {
+      background: var(--g50)
+    }
+
+    .trip-dot {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+
+    .trip-info {
+      flex: 1;
+      min-width: 0
+    }
+
+    .trip-route {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--black);
+      margin-bottom: 3px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .trip-route svg {
+      width: 10px;
+      height: 10px;
+      stroke: var(--g400);
+      fill: none;
+      stroke-width: 2.5;
+      stroke-linecap: round;
+    }
+
+    .trip-meta {
+      font-size: 11px;
+      color: var(--g600)
+    }
+
+    .trip-meta b {
+      color: var(--black);
+      font-weight: 600
+    }
+
+    .trip-date {
+      font-size: 11px;
+      color: var(--g600);
+      white-space: nowrap;
+      text-align: right;
+    }
+
+    .trip-date strong {
+      display: block;
+      color: var(--black);
+      font-size: 12px;
+      font-weight: 700
+    }
+
+    /* ── DANGER ZONE ── */
+    .danger-card {
+      border: 1px solid #fca5a5;
+      border-radius: var(--r-lg);
+      overflow: hidden;
+    }
+
+    .danger-hdr {
+      padding: 13px 20px;
+      border-bottom: 1px solid #fca5a5;
+      background: #fff5f5;
+    }
+
+    .danger-hdr-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #b91c1c
+    }
+
+    .danger-hdr-sub {
+      font-size: 11px;
+      color: #ef4444;
+      margin-top: 2px
+    }
+
+    .danger-body {
+      padding: 16px 20px;
+      background: var(--white)
+    }
+
+    .danger-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .danger-row:last-child {
+      border-bottom: none
+    }
+
+    .danger-row-info {
+      font-size: 13px;
+      color: var(--g800)
+    }
+
+    .danger-row-desc {
+      font-size: 11px;
+      color: var(--g600);
+      margin-top: 2px
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 640px) {
+      .hero {
+        flex-wrap: wrap
+      }
+
+      .hero-stats {
+        margin-left: 0;
+        width: 100%
+      }
+
+      .hstat {
+        flex: 1;
+        padding: 0 12px
+      }
+
+      .form-grid {
+        grid-template-columns: 1fr
+      }
+
+      .form-full {
+        grid-column: span 1
+      }
+
+      .plans-grid {
+        grid-template-columns: 1fr
+      }
+
+      .hist-stats {
+        grid-template-columns: repeat(3, 1fr)
+      }
+
+      .nav {
+        padding: 0 16px
+      }
+
+      .page {
+        padding: 20px 12px 40px
+      }
+    }
+
+    /* ── logout confirm dialog ── */
+    .lo-bg {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .6);
+      backdrop-filter: blur(4px);
+      z-index: 9500;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .lo-bg.open {
+      display: flex
+    }
+
+    .lo-dialog {
+      background: #fff;
+      border-radius: 22px;
+      width: 100%;
+      max-width: 380px;
+      overflow: hidden;
+      box-shadow: 0 24px 64px rgba(0, 0, 0, .28);
+      animation: loSlideUp .22s cubic-bezier(.4, 0, .2, 1);
+    }
+
+    @keyframes loSlideUp {
+      from {
+        opacity: 0;
+        transform: translateY(16px) scale(.96)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1)
+      }
+    }
+
+    .lo-top {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 32px 28px 24px;
+      text-align: center;
+    }
+
+    .lo-icon-wrap {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: #fff0f2;
+      border: 1.5px solid #fecdd3;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 18px;
+    }
+
+    .lo-icon-wrap svg {
+      width: 24px;
+      height: 24px;
+      stroke: #FF385C;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .lo-title {
+      font-size: 17px;
+      font-weight: 800;
+      color: #111;
+      letter-spacing: -.02em;
+      margin-bottom: 8px
+    }
+
+    .lo-sub {
+      font-size: 13px;
+      color: #6b6b6b;
+      line-height: 1.55;
+      max-width: 280px
+    }
+
+    .lo-actions {
+      display: flex;
+      border-top: 1px solid #e5e5e5
+    }
+
+    .lo-cancel {
+      flex: 1;
+      padding: 16px;
+      background: none;
+      border: none;
+      border-right: 1px solid #e5e5e5;
+      font-family: var(--font);
+      font-size: 14px;
+      font-weight: 600;
+      color: #6b6b6b;
+      cursor: pointer;
+      transition: background .15s, color .15s;
+    }
+
+    .lo-cancel:hover {
+      background: #f9f9f9;
+      color: #111
+    }
+
+    .lo-confirm {
+      flex: 1;
+      padding: 16px;
+      background: none;
+      border: none;
+      font-family: var(--font);
+      font-size: 14px;
+      font-weight: 700;
+      color: #FF385C;
+      cursor: pointer;
+      transition: background .15s;
+    }
+
+    .lo-confirm:hover {
+      background: #fff0f2
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ══ NAV ══ -->
+  <nav class="nav">
+    <a class="logo" href="/">
+      <div class="logo-mark">
+        <svg viewBox="0 0 20 20">
+          <path
+            d="M10 1.5C6.41 1.5 3.5 4.41 3.5 8c0 4.9 6.5 10.5 6.5 10.5S16.5 12.9 16.5 8c0-3.59-2.91-6.5-6.5-6.5zm0 8.75a2.25 2.25 0 1 1 0-4.5 2.25 2.25 0 0 1 0 4.5z" />
+        </svg>
+      </div>
+      <span class="logo-text">make<strong>Trip</strong></span>
+    </a>
+    <a class="nav-back" href="/home">
+      <svg viewBox="0 0 24 24">
+        <polyline points="15 18 9 12 15 6" />
+      </svg>
+      Back to map
+    </a>
+  </nav>
+
+  <!-- ══ PAGE ══ -->
+  <div class="page">
+
+    <!-- HERO -->
+    <div class="hero">
+      <div class="hero-av">
+        AT
+        <div class="hero-av-edit" title="Change photo">
+          <svg viewBox="0 0 24 24">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+          </svg>
+        </div>
+      </div>
+      <div class="hero-info">
+        <div class="hero-name">Alex Traveller</div>
+        <div class="hero-email">alex@maketrip.app</div>
+        <div class="hero-since">
+          <svg viewBox="0 0 24 24">
+            <rect x="3" y="4" width="18" height="18" rx="2" />
+            <line x1="16" y1="2" x2="16" y2="6" />
+            <line x1="8" y1="2" x2="8" y2="6" />
+            <line x1="3" y1="10" x2="21" y2="10" />
+          </svg>
+          Member since March 2022
+        </div>
+      </div>
+      <div class="hero-stats">
+        <div class="hstat">
+          <div class="hstat-val">8</div>
+          <div class="hstat-lbl">Trips</div>
+        </div>
+        <div class="hstat">
+          <div class="hstat-val">12</div>
+          <div class="hstat-lbl">Countries</div>
+        </div>
+        <div class="hstat">
+          <div class="hstat-val">47</div>
+          <div class="hstat-lbl">Places</div>
+        </div>
+        <div class="hstat">
+          <div class="hstat-val">23</div>
+          <div class="hstat-lbl">Reviews</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TABS -->
+    <div class="tabs-bar">
+      <button class="tab-btn active" data-tab="profile" onclick="switchTab('profile')">
+        <svg viewBox="0 0 24 24">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+          <circle cx="12" cy="7" r="4" />
+        </svg>
+        Profile
+      </button>
+      <button class="tab-btn" data-tab="plans" onclick="switchTab('plans')">
+        <svg viewBox="0 0 24 24">
+          <path d="M9 11l3 3L22 4" />
+          <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+        </svg>
+        My Plans
+      </button>
+      <button class="tab-btn" data-tab="history" onclick="switchTab('history')">
+        <svg viewBox="0 0 24 24">
+          <path d="M12 8v4l3 3m6-3a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" />
+        </svg>
+        History
+      </button>
+      <button class="tab-btn" data-tab="settings" onclick="switchTab('settings')">
+        <svg viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="3" />
+          <path
+            d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+        </svg>
+        Settings
+      </button>
+    </div>
+
+    <!-- ══ PROFILE TAB ══ -->
+    <div class="tab-panel active" id="tab-profile">
+
+      <div class="card">
+        <div class="card-hdr">
+          <div>
+            <div class="card-title">Personal Information</div>
+            <div class="card-sub">Update your display name, bio and contact details</div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="form-grid">
+            <div class="form-field">
+              <label class="form-label">First name</label>
+              <input class="form-input" type="text" value="Alex">
+            </div>
+            <div class="form-field">
+              <label class="form-label">Last name</label>
+              <input class="form-input" type="text" value="Traveller">
+            </div>
+            <div class="form-field">
+              <label class="form-label">Email</label>
+              <input class="form-input" type="email" value="alex@maketrip.app">
+            </div>
+            <div class="form-field">
+              <label class="form-label">Phone</label>
+              <input class="form-input" type="tel" placeholder="+1 555 000 0000">
+            </div>
+            <div class="form-field form-full">
+              <label class="form-label">Bio</label>
+              <textarea class="form-textarea"
+                placeholder="Tell other travellers about yourself…">Passionate traveller with a love for Patagonia, street food, and off-the-beaten-path adventures. Always planning the next trip.</textarea>
+              <span class="form-hint">Shown on your public profile and reviews</span>
+            </div>
+            <div class="form-field">
+              <label class="form-label">Home city</label>
+              <input class="form-input" type="text" placeholder="e.g. Buenos Aires">
+            </div>
+            <div class="form-field">
+              <label class="form-label">Nationality</label>
+              <select class="form-select">
+                <option>🇦🇷 Argentina</option>
+                <option>🇨🇱 Chile</option>
+                <option>🇧🇷 Brazil</option>
+                <option>🇺🇸 United States</option>
+                <option>🇬🇧 United Kingdom</option>
+                <option>🇩🇪 Germany</option>
+                <option>🇫🇷 France</option>
+                <option>🇯🇵 Japan</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="form-footer">
+          <button class="btn btn-secondary">Discard</button>
+          <button class="btn btn-primary" onclick="showToast('Profile saved!')">
+            <svg viewBox="0 0 24 24">
+              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+              <polyline points="17 21 17 13 7 13 7 21" />
+              <polyline points="7 3 7 8 15 8" />
+            </svg>
+            Save changes
+          </button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-hdr">
+          <div>
+            <div class="card-title">Travel Preferences</div>
+            <div class="card-sub">Help us personalise your trip recommendations</div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="form-grid">
+            <div class="form-field">
+              <label class="form-label">Travel style</label>
+              <select class="form-select">
+                <option>🎒 Backpacker</option>
+                <option selected>🏨 Comfort traveller</option>
+                <option>💎 Luxury</option>
+                <option>🌿 Eco traveller</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label class="form-label">Preferred activities</label>
+              <select class="form-select">
+                <option>🏔️ Adventure & trekking</option>
+                <option selected>🍽️ Food & culture</option>
+                <option>🏖️ Beach & relaxation</option>
+                <option>🏛️ History & heritage</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label class="form-label">Typical trip length</label>
+              <select class="form-select">
+                <option>Weekend (1–3 days)</option>
+                <option selected>Short trip (4–7 days)</option>
+                <option>Two weeks</option>
+                <option>Month+</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label class="form-label">Travel companions</label>
+              <select class="form-select">
+                <option>Solo</option>
+                <option selected>Couple</option>
+                <option>Friends group</option>
+                <option>Family with kids</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="form-footer">
+          <button class="btn btn-primary" onclick="showToast('Preferences saved!')">
+            <svg viewBox="0 0 24 24">
+              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+              <polyline points="17 21 17 13 7 13 7 21" />
+              <polyline points="7 3 7 8 15 8" />
+            </svg>
+            Save preferences
+          </button>
+        </div>
+      </div>
+
+    </div><!-- /tab-profile -->
+
+    <!-- ══ MY PLANS TAB ══ -->
+    <div class="tab-panel" id="tab-plans">
+
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+        <div>
+          <div style="font-size:15px;font-weight:700;color:var(--black)">Your trip plans</div>
+          <div style="font-size:12px;color:var(--g600);margin-top:2px">3 plans · 2 active</div>
+        </div>
+        <button class="btn btn-primary" onclick="showToast('Opening trip builder…')">
+          <svg viewBox="0 0 24 24">
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+          New plan
+        </button>
+      </div>
+
+      <div class="plans-grid">
+
+        <div class="plan-card" onclick="showToast('Opening: Santiago → Puerto Natales')">
+          <div class="plan-cover" style="background:linear-gradient(135deg,#1a5c4a,#0a3a18)">
+            <div class="plan-cover-ov"></div>
+            <span style="position:relative;z-index:1">🧊</span>
+            <div class="plan-badge active">Active</div>
+          </div>
+          <div class="plan-body">
+            <div class="plan-route">
+              Santiago
+              <svg viewBox="0 0 24 24">
+                <line x1="5" y1="12" x2="19" y2="12" />
+                <polyline points="12 5 19 12 12 19" />
+              </svg>
+              Puerto Natales
+            </div>
+            <div class="plan-meta">
+              <span>
+                <svg viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="10" />
+                  <polyline points="12 6 12 12 16 14" />
+                </svg>
+                10 stops
+              </span>
+              <span>
+                <svg viewBox="0 0 24 24">
+                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                  <circle cx="12" cy="10" r="3" />
+                </svg>
+                1,285 km
+              </span>
+              <span>Last edited 2 days ago</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="plan-card" onclick="showToast('Opening: Buenos Aires → Ushuaia')">
+          <div class="plan-cover" style="background:linear-gradient(135deg,#1e3a5f,#0a1929)">
+            <div class="plan-cover-ov"></div>
+            <span style="position:relative;z-index:1">🌨️</span>
+            <div class="plan-badge completed">Completed</div>
+          </div>
+          <div class="plan-body">
+            <div class="plan-route">
+              Buenos Aires
+              <svg viewBox="0 0 24 24">
+                <line x1="5" y1="12" x2="19" y2="12" />
+                <polyline points="12 5 19 12 12 19" />
+              </svg>
+              Ushuaia
+            </div>
+            <div class="plan-meta">
+              <span>
+                <svg viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="10" />
+                  <polyline points="12 6 12 12 16 14" />
+                </svg>
+                7 stops
+              </span>
+              <span>
+                <svg viewBox="0 0 24 24">
+                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                  <circle cx="12" cy="10" r="3" />
+                </svg>
+                3,200 km
+              </span>
+              <span>January 2024</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="plan-card" onclick="showToast('Opening: Cusco → Machu Picchu')">
+          <div class="plan-cover" style="background:linear-gradient(135deg,#78350f,#451a03)">
+            <div class="plan-cover-ov"></div>
+            <span style="position:relative;z-index:1">🗿</span>
+            <div class="plan-badge draft">Draft</div>
+          </div>
+          <div class="plan-body">
+            <div class="plan-route">
+              Cusco
+              <svg viewBox="0 0 24 24">
+                <line x1="5" y1="12" x2="19" y2="12" />
+                <polyline points="12 5 19 12 12 19" />
+              </svg>
+              Machu Picchu
+            </div>
+            <div class="plan-meta">
+              <span>
+                <svg viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="10" />
+                  <polyline points="12 6 12 12 16 14" />
+                </svg>
+                3 stops
+              </span>
+              <span>
+                <svg viewBox="0 0 24 24">
+                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                  <circle cx="12" cy="10" r="3" />
+                </svg>
+                120 km
+              </span>
+              <span>In progress</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="new-plan-card" onclick="showToast('Opening trip builder…')">
+          <svg viewBox="0 0 24 24">
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+          Start a new plan
+        </div>
+
+      </div>
+    </div><!-- /tab-plans -->
+
+    <!-- ══ HISTORY TAB ══ -->
+    <div class="tab-panel" id="tab-history">
+
+      <div class="hist-stats">
+        <div class="hbox">
+          <div class="hbox-icon">🌍</div>
+          <div class="hbox-val">12</div>
+          <div class="hbox-lbl">Countries visited</div>
+        </div>
+        <div class="hbox">
+          <div class="hbox-icon">📍</div>
+          <div class="hbox-val">47</div>
+          <div class="hbox-lbl">Places explored</div>
+        </div>
+        <div class="hbox">
+          <div class="hbox-icon">🛣️</div>
+          <div class="hbox-val">8.4k</div>
+          <div class="hbox-lbl">km travelled</div>
+        </div>
+      </div>
+
+      <div class="timeline-card">
+
+        <div class="trip-row">
+          <div class="trip-dot" style="background:#e6f9f3">🧊</div>
+          <div class="trip-info">
+            <div class="trip-route">
+              Buenos Aires
+              <svg viewBox="0 0 24 24">
+                <line x1="5" y1="12" x2="19" y2="12" />
+                <polyline points="12 5 19 12 12 19" />
+              </svg>
+              Ushuaia
+            </div>
+            <div class="trip-meta"><b>7 stops</b> · 3,200 km · 12 days · Argentina</div>
+          </div>
+          <div class="trip-date"><strong>Jan 2024</strong>Completed</div>
+        </div>
+
+        <div class="trip-row">
+          <div class="trip-dot" style="background:#eff6ff">⛰️</div>
+          <div class="trip-info">
+            <div class="trip-route">
+              Santiago
+              <svg viewBox="0 0 24 24">
+                <line x1="5" y1="12" x2="19" y2="12" />
+                <polyline points="12 5 19 12 12 19" />
+              </svg>
+              Torres del Paine
+            </div>
+            <div class="trip-meta"><b>5 stops</b> · 2,100 km · 8 days · Chile</div>
+          </div>
+          <div class="trip-date"><strong>Mar 2023</strong>Completed</div>
+        </div>
+
+        <div class="trip-row">
+          <div class="trip-dot" style="background:#fdf4ff">🗿</div>
+          <div class="trip-info">
+            <div class="trip-route">
+              Lima
+              <svg viewBox="0 0 24 24">
+                <line x1="5" y1="12" x2="19" y2="12" />
+                <polyline points="12 5 19 12 12 19" />
+              </svg>
+              Machu Picchu
+            </div>
+            <div class="trip-meta"><b>4 stops</b> · 1,100 km · 5 days · Peru</div>
+          </div>
+          <div class="trip-date"><strong>Sep 2022</strong>Completed</div>
+        </div>
+
+        <div class="trip-row">
+          <div class="trip-dot" style="background:#fff7ed">🌋</div>
+          <div class="trip-info">
+            <div class="trip-route">
+              Mendoza
+              <svg viewBox="0 0 24 24">
+                <line x1="5" y1="12" x2="19" y2="12" />
+                <polyline points="12 5 19 12 12 19" />
+              </svg>
+              Bariloche
+            </div>
+            <div class="trip-meta"><b>3 stops</b> · 690 km · 4 days · Argentina</div>
+          </div>
+          <div class="trip-date"><strong>Feb 2022</strong>Completed</div>
+        </div>
+
+        <div class="trip-row">
+          <div class="trip-dot" style="background:#fef9c3">🏰</div>
+          <div class="trip-info">
+            <div class="trip-route">
+              Bogotá
+              <svg viewBox="0 0 24 24">
+                <line x1="5" y1="12" x2="19" y2="12" />
+                <polyline points="12 5 19 12 12 19" />
+              </svg>
+              Cartagena
+            </div>
+            <div class="trip-meta"><b>5 stops</b> · 1,050 km · 7 days · Colombia</div>
+          </div>
+          <div class="trip-date"><strong>Nov 2021</strong>Completed</div>
+        </div>
+
+      </div>
+    </div><!-- /tab-history -->
+
+    <!-- ══ SETTINGS TAB ══ -->
+    <div class="tab-panel" id="tab-settings">
+
+      <!-- App preferences -->
+      <div class="card" style="margin-bottom:14px">
+        <div class="card-hdr">
+          <div>
+            <div class="card-title">App Preferences</div>
+            <div class="card-sub">Language, currency and display options</div>
+          </div>
+        </div>
+        <div class="card-body" style="padding:6px 20px">
+          <div class="pref-row">
+            <div class="pref-lbl">Language</div>
+            <select class="pref-select">
+              <option selected>🇬🇧 English</option>
+              <option>🇪🇸 Español</option>
+              <option>🇫🇷 Français</option>
+              <option>🇩🇪 Deutsch</option>
+              <option>🇯🇵 日本語</option>
+              <option>🇵🇹 Português</option>
+            </select>
+          </div>
+          <div class="pref-row">
+            <div class="pref-lbl">Currency</div>
+            <select class="pref-select">
+              <option selected>USD — US Dollar</option>
+              <option>EUR — Euro</option>
+              <option>GBP — British Pound</option>
+              <option>ARS — Argentine Peso</option>
+              <option>CLP — Chilean Peso</option>
+              <option>JPY — Japanese Yen</option>
+            </select>
+          </div>
+          <div class="pref-row">
+            <div class="pref-lbl">Distance units</div>
+            <select class="pref-select">
+              <option selected>Kilometres (km)</option>
+              <option>Miles (mi)</option>
+            </select>
+          </div>
+          <div class="pref-row">
+            <div class="pref-lbl">Map style</div>
+            <select class="pref-select">
+              <option selected>Light (default)</option>
+              <option>Dark</option>
+              <option>Satellite</option>
+              <option>Terrain</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-footer">
+          <button class="btn btn-primary" onclick="showToast('Preferences saved!')">Save preferences</button>
+        </div>
+      </div>
+
+      <!-- Notifications -->
+      <div class="card" style="margin-bottom:14px">
+        <div class="card-hdr">
+          <div>
+            <div class="card-title">Notifications</div>
+            <div class="card-sub">Choose what updates you receive</div>
+          </div>
+        </div>
+        <div class="card-body" style="padding:0 20px">
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <div class="toggle-name">Weekly travel digest</div>
+              <div class="toggle-desc">Top destinations and curated route ideas every Friday</div>
+            </div>
+            <label class="toggle"><input type="checkbox" checked>
+              <div class="toggle-track"></div>
+            </label>
+          </div>
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <div class="toggle-name">Trip reminders</div>
+              <div class="toggle-desc">Alerts before your planned departure dates</div>
+            </div>
+            <label class="toggle"><input type="checkbox" checked>
+              <div class="toggle-track"></div>
+            </label>
+          </div>
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <div class="toggle-name">New destinations nearby</div>
+              <div class="toggle-desc">Notify me when new stops are added along my saved routes</div>
+            </div>
+            <label class="toggle"><input type="checkbox">
+              <div class="toggle-track"></div>
+            </label>
+          </div>
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <div class="toggle-name">Review replies</div>
+              <div class="toggle-desc">Email me when someone replies to my reviews</div>
+            </div>
+            <label class="toggle"><input type="checkbox" checked>
+              <div class="toggle-track"></div>
+            </label>
+          </div>
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <div class="toggle-name">Promotional offers</div>
+              <div class="toggle-desc">Partner deals, discounts and seasonal campaigns</div>
+            </div>
+            <label class="toggle"><input type="checkbox">
+              <div class="toggle-track"></div>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Privacy -->
+      <div class="card" style="margin-bottom:14px">
+        <div class="card-hdr">
+          <div>
+            <div class="card-title">Privacy</div>
+            <div class="card-sub">Control what other travellers can see</div>
+          </div>
+        </div>
+        <div class="card-body" style="padding:0 20px">
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <div class="toggle-name">Public profile</div>
+              <div class="toggle-desc">Other users can see your profile page and stats</div>
+            </div>
+            <label class="toggle"><input type="checkbox" checked>
+              <div class="toggle-track"></div>
+            </label>
+          </div>
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <div class="toggle-name">Share trip history</div>
+              <div class="toggle-desc">Let others see the trips and destinations you've completed</div>
+            </div>
+            <label class="toggle"><input type="checkbox" checked>
+              <div class="toggle-track"></div>
+            </label>
+          </div>
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <div class="toggle-name">Show visited places on map</div>
+              <div class="toggle-desc">Display a heatmap of your explored locations publicly</div>
+            </div>
+            <label class="toggle"><input type="checkbox">
+              <div class="toggle-track"></div>
+            </label>
+          </div>
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <div class="toggle-name">Allow data for recommendations</div>
+              <div class="toggle-desc">Use your history to improve destination suggestions</div>
+            </div>
+            <label class="toggle"><input type="checkbox" checked>
+              <div class="toggle-track"></div>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Account -->
+      <div class="card" style="margin-bottom:14px">
+        <div class="card-hdr">
+          <div>
+            <div class="card-title">Account</div>
+            <div class="card-sub">Password and account management</div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="form-grid">
+            <div class="form-field">
+              <label class="form-label">Current password</label>
+              <input class="form-input" type="password" placeholder="••••••••">
+            </div>
+            <div></div>
+            <div class="form-field">
+              <label class="form-label">New password</label>
+              <input class="form-input" type="password" placeholder="••••••••">
+            </div>
+            <div class="form-field">
+              <label class="form-label">Confirm new password</label>
+              <input class="form-input" type="password" placeholder="••••••••">
+            </div>
+          </div>
+        </div>
+        <div class="form-footer" style="justify-content:space-between">
+          <button class="btn btn-secondary" onclick="showToast('Data export requested. Check your email.')">
+            <svg viewBox="0 0 24 24">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            Export my data
+          </button>
+          <button class="btn btn-primary" onclick="showToast('Password updated!')">Update password</button>
+        </div>
+      </div>
+
+      <!-- Danger zone -->
+      <div class="danger-card">
+        <div class="danger-hdr">
+          <div class="danger-hdr-title">Danger zone</div>
+          <div class="danger-hdr-sub">These actions are permanent and cannot be undone</div>
+        </div>
+        <div class="danger-body">
+          <div class="danger-row">
+            <div>
+              <div class="danger-row-info">Log out of all devices</div>
+              <div class="danger-row-desc">Revoke all active sessions except this one</div>
+            </div>
+            <button class="btn btn-secondary" style="color:#b91c1c;border-color:#fca5a5" onclick="confirmLogout()">Log
+              out everywhere</button>
+          </div>
+          <div class="danger-row">
+            <div>
+              <div class="danger-row-info">Delete account</div>
+              <div class="danger-row-desc">Permanently remove your account, plans and all data</div>
+            </div>
+            <button class="btn btn-danger"
+              onclick="if(confirm('Are you sure? This cannot be undone.'))showToast('Account deletion requested.')">Delete
+              account</button>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /tab-settings -->
+
+  </div><!-- /page -->
+
+  <!-- TOAST -->
+  <div id="toast" style="
+    display:none;position:fixed;bottom:28px;left:50%;transform:translateX(-50%);
+    background:var(--black);color:#fff;padding:10px 20px;border-radius:99px;
+    font-size:13px;font-weight:500;box-shadow:var(--sh-lg);z-index:9999;
+    white-space:nowrap;animation:fadeIn .2s ease;
+  "></div>
+
+  <style>
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(8px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0)
+      }
+    }
+  </style>
+
+  <script>
+    function switchTab(name) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === `tab-${name}`));
+    }
+
+    // Activate tab from URL param (?tab=settings etc.)
+    const urlTab = new URLSearchParams(location.search).get('tab');
+    if (urlTab) switchTab(urlTab);
+
+    let _tt;
+    function showToast(msg) {
+      clearTimeout(_tt);
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.style.display = 'block';
+      t.style.animation = 'none';
+      requestAnimationFrame(() => { t.style.animation = 'fadeIn .2s ease'; });
+      _tt = setTimeout(() => { t.style.display = 'none'; }, 2800);
+    }
+
+    function confirmLogout() {
+      document.getElementById('lo-modal').classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeLo() {
+      document.getElementById('lo-modal').classList.remove('open');
+      document.body.style.overflow = '';
+    }
+  </script>
+
+  <!-- ══ LOGOUT CONFIRM ══ -->
+  <div class="lo-bg" id="lo-modal" onclick="if(event.target===this)closeLo()">
+    <div class="lo-dialog">
+      <div class="lo-top">
+        <div class="lo-icon-wrap">
+          <svg viewBox="0 0 24 24">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+            <polyline points="16 17 21 12 16 7" />
+            <line x1="21" y1="12" x2="9" y2="12" />
+          </svg>
+        </div>
+        <div class="lo-title">Log out?</div>
+        <div class="lo-sub">You'll be redirected to the home page. Your saved plans won't be affected.</div>
+      </div>
+      <div class="lo-actions">
+        <button class="lo-cancel" onclick="closeLo()">Stay</button>
+        <button class="lo-confirm" onclick="window.location.href='/home'">Log out</button>
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>
