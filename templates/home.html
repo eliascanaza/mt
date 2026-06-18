@@ -10,8 +10,8 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap"
     rel="stylesheet">
-  <link href="https://unpkg.com/maplibre-gl@4.0.0/dist/maplibre-gl.css" rel="stylesheet" />
-  <script src="https://unpkg.com/maplibre-gl@4.0.0/dist/maplibre-gl.js"></script>
+  <script
+    src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&libraries=marker&v=weekly"></script>
   <style>
     /* ── reset ── */
     *,
@@ -405,18 +405,6 @@
       background: var(--g50)
     }
 
-    .ac-icon {
-      width: 30px;
-      height: 30px;
-      border-radius: var(--r-sm);
-      background: var(--g100);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 15px;
-      flex-shrink: 0
-    }
-
     .ac-info {
       flex: 1;
       min-width: 0
@@ -769,6 +757,50 @@
 
     .left-inner {
       padding: 22px 20px 32px
+    }
+
+    /* ── search empty state ── */
+    .search-empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding: 60px 16px;
+      color: var(--g600)
+    }
+
+    .search-empty-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: var(--g100);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 16px
+    }
+
+    .search-empty-icon svg {
+      width: 22px;
+      height: 22px;
+      stroke: var(--g400);
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round
+    }
+
+    .search-empty-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--black);
+      margin-bottom: 6px
+    }
+
+    .search-empty-sub {
+      font-size: 12px;
+      line-height: 1.6;
+      max-width: 220px
     }
 
     /* ── ranking panel ── */
@@ -1539,6 +1571,10 @@
       height: 100%
     }
 
+    .start-trip-btn {
+      display: none
+    }
+
     /* panel toggle */
     .panel-toggle {
       position: absolute;
@@ -1727,12 +1763,6 @@
 
     .zoom-btn:hover {
       background: var(--g50)
-    }
-
-    .maplibregl-ctrl-group {
-      border-radius: var(--r-md) !important;
-      border: 1px solid var(--border) !important;
-      box-shadow: var(--sh-sm) !important
     }
 
     /* markers */
@@ -3150,7 +3180,7 @@
       bottom: 100px;
       left: 50%;
       transform: translateX(-50%);
-      background: var(--black);
+      background: var(--green);
       color: #fff;
       padding: 11px 22px;
       border-radius: 99px;
@@ -3418,13 +3448,6 @@
         letter-spacing: .3px
       }
 
-      .st-trip {
-        font-size: 11px;
-        font-weight: 500;
-        color: rgba(255, 255, 255, .85);
-        text-transform: lowercase
-      }
-
       .transport-box {
         top: 10px;
         left: 10px;
@@ -3568,7 +3591,7 @@
           </svg></div>
         <div class="sp-wrap">
           <span class="sp-label">From</span>
-          <input class="sp-input" id="from-input" type="text" value="Santiago, Chile" placeholder="City or place…"
+          <input class="sp-input" id="from-input" type="text" value="" placeholder="City or place…"
             oninput="handleAC('from',this.value);updateClear('from',this.value)"
             onfocus="handleAC('from',this.value);showClear('from')" onblur="setTimeout(()=>hideClear('from'),150)"
             autocomplete="off" />
@@ -3592,7 +3615,7 @@
           </svg></div>
         <div class="sp-wrap">
           <span class="sp-label">To</span>
-          <input class="sp-input" id="to-input" type="text" value="Puerto Natales" placeholder="Destination…"
+          <input class="sp-input" id="to-input" type="text" value="" placeholder="Destination…"
             oninput="handleAC('to',this.value);updateClear('to',this.value)"
             onfocus="handleAC('to',this.value);showClear('to')" onblur="setTimeout(()=>hideClear('to'),150)"
             autocomplete="off" />
@@ -3701,7 +3724,7 @@
   <div class="main">
 
     <!-- LEFT PANEL -->
-    <div class="left" id="left-panel">
+    <div class="left collapsed panel-hidden" id="left-panel">
 
       <!-- ranking panel — slides in over the route content -->
       <div class="ranking-panel" id="ranking-panel">
@@ -3725,131 +3748,14 @@
       <div class="left-scroll">
         <div class="left-inner" id="left-inner">
 
-          <!-- FROM -->
-          <div class="place-dot-row">
-            <div class="p-dot green"></div>
-            <div class="place-name" onclick="openPlacePopup('from')">Santiago, Chile</div>
-          </div>
-          <div class="star-row">
-            <div class="stars">
-              <svg viewBox="0 0 24 24" class="full">
-                <polygon
-                  points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-              </svg>
-              <svg viewBox="0 0 24 24" class="full">
-                <polygon
-                  points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-              </svg>
-              <svg viewBox="0 0 24 24" class="full">
-                <polygon
-                  points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-              </svg>
-              <svg viewBox="0 0 24 24" class="full">
-                <polygon
-                  points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-              </svg>
-              <svg viewBox="0 0 24 24" class="half">
-                <polygon
-                  points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-              </svg>
+          <!-- shown until the user searches a place -->
+          <div class="search-empty-state" id="search-empty-state">
+            <div class="search-empty-icon">
+              <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></svg>
             </div>
-            <span class="star-val">4.5</span><span class="sep"></span><span class="rev-count">2,140 reviews</span>
+            <div class="search-empty-title">Plan your next trip</div>
+            <p class="search-empty-sub">Search a starting point above — and optionally a destination — to see it on the map.</p>
           </div>
-          <p class="place-desc">Chile's vibrant capital between the Andes and the Pacific. A world-class cultural hub
-            and gateway to the country.</p>
-
-          <!-- TO divider -->
-          <div class="to-divider">
-            <div class="to-label">
-              <svg viewBox="0 0 24 24">
-                <line x1="12" y1="5" x2="12" y2="19" />
-                <polyline points="19 12 12 19 5 12" />
-              </svg>
-              to
-            </div>
-          </div>
-
-          <!-- TO -->
-          <div class="place-dot-row">
-            <div class="p-dot red"></div>
-            <div class="place-name" onclick="openPlacePopup('to')">Puerto Natales, Chile</div>
-          </div>
-          <div class="star-row">
-            <div class="stars">
-              <svg viewBox="0 0 24 24" class="full">
-                <polygon
-                  points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-              </svg>
-              <svg viewBox="0 0 24 24" class="full">
-                <polygon
-                  points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-              </svg>
-              <svg viewBox="0 0 24 24" class="full">
-                <polygon
-                  points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-              </svg>
-              <svg viewBox="0 0 24 24" class="full">
-                <polygon
-                  points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-              </svg>
-              <svg viewBox="0 0 24 24" class="full">
-                <polygon
-                  points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-              </svg>
-            </div>
-            <span class="star-val">4.9</span><span class="sep"></span><span class="rev-count">987 reviews</span>
-          </div>
-          <p class="place-desc">Gateway to Patagonia and Torres del Paine. A small town at the end of the world with
-            wild scenery in every direction.</p>
-
-          <div class="hr"></div>
-
-          <!-- Route overview -->
-          <div class="sec-lbl">Route overview</div>
-          <div class="stats-row">
-            <div class="stat-box">
-              <div class="stat-lbl">Distance</div>
-              <div class="stat-val">2,460 km</div>
-              <div class="stat-note">total route</div>
-            </div>
-            <div class="stat-box">
-              <div class="stat-lbl">Total driving</div>
-              <div class="stat-val">26 h</div>
-              <div class="stat-note">non-stop est.</div>
-            </div>
-            <div class="stat-box">
-              <div class="stat-lbl">Stops</div>
-              <div class="stat-val">3 places</div>
-              <div class="stat-note">recommended</div>
-            </div>
-            <div class="stat-box">
-              <div class="stat-lbl">Trip length</div>
-              <div class="stat-val">8–10 days</div>
-              <div class="stat-note">ideal duration</div>
-            </div>
-          </div>
-
-          <div class="hr"></div>
-
-          <!-- Filter + stops -->
-          <div class="filter-row">
-            <div class="ftab on" onclick="filterStop(this,'all')">All stops</div>
-            <div class="ftab" onclick="filterStop(this,'trek')"><svg viewBox="0 0 24 24">
-                <path d="M3 17l4-8 5 6 3-3 4 5" />
-              </svg>Trekking</div>
-            <div class="ftab" onclick="filterStop(this,'lake')"><svg viewBox="0 0 24 24">
-                <path d="M2 12s3-6 10-6 10 6 10 6-3 6-10 6-10-6-10-6z" />
-              </svg>Lakes</div>
-            <div class="ftab" onclick="filterStop(this,'town')"><svg viewBox="0 0 24 24">
-                <rect x="2" y="7" width="20" height="14" rx="2" />
-                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
-              </svg>Towns</div>
-            <div class="ftab" onclick="filterStop(this,'trail')"><svg viewBox="0 0 24 24">
-                <path d="M3 12h18M3 6h18M3 18h18" />
-              </svg>Trails</div>
-          </div>
-
-          <div class="timeline" id="stops-list"></div>
 
         </div>
       </div>
@@ -3857,33 +3763,42 @@
 
     <!-- MAP -->
     <div class="map-side">
-      <div class="panel-toggle" id="panel-toggle" onclick="togglePanel()">
+      <div class="panel-toggle flipped" id="panel-toggle" onclick="togglePanel()">
         <svg viewBox="0 0 24 24">
           <polyline points="15 18 9 12 15 6" />
         </svg>
       </div>
       <button class="start-trip-btn" id="start-trip-btn" onclick="startTrip()">
-        <span class="st-start">Start</span><span class="st-trip">trip</span>
+        <span class="st-start">Start </span>
       </button>
       <div id="map"></div>
       <div class="transport-box">
         <div class="transport-title">Travel by</div>
         <div class="transport-btns">
           <div class="tbtn active" onclick="setTransport(this,'Car')"><svg viewBox="0 0 24 24">
-              <path d="M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v9a2 2 0 0 1-2 2h-3" />
-              <circle cx="7.5" cy="17.5" r="2.5" />
-              <circle cx="17.5" cy="17.5" r="2.5" />
+              <path
+                d="M19 17h2v-4.83a2 2 0 0 0-.59-1.42L18 8.5A4 4 0 0 0 15.17 7H8.83A4 4 0 0 0 6 8.5l-2.41 2.25a2 2 0 0 0-.59 1.42V17h2" />
+              <circle cx="7" cy="17" r="2" />
+              <circle cx="17" cy="17" r="2" />
+              <path d="M9 17h6" />
             </svg><span>Car</span></div>
           <div class="tbtn" onclick="setTransport(this,'Walk')"><svg viewBox="0 0 24 24">
-              <circle cx="12" cy="5" r="2" />
-              <path d="m19 13-4.5-4-3.5 7-3-4H5" />
+              <path
+                d="M4 16v-2.38C4 11.5 2.97 10.5 3 8c.03-2.72 1.49-6 4.5-6C9.37 2 10 3.8 10 5.5c0 3.11-2 5.66-2 8.68V16a2 2 0 1 1-4 0Z" />
+              <path
+                d="M20 20v-2.38c0-2.12 1.03-3.12 1-5.62-.03-2.72-1.49-6-4.5-6C14.63 6 14 7.8 14 9.5c0 3.11 2 5.66 2 8.68V20a2 2 0 1 0 4 0Z" />
+              <path d="M16 17h4" />
+              <path d="M4 13h4" />
             </svg><span>Walk</span></div>
           <div class="tbtn" onclick="setTransport(this,'Plane')"><svg viewBox="0 0 24 24">
-              <path d="M17.8 19.2 16 11l3.5-3.5C21 6 21 4 19 2c-2-2-4-2-5.5-.5L10 5H3l-1 1 3 2 1 5 3 1 1 3 5 3 1-1z" />
+              <path
+                d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.3c.4-.2.6-.6.5-1.1z" />
             </svg><span>Plane</span></div>
           <div class="tbtn" onclick="setTransport(this,'Train')"><svg viewBox="0 0 24 24">
-              <rect x="4" y="3" width="16" height="16" rx="2" />
-              <path d="M4 11h16M12 3v8M8 19l-2 3M16 19l2 3M8 15h.01M16 15h.01" />
+              <rect x="4" y="3" width="16" height="13" rx="4" />
+              <path d="M4 9.5h16" />
+              <path d="M9 21l-2-3M15 21l2-3" />
+              <path d="M8 13.5h.01M16 13.5h.01" />
             </svg><span>Train</span></div>
         </div>
       </div>
@@ -3894,8 +3809,8 @@
         <span>Save plan</span>
       </div>
       <div class="zoom-box">
-        <button class="zoom-btn" onclick="map.zoomIn()">+</button>
-        <button class="zoom-btn" onclick="map.zoomOut()">−</button>
+        <button class="zoom-btn" onclick="map.setZoom(map.getZoom()+1)">+</button>
+        <button class="zoom-btn" onclick="map.setZoom(map.getZoom()-1)">−</button>
       </div>
     </div>
   </div>
@@ -4242,53 +4157,105 @@
     const SVG_CAR = `<svg viewBox="0 0 24 24" style="width:11px;height:11px;stroke:var(--g600);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v9a2 2 0 0 1-2 2h-3"/><circle cx="7.5" cy="17.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>`;
     const SVG_PIN = `<svg viewBox="0 0 24 24" style="width:10px;height:10px;stroke:var(--g600);fill:none;stroke-width:2;stroke-linecap:round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>`;
 
-    let selectedId = 1, panelOpen_ = true;
-    let currentFrom = 'Santiago, Chile', currentTo = 'Puerto Natales, Chile';
+    let selectedId = 1, panelOpen_ = false;
+    let currentFrom = '', currentTo = '';
+    let currentStopsFilter = 'all', currentTransportMode = 'Car';
+    let hasRoute = false;
     const markers = {};
 
     /* ══ MAP ══ */
-    const map = new maplibregl.Map({
-      container: 'map', style: 'https://tiles.openfreemap.org/styles/liberty',
-      center: [-71.8, -39.5], zoom: 7.2, attributionControl: false,
+    // coord arrays in this file are [lng, lat]; Google Maps wants {lat, lng}
+    const toLatLng = c => ({ lat: c[1], lng: c[0] });
+
+    function boundsOf(coordsArr) {
+      const b = new google.maps.LatLngBounds();
+      coordsArr.forEach(c => b.extend(toLatLng(c)));
+      return b;
+    }
+
+    const map = new google.maps.Map(document.getElementById('map'), {
+      mapId: 'DEMO_MAP_ID',
+      center: { lat: 20, lng: 0 }, zoom: 2,
+      disableDefaultUI: true, gestureHandling: 'greedy',
     });
-    map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-right');
 
-    map.on('load', () => {
-      const coords = [FROM.coord, ...STOPS.map(s => s.coord), TO.coord];
-      map.addSource('route', { type: 'geojson', data: { type: 'Feature', geometry: { type: 'LineString', coordinates: coords } } });
-      map.addLayer({ id: 'route-halo', type: 'line', source: 'route', layout: { 'line-join': 'round', 'line-cap': 'round' }, paint: { 'line-color': '#FF385C', 'line-width': 10, 'line-opacity': .10 } });
-      map.addLayer({ id: 'route-white', type: 'line', source: 'route', layout: { 'line-join': 'round', 'line-cap': 'round' }, paint: { 'line-color': '#ffffff', 'line-width': 5, 'line-opacity': .9 } });
-      map.addLayer({ id: 'route-main', type: 'line', source: 'route', layout: { 'line-join': 'round', 'line-cap': 'round' }, paint: { 'line-color': '#FF385C', 'line-width': 2.5, 'line-dasharray': [2, 2] } });
+    const { AdvancedMarkerElement } = google.maps.marker;
 
-      // FROM marker
-      const fe = document.createElement('div');
-      fe.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;"><div class="m-start"><svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:#fff;fill:none;stroke-width:2.2;stroke-linecap:round"><circle cx="12" cy="12" r="4"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg></div><div class="m-lbl">Santiago</div></div>`;
-      new maplibregl.Marker({ element: fe, anchor: 'bottom' }).setLngLat(FROM.coord).addTo(map);
+    let routePolylines = [];
+    function clearRoutePolylines() {
+      routePolylines.forEach(p => p.setMap(null));
+      routePolylines = [];
+    }
 
-      // TO marker
-      const te = document.createElement('div');
-      te.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;"><div class="m-end"><svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:#fff;stroke:none"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z"/></svg></div><div class="m-lbl">Puerto Natales</div></div>`;
-      new maplibregl.Marker({ element: te, anchor: 'bottom' }).setLngLat(TO.coord).addTo(map);
+    function drawRoutePath(path, geodesic = false) {
+      clearRoutePolylines();
+      routePolylines.push(new google.maps.Polyline({ map, path, geodesic, strokeColor: '#FF385C', strokeOpacity: .16, strokeWeight: 18 }));
+      routePolylines.push(new google.maps.Polyline({ map, path, geodesic, strokeColor: '#ffffff', strokeOpacity: .95, strokeWeight: 10 }));
+      routePolylines.push(new google.maps.Polyline({
+        map, path, geodesic, strokeOpacity: 0,
+        icons: [{ icon: { path: 'M 0,-1 0,1', strokeOpacity: 1, strokeColor: '#FF385C', strokeWeight: 4.5, scale: 2.4 }, offset: '0', repeat: '10px' }],
+      }));
+    }
 
-      // STOP markers
-      STOPS.forEach((s, i) => {
-        const el = document.createElement('div');
-        el.className = 'ww-marker-wrap';
-        const shortName = s.name.split('—')[0].trim();
-        el.innerHTML = `<div class="ww-marker-dot">${i + 1}</div><div class="ww-marker-lbl">${shortName}</div>`;
+    const directionsService = new google.maps.DirectionsService();
+    const geocoder = new google.maps.Geocoder();
 
-        let marker = new maplibregl.Marker({ element: el, anchor: 'bottom' }).setLngLat(s.coord).addTo(map);
-
-        el.addEventListener('click', e => {
-          e.stopPropagation();
-          selectStop(s.id, false);
-          openPlacePopupFromStop(s.id);
+    function geocodePlace(query) {
+      return new Promise((resolve, reject) => {
+        geocoder.geocode({ address: query }, (results, status) => {
+          if (status === 'OK' && results[0]) {
+            const loc = results[0].geometry.location;
+            resolve({ coord: [loc.lng(), loc.lat()], formatted: results[0].formatted_address });
+          } else {
+            reject(status);
+          }
         });
-        markers[s.id] = { marker };
       });
+    }
 
-      renderStops(STOPS);
-    });
+    // Google Directions has no flight mode; a great-circle line is the honest
+    // representation of air travel and skips the road-trip stops entirely.
+    const TRAVEL_MODE = { Car: 'DRIVING', Walk: 'WALKING', Train: 'TRANSIT' };
+
+    function requestRoute(mode, { useStops = true, onResult } = {}) {
+      const routeStops = mode === 'Plane' || !useStops ? [] : visibleStopsForFilter();
+      const routeCoords = [FROM.coord, ...routeStops.map(s => s.coord), TO.coord];
+
+      if (mode === 'Plane') {
+        drawRoutePath([toLatLng(FROM.coord), toLatLng(TO.coord)], true);
+        if (onResult) onResult(null);
+        return;
+      }
+      const request = {
+        origin: toLatLng(FROM.coord),
+        destination: toLatLng(TO.coord),
+        travelMode: google.maps.TravelMode[TRAVEL_MODE[mode]],
+      };
+      // TRANSIT directions reject the waypoints param outright
+      if (mode !== 'Train') {
+        request.waypoints = routeStops.map(s => ({ location: toLatLng(s.coord), stopover: true }));
+      }
+      directionsService.route(request, (result, status) => {
+        if (status === google.maps.DirectionsStatus.OK) {
+          drawRoutePath(result.routes[0].overview_path);
+          if (onResult) onResult(result.routes[0]);
+        } else {
+          console.warn(`${mode} directions failed (${status}), falling back to a straight line`);
+          drawRoutePath(routeCoords.map(toLatLng));
+          showToast(`No ${mode.toLowerCase()} route available for this distance — showing a straight line instead`);
+          if (onResult) onResult(null);
+        }
+      });
+    }
+
+    // FROM/TO markers exist but stay unattached (map: null) until a search resolves a place
+    const fe = document.createElement('div');
+    fe.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;"><div class="m-start"><svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:#fff;fill:none;stroke-width:2.2;stroke-linecap:round"><circle cx="12" cy="12" r="4"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg></div><div class="m-lbl"></div></div>`;
+    const fromMarker = new AdvancedMarkerElement({ position: toLatLng(FROM.coord), content: fe });
+
+    const te = document.createElement('div');
+    te.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;"><div class="m-end"><svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:#fff;stroke:none"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z"/></svg></div><div class="m-lbl"></div></div>`;
+    const toMarker = new AdvancedMarkerElement({ position: toLatLng(TO.coord), content: te });
 
     /* ══ RENDER STOPS TIMELINE ══ */
     function renderStops(list) {
@@ -4341,7 +4308,8 @@
       document.querySelectorAll('.tl-stop').forEach(c => c.classList.toggle('active', +c.dataset.id === id));
       document.querySelector(`.tl-stop[data-id="${id}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       if (flyMap) {
-        map.flyTo({ center: s.coord, zoom: 9, duration: 1000, essential: true });
+        map.panTo(toLatLng(s.coord));
+        map.setZoom(9);
       }
     }
 
@@ -4864,7 +4832,7 @@
       panel.classList.remove('collapsed', 'panel-hidden');
       toggle.classList.remove('flipped');
       panelOpen_ = true;
-      setTimeout(() => map.resize(), 340);
+      setTimeout(() => google.maps.event.trigger(map, 'resize'), 340);
 
       document.getElementById('ranking-panel').classList.add('open');
     }
@@ -4944,9 +4912,10 @@
     }
 
     function flyToMarker(index) {
-      if (worldwideMarkers[index]) {
-        const lngLat = worldwideMarkers[index].getLngLat();
-        map.flyTo({ center: lngLat, zoom: 6, duration: 700 });
+      const item = currentRankingList[index];
+      if (item && item.coord) {
+        map.panTo(toLatLng(item.coord));
+        map.setZoom(6);
       }
     }
 
@@ -4966,17 +4935,11 @@
           e.stopPropagation();
           openPlacePopupFromRanking(i);
         });
-        const m = new maplibregl.Marker({ element: el, anchor: 'bottom' })
-          .setLngLat(item.coord)
-          .addTo(map);
+        const m = new AdvancedMarkerElement({ map, position: toLatLng(item.coord), content: el });
         worldwideMarkers.push(m);
       });
 
-      const bounds = d.list.reduce(
-        (b, item) => b.extend(item.coord),
-        new maplibregl.LngLatBounds(d.list[0].coord, d.list[0].coord)
-      );
-      map.fitBounds(bounds, { padding: 70, duration: 900 });
+      map.fitBounds(boundsOf(d.list.map(item => item.coord)), 70);
 
       openRankingPanel(
         `Top 10 · ${country}`,
@@ -4990,14 +4953,11 @@
     let nearbyMarkers = [];
 
     function cleanMap() {
-      Object.values(markers).forEach(({ marker, popup }) => {
-        if (popup && popup.isOpen()) popup.remove();
-        marker.remove();
-      });
+      Object.values(markers).forEach(({ marker }) => { marker.map = null; });
       Object.keys(markers).forEach(k => delete markers[k]);
-      worldwideMarkers.forEach(m => m.remove());
+      worldwideMarkers.forEach(m => { m.map = null; });
       worldwideMarkers = [];
-      nearbyMarkers.forEach(m => m.remove());
+      nearbyMarkers.forEach(m => { m.map = null; });
       nearbyMarkers = [];
     }
 
@@ -5013,17 +4973,11 @@
           e.stopPropagation();
           openPlacePopupFromNearby(p);
         });
-        const m = new maplibregl.Marker({ element: el, anchor: 'bottom' })
-          .setLngLat(p.coord)
-          .addTo(map);
+        const m = new AdvancedMarkerElement({ map, position: toLatLng(p.coord), content: el });
         nearbyMarkers.push(m);
       });
       const allCoords = [FROM.coord, ...list.map(p => p.coord)];
-      const bounds = allCoords.reduce(
-        (b, c) => b.extend(c),
-        new maplibregl.LngLatBounds(allCoords[0], allCoords[0])
-      );
-      map.fitBounds(bounds, { padding: 60, duration: 900 });
+      map.fitBounds(boundsOf(allCoords), 60);
     }
 
     function showWorldwideOnMap() {
@@ -5052,17 +5006,11 @@
           e.stopPropagation();
           openPlacePopupFromRanking(i);
         });
-        const m = new maplibregl.Marker({ element: el, anchor: 'bottom' })
-          .setLngLat(WW_COORDS[i])
-          .addTo(map);
+        const m = new AdvancedMarkerElement({ map, position: toLatLng(WW_COORDS[i]), content: el });
         worldwideMarkers.push(m);
       });
 
-      const bounds = WW_COORDS.reduce(
-        (b, c) => b.extend(c),
-        new maplibregl.LngLatBounds(WW_COORDS[0], WW_COORDS[0])
-      );
-      map.fitBounds(bounds, { padding: 60, duration: 900 });
+      map.fitBounds(boundsOf(WW_COORDS), 60);
 
       const wwData = TOP10.worldwide.list.map((item, i) => ({ ...item, coord: WW_COORDS[i] }));
       openRankingPanel(
@@ -5096,7 +5044,6 @@
         matches.map(p => {
           const hl = p.n.replace(new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi'), '<span class="ac-match">$1</span>');
           return `<div class="ac-item" onclick="selectAC('${side}','${p.n.replace(/'/g, "\\'")}')">
-        <div class="ac-icon">${p.e}</div>
         <div class="ac-info"><div class="ac-name">${hl}</div><div class="ac-sub">${p.s}</div></div>
       </div>`;
         }).join('');
@@ -5117,33 +5064,43 @@
         const m = markers[s.id];
         if (!m) return;
         if (visibleIds.has(s.id)) {
-          m.marker.addTo(map);
+          m.marker.map = map;
         } else {
-          m.marker.remove();
+          m.marker.map = null;
         }
       });
       const coords = [FROM.coord, ...list.map(s => s.coord)];
       if (list.length) {
-        const bounds = coords.reduce(
-          (b, c) => b.extend(c),
-          new maplibregl.LngLatBounds(coords[0], coords[0])
-        );
-        map.fitBounds(bounds, { padding: 80, duration: 800 });
+        map.fitBounds(boundsOf(coords), 80);
       }
     }
 
-    function filterStop(el, cat) {
-      document.querySelectorAll('.ftab').forEach(t => t.classList.remove('on'));
-      el.classList.add('on');
-      renderStops(cat === 'all' ? STOPS : STOPS.filter(s => s.cat === cat));
+    function visibleStopsForFilter() {
+      return currentStopsFilter === 'all' ? STOPS : STOPS.filter(s => s.cat === currentStopsFilter);
     }
 
     /* ══ TRANSPORT ══ */
     function setTransport(el, mode) {
+      if (!hasRoute) { showToast('Search a route first'); return; }
       document.querySelectorAll('.tbtn').forEach(b => b.classList.remove('active'));
       el.classList.add('active');
-      const msgs = { Car: 'Showing car route', Walk: 'Walking route (very long!)', Plane: 'Showing flight routes', Train: 'Showing train options' };
+      const msgs = { Car: 'Showing car route (😃)', Walk: 'Walking route (🏃)', Plane: 'Showing flight route (✈️)', Train: 'Showing train route (🚂)' };
       showToast(msgs[mode] || 'Route updated');
+      currentTransportMode = mode;
+      requestRoute(mode, {
+        useStops: false,
+        onResult: route => {
+          const distEl = document.getElementById('route-distance');
+          const durEl = document.getElementById('route-duration');
+          if (route && distEl && durEl) {
+            const meters = route.legs.reduce((a, l) => a + l.distance.value, 0);
+            const seconds = route.legs.reduce((a, l) => a + l.duration.value, 0);
+            const h = Math.floor(seconds / 3600), m = Math.round((seconds % 3600) / 60);
+            distEl.textContent = `${Math.round(meters / 1000).toLocaleString()} km`;
+            durEl.textContent = m ? `${h} h ${m} min` : `${h} h`;
+          }
+        },
+      });
     }
 
     /* ══ PANEL TOGGLE ══ */
@@ -5159,8 +5116,18 @@
       } else {
         panel.classList.toggle('collapsed', !panelOpen_);
         toggle.classList.toggle('flipped', !panelOpen_);
-        setTimeout(() => map.resize(), 310);
+        setTimeout(() => google.maps.event.trigger(map, 'resize'), 310);
       }
+    }
+
+    /* reveal the left panel once a search produces a result */
+    function openLeftPanel() {
+      const panel = document.getElementById('left-panel');
+      const toggle = document.getElementById('panel-toggle');
+      panel.classList.remove('collapsed', 'panel-hidden');
+      toggle.classList.remove('flipped');
+      panelOpen_ = true;
+      setTimeout(() => google.maps.event.trigger(map, 'resize'), 340);
     }
 
     /* ══ START TRIP (open in Google/Apple Maps) ══ */
@@ -5170,14 +5137,14 @@
 
     function confirmStartTrip(provider) {
       closeModal('mc-modal');
-      const toLatLng = c => `${c[1]},${c[0]}`;
-      const origin = toLatLng(FROM.coord);
-      const destination = toLatLng(TO.coord);
-      const waypoints = STOPS.map(s => toLatLng(s.coord));
+      if (!hasRoute) { showToast('Search a route first'); return; }
+      const toLatLngStr = c => `${c[1]},${c[0]}`;
+      const origin = toLatLngStr(FROM.coord);
+      const destination = toLatLngStr(TO.coord);
 
       const url = provider === 'apple'
-        ? `https://maps.apple.com/?saddr=${origin}&daddr=${[...waypoints, destination].join('+to:')}&dirflg=d`
-        : `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&waypoints=${waypoints.join('|')}&travelmode=driving`;
+        ? `https://maps.apple.com/?saddr=${origin}&daddr=${destination}&dirflg=d`
+        : `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&travelmode=driving`;
 
       window.open(url, '_blank');
     }
@@ -5188,19 +5155,71 @@
       [fi.value, ti.value] = [ti.value, fi.value];
       showToast('Route swapped');
     }
-    function doSearch() {
+    async function doSearch() {
       closeAllAC();
       const fromVal = document.getElementById('from-input').value.trim();
       const toVal = document.getElementById('to-input').value.trim();
       if (!fromVal) { showToast('Please enter a starting location'); return; }
-      currentFrom = fromVal;
-      currentTo = toVal;
+
+      showToast(toVal ? `Finding route: ${fromVal} → ${toVal}` : `Exploring around ${fromVal}`);
+
+      let fromGeo, toGeo;
+      try {
+        fromGeo = await geocodePlace(fromVal);
+      } catch {
+        showToast(`Couldn't find "${fromVal}" — try a different search`);
+        return;
+      }
       if (toVal) {
+        try {
+          toGeo = await geocodePlace(toVal);
+        } catch {
+          showToast(`Couldn't find "${toVal}" — try a different search`);
+          return;
+        }
+      }
+
+      // move the FROM pin to the geocoded location
+      FROM.coord = fromGeo.coord;
+      FROM.name = fromGeo.formatted;
+      fromMarker.position = toLatLng(FROM.coord);
+      fromMarker.map = map;
+      fe.querySelector('.m-lbl').textContent = fromVal;
+      currentFrom = fromVal;
+
+      openLeftPanel();
+
+      if (toGeo) {
+        TO.coord = toGeo.coord;
+        TO.name = toGeo.formatted;
+        toMarker.position = toLatLng(TO.coord);
+        toMarker.map = map;
+        te.querySelector('.m-lbl').textContent = toVal;
+        currentTo = toVal;
+        hasRoute = true;
+
         renderRouteMode(fromVal, toVal);
-        showToast(`Finding route: ${fromVal} → ${toVal}`);
+        requestRoute(currentTransportMode, {
+          useStops: false,
+          onResult: route => {
+            if (route) {
+              const meters = route.legs.reduce((a, l) => a + l.distance.value, 0);
+              const seconds = route.legs.reduce((a, l) => a + l.duration.value, 0);
+              const h = Math.floor(seconds / 3600), m = Math.round((seconds % 3600) / 60);
+              document.getElementById('route-distance').textContent = `${Math.round(meters / 1000).toLocaleString()} km`;
+              document.getElementById('route-duration').textContent = m ? `${h} h ${m} min` : `${h} h`;
+            }
+          },
+        });
+        map.fitBounds(boundsOf([FROM.coord, TO.coord]), 80);
       } else {
+        currentTo = '';
+        hasRoute = false;
+        toMarker.map = null;
+        clearRoutePolylines();
         renderExploreMode(fromVal);
-        showToast(`Exploring around ${fromVal}`);
+        map.panTo(toLatLng(FROM.coord));
+        map.setZoom(11);
       }
     }
 
@@ -5295,22 +5314,13 @@
         <div class="hr"></div>
         <div class="sec-lbl">Route overview</div>
         <div class="stats-row">
-          <div class="stat-box"><div class="stat-lbl">Distance</div><div class="stat-val">2,460 km</div><div class="stat-note">total route</div></div>
-          <div class="stat-box"><div class="stat-lbl">Total driving</div><div class="stat-val">26 h</div><div class="stat-note">non-stop est.</div></div>
-          <div class="stat-box"><div class="stat-lbl">Stops</div><div class="stat-val">3 places</div><div class="stat-note">recommended</div></div>
-          <div class="stat-box"><div class="stat-lbl">Trip length</div><div class="stat-val">8–10 days</div><div class="stat-note">ideal duration</div></div>
+          <div class="stat-box"><div class="stat-lbl">Distance</div><div class="stat-val" id="route-distance">—</div><div class="stat-note">total route</div></div>
+          <div class="stat-box"><div class="stat-lbl">Driving time</div><div class="stat-val" id="route-duration">—</div><div class="stat-note">non-stop est.</div></div>
         </div>
         <div class="hr"></div>
-        <div class="filter-row">
-          <div class="ftab on" onclick="filterStop(this,'all')">All stops</div>
-          <div class="ftab" onclick="filterStop(this,'trek')"><svg viewBox="0 0 24 24"><path d="M3 17l4-8 5 6 3-3 4 5"/></svg>Trekking</div>
-          <div class="ftab" onclick="filterStop(this,'lake')"><svg viewBox="0 0 24 24"><path d="M2 12s3-6 10-6 10 6 10 6-3 6-10 6-10-6-10-6z"/></svg>Lakes</div>
-          <div class="ftab" onclick="filterStop(this,'town')"><svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>Towns</div>
-          <div class="ftab" onclick="filterStop(this,'trail')"><svg viewBox="0 0 24 24"><path d="M3 12h18M3 6h18M3 18h18"/></svg>Trails</div>
-        </div>
         <div class="timeline" id="stops-list"></div>`;
 
-      renderStops(STOPS);
+      renderStops([]);
     }
 
     /* ══ MOBILE DRAG SHEET ══ */
@@ -5356,8 +5366,6 @@
       document.body.appendChild(t);
       _tt = setTimeout(() => t && t.remove(), 2800);
     }
-
-    renderStops(STOPS);
 
     function openSavePlan() {
       document.getElementById('sp-name-input').value = '';
