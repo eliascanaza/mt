@@ -14,14 +14,17 @@ Endpoints:
   POST /api/plans                  → save a new plan
 """
 
-import json
-from pathlib import Path
-from flask import Flask, jsonify, request, send_from_directory, abort
+import os
+from dotenv import load_dotenv
+from flask import Flask, jsonify, request, send_from_directory, abort, render_template
 
 import database as db
 
-app = Flask(__name__, template_folder="templates", static_folder="static")
+load_dotenv()
+
+app = Flask(__name__, template_folder="templates", static_folder="assets", static_url_path="/assets")
 app.config["JSON_SORT_KEYS"] = False
+app.config["GOOGLE_MAPS_API_KEY"] = os.environ.get("GOOGLE_MAPS_API_KEY", "")
 
 
 # ── HTML frontend ────────────────────────────────────────────────────────
@@ -37,7 +40,7 @@ def profile():
 
 @app.route("/home")
 def home():
-    return send_from_directory("templates", "home.html")
+    return render_template("home.html", google_maps_api_key=app.config["GOOGLE_MAPS_API_KEY"])
 
 
 # ── Stops ────────────────────────────────────────────────────────────────
