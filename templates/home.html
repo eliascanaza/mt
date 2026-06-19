@@ -1789,6 +1789,95 @@
       background: var(--g50)
     }
 
+    /* places range slider (bottom-right, vertical, 1-10) */
+    .places-range-box {
+      position: absolute;
+      bottom: 14px;
+      right: 14px;
+      z-index: 10;
+      width: 34px;
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--r-sm);
+      box-shadow: var(--sh-sm);
+      padding: 10px 0 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px
+    }
+
+    /* hidden on desktop to stay flush with the zoom box's width; shown on mobile */
+    .places-range-title {
+      display: none;
+      font-size: 8px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      color: var(--g600);
+      white-space: nowrap;
+    }
+
+    .places-range-track-wrap {
+      width: 22px;
+      height: 130px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .places-range-input {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 130px;
+      height: 22px;
+      margin: 0;
+      background: transparent;
+      transform: rotate(-90deg);
+      cursor: pointer;
+    }
+
+    .places-range-input::-webkit-slider-runnable-track {
+      height: 6px;
+      border-radius: 99px;
+      background: var(--g200);
+    }
+
+    .places-range-input::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #1d6ff3;
+      border: 4px solid #cfe0fb;
+      box-shadow: var(--sh-sm);
+      margin-top: -6px;
+      cursor: pointer;
+    }
+
+    .places-range-input::-moz-range-track {
+      height: 6px;
+      border-radius: 99px;
+      background: var(--g200);
+    }
+
+    .places-range-input::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #1d6ff3;
+      border: 4px solid #cfe0fb;
+      box-shadow: var(--sh-sm);
+      cursor: pointer;
+    }
+
+    .places-range-value {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--black);
+      text-align: center;
+    }
+
     /* markers */
     .m-start {
       width: 28px;
@@ -3214,6 +3303,50 @@
         bottom: 16px
       }
 
+      /* sits just above the "Route details" / "Hide details" pill, tracking it as it moves */
+      .places-range-box {
+        width: 48px;
+        bottom: calc(52vh + 12px + 56px);
+        right: 16px;
+        padding: 10px 0 8px;
+        transition: bottom .32s cubic-bezier(.4, 0, .2, 1)
+      }
+
+      .panel-toggle.flipped~.places-range-box {
+        bottom: 72px
+      }
+
+      .places-range-title {
+        display: block
+      }
+
+      .places-range-track-wrap {
+        width: 28px;
+        height: 140px
+      }
+
+      .places-range-input {
+        width: 140px;
+        height: 28px
+      }
+
+      .places-range-input::-webkit-slider-thumb {
+        width: 26px;
+        height: 26px;
+        border-width: 5px;
+        margin-top: -10px
+      }
+
+      .places-range-input::-moz-range-thumb {
+        width: 26px;
+        height: 26px;
+        border-width: 5px
+      }
+
+      .places-range-value {
+        font-size: 13px
+      }
+
       .panel-toggle::after {
         content: 'Hide details';
         font-size: 12px;
@@ -3620,6 +3753,14 @@
         <button class="zoom-btn" onclick="map.setZoom(map.getZoom()+1)">+</button>
         <button class="zoom-btn" onclick="map.setZoom(map.getZoom()-1)">−</button>
       </div>
+      <div class="places-range-box" id="places-range-box" title="Places along the route" style="display:none">
+        <div class="places-range-title">Places</div>
+        <div class="places-range-track-wrap">
+          <input type="range" class="places-range-input" id="places-range" min="1" max="10" step="1" value="5"
+            oninput="onPlacesRangeChange(this.value)" />
+        </div>
+        <div class="places-range-value" id="places-range-value">5</div>
+      </div>
     </div>
   </div>
 
@@ -3931,6 +4072,15 @@
     const SVG_CAR = `<svg viewBox="0 0 24 24" style="width:11px;height:11px;stroke:var(--g600);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v9a2 2 0 0 1-2 2h-3"/><circle cx="7.5" cy="17.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>`;
     const SVG_PIN = `<svg viewBox="0 0 24 24" style="width:10px;height:10px;stroke:var(--g600);fill:none;stroke-width:2;stroke-linecap:round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>`;
 
+    // No auth system yet — every save is attributed to this mock user.
+    const CURRENT_USER_ID = 1111;
+
+    // How many tourist stops to look for along the route — controlled by the
+    // vertical range slider over the map. lastRoutePath caches the driven
+    // path so dragging the slider re-searches Places without a new Directions call.
+    let placesCount = 5;
+    let lastRoutePath = null;
+
     let selectedId = 1, panelOpen_ = true;
     let currentFrom = '', currentTo = '';
     let currentStopsFilter = 'all', currentTransportMode = 'Car';
@@ -4020,9 +4170,13 @@
 
     // Writes a Directions route's total distance/time into the left panel —
     // shared by the initial search and any re-route through found stops.
+    const TRANSPORT_TIME_LABEL = { Car: 'Driving time', Walk: 'Walking time', Plane: 'Flying time', Train: 'Train time' };
+
     function applyRouteStats(route) {
       const distEl = document.getElementById('route-distance');
       const durEl = document.getElementById('route-duration');
+      const durLabelEl = document.getElementById('route-duration-label');
+      if (durLabelEl) durLabelEl.textContent = TRANSPORT_TIME_LABEL[currentTransportMode] || 'Driving time';
       if (!route || !distEl || !durEl) return;
       const meters = route.legs.reduce((a, l) => a + l.distance.value, 0);
       const seconds = route.legs.reduce((a, l) => a + l.duration.value, 0);
@@ -4095,6 +4249,30 @@
         const marker = new AdvancedMarkerElement({ map, position: toLatLng(s.coord), content: el });
         markers[s.id] = { marker };
       });
+    }
+
+    // Vertical "places" slider over the map — re-searches Places for the
+    // chosen number of stops along the already-known route, debounced so a
+    // drag doesn't fire a Places call (and a Directions re-route) per pixel.
+    let placesRangeDebounce;
+    async function onPlacesRangeChange(val) {
+      placesCount = parseInt(val, 10);
+      document.getElementById('places-range-value').textContent = placesCount;
+      clearTimeout(placesRangeDebounce);
+      placesRangeDebounce = setTimeout(async () => {
+        if (!lastRoutePath) return;
+        STOPS = await findTouristStopsAlongRoute(lastRoutePath, placesCount);
+        selectedId = STOPS[0]?.id ?? null;
+        rebuildStopMarkers(STOPS);
+        renderStops(STOPS);
+        requestRoute(currentTransportMode, {
+          useStops: true,
+          onResult: routedThroughStops => {
+            applyRouteStats(routedThroughStops);
+            map.fitBounds(boundsOf([FROM.coord, TO.coord, ...STOPS.map(s => s.coord)]), 80);
+          },
+        });
+      }, 400);
     }
 
     function geocodePlace(query) {
@@ -4421,189 +4599,6 @@
     }
     function closeDropdown() { document.getElementById('u-drop').classList.remove('open'); }
 
-    /* ══ COUNTRY TOP 10 DATA ══ */
-    const COUNTRY_TOP10 = {
-      'Chile': {
-        flag: '🇨🇱', sub: 'South America · 10 destinations', center: [-70.6, -33.5], zoom: 4,
-        list: [
-          { n: 'Torres del Paine', d: 'Granite spires above Patagonian steppe framed by glacial lakes.', r: '4.97', t: 'Nature', coord: [-72.93, -51.03] },
-          { n: 'Atacama Desert', d: 'Surreal altiplanic landscapes and the clearest skies on the planet.', r: '4.93', t: 'Nature', coord: [-68.20, -22.91] },
-          { n: 'Easter Island', d: 'Mysterious moai statues in the middle of the Pacific Ocean.', r: '4.91', t: 'History', coord: [-109.37, -27.12] },
-          { n: 'Valparaíso', d: 'Colorful hillside city with street art and bohemian culture.', r: '4.87', t: 'Culture', coord: [-71.63, -33.05] },
-          { n: 'Pucón & Lake District', d: 'Volcano-studded lakes district perfect for trekking and kayaking.', r: '4.86', t: 'Nature', coord: [-71.97, -39.28] },
-          { n: 'Chiloé Island', d: 'Stilted churches, mythology, and wild southern coastline.', r: '4.84', t: 'Culture', coord: [-73.62, -42.62] },
-          { n: 'Carretera Austral', d: 'One of the world\'s great road trips through Patagonian wilderness.', r: '4.83', t: 'Adventure', coord: [-72.07, -45.57] },
-          { n: 'Marble Caves', d: 'Azure caverns carved into marble above glacial General Carrera Lake.', r: '4.82', t: 'Scenic', coord: [-72.67, -46.65] },
-          { n: 'Viña del Mar', d: 'Pacific beaches, gardens and vineyards near the capital.', r: '4.79', t: 'Beach', coord: [-71.55, -33.02] },
-          { n: 'Punta Arenas', d: 'Southern-most city on earth, gateway to Patagonia and Antarctica.', r: '4.78', t: 'Nature', coord: [-70.92, -53.16] },
-        ]
-      },
-      'Argentina': {
-        flag: '🇦🇷', sub: 'South America · 10 destinations', center: [-63.6, -38.4], zoom: 4,
-        list: [
-          { n: 'Iguazú Falls', d: 'The world\'s widest waterfall system set in subtropical jungle.', r: '4.96', t: 'Nature', coord: [-54.44, -25.70] },
-          { n: 'Perito Moreno Glacier', d: 'A moving wall of ice 5 km wide that constantly calves into a lake.', r: '4.94', t: 'Nature', coord: [-73.04, -50.49] },
-          { n: 'Buenos Aires', d: 'The Paris of South America: tango, steak, and endless boulevards.', r: '4.88', t: 'Culture', coord: [-58.38, -34.61] },
-          { n: 'Mendoza', d: 'Wine country at the foot of the Andes, world-class Malbec.', r: '4.86', t: 'Gastronomy', coord: [-68.83, -32.89] },
-          { n: 'Bariloche', d: 'Alpine-style town on a Patagonian lake with world-class skiing.', r: '4.85', t: 'Adventure', coord: [-71.31, -41.13] },
-          { n: 'Salta', d: 'Colonial architecture meets dramatic Andean landscapes.', r: '4.84', t: 'Culture', coord: [-65.41, -24.79] },
-          { n: 'Quebrada de Humahuaca', d: 'UNESCO World Heritage Andean valley with ancient ruins.', r: '4.83', t: 'History', coord: [-65.35, -23.20] },
-          { n: 'Tierra del Fuego', d: 'End-of-the-world wilderness: glaciers, trekking and penguins.', r: '4.82', t: 'Nature', coord: [-68.30, -54.81] },
-          { n: 'Cafayate', d: 'Wine region in a highland valley with red canyon landscapes.', r: '4.80', t: 'Gastronomy', coord: [-65.97, -26.07] },
-          { n: 'Córdoba', d: 'Student city with Jesuit heritage and a vibrant arts scene.', r: '4.76', t: 'Culture', coord: [-64.18, -31.42] },
-        ]
-      },
-      'Peru': {
-        flag: '🇵🇪', sub: 'South America · 10 destinations', center: [-75.0, -9.2], zoom: 5,
-        list: [
-          { n: 'Machu Picchu', d: '15th-century Inca citadel perched in the cloud-forest Andes.', r: '4.97', t: 'History', coord: [-72.54, -13.16] },
-          { n: 'Cusco', d: 'Inca capital turned vibrant city, gateway to the Sacred Valley.', r: '4.91', t: 'History', coord: [-71.98, -13.53] },
-          { n: 'Amazon Rainforest', d: 'Iquitos: the largest city in the world accessible only by air or river.', r: '4.89', t: 'Wildlife', coord: [-73.25, -3.75] },
-          { n: 'Lake Titicaca', d: 'Highest navigable lake on earth, with floating Uros reed islands.', r: '4.87', t: 'Culture', coord: [-69.33, -15.84] },
-          { n: 'Nazca Lines', d: 'Mysterious giant geoglyphs etched into the desert 2,000 years ago.', r: '4.85', t: 'History', coord: [-74.91, -14.74] },
-          { n: 'Arequipa', d: 'White colonial city backed by three majestic volcanoes.', r: '4.84', t: 'Culture', coord: [-71.54, -16.41] },
-          { n: 'Colca Canyon', d: 'One of the world\'s deepest canyons, home to the Andean condor.', r: '4.83', t: 'Nature', coord: [-71.92, -15.53] },
-          { n: 'Paracas', d: 'Desert peninsula with extraordinary Pacific marine wildlife.', r: '4.80', t: 'Wildlife', coord: [-76.25, -13.85] },
-          { n: 'Huacachina', d: 'An oasis lagoon surrounded by giant sand dunes in the coastal desert.', r: '4.79', t: 'Adventure', coord: [-75.77, -14.09] },
-          { n: 'Máncora', d: 'Year-round surf and sun on Peru\'s northern Pacific coast.', r: '4.75', t: 'Beach', coord: [-81.05, -4.11] },
-        ]
-      },
-      'Japan': {
-        flag: '🇯🇵', sub: 'East Asia · 10 destinations', center: [138.0, 36.2], zoom: 5,
-        list: [
-          { n: 'Kyoto', d: 'Ancient temples, bamboo forests, and the world\'s most refined tea culture.', r: '4.95', t: 'Culture', coord: [135.77, 35.01] },
-          { n: 'Tokyo', d: 'Hyper-efficient, hyper-delicious, utterly unlike anywhere else on earth.', r: '4.93', t: 'City', coord: [139.69, 35.68] },
-          { n: 'Mount Fuji', d: 'Japan\'s sacred volcano and iconic silhouette on the world\'s skyline.', r: '4.91', t: 'Nature', coord: [138.73, 35.36] },
-          { n: 'Osaka', d: 'Japan\'s kitchen: street food, neon and a wonderfully loud personality.', r: '4.89', t: 'Gastronomy', coord: [135.50, 34.69] },
-          { n: 'Hiroshima', d: 'A city reborn; the Peace Memorial is one of humanity\'s most moving places.', r: '4.88', t: 'History', coord: [132.45, 34.39] },
-          { n: 'Nara', d: 'Free-roaming deer and thousand-year-old temples in a compact city.', r: '4.86', t: 'Culture', coord: [135.84, 34.69] },
-          { n: 'Hakone', d: 'Volcanic hot springs and views of Fuji from steaming open-air baths.', r: '4.85', t: 'Nature', coord: [139.07, 35.23] },
-          { n: 'Nikko', d: 'Ornate shrines and waterfalls in cedar forests north of Tokyo.', r: '4.83', t: 'Culture', coord: [139.60, 36.75] },
-          { n: 'Hokkaido', d: 'Japan\'s wild north: lavender fields, powder snow and fresh seafood.', r: '4.82', t: 'Nature', coord: [141.34, 43.06] },
-          { n: 'Okinawa', d: 'Tropical islands with turquoise reefs, unique culture and WWII history.', r: '4.80', t: 'Beach', coord: [127.68, 26.21] },
-        ]
-      },
-      'Greece': {
-        flag: '🇬🇷', sub: 'Southern Europe · 10 destinations', center: [21.8, 39.1], zoom: 6,
-        list: [
-          { n: 'Santorini', d: 'Volcanic island with iconic white-domed architecture above a deep-blue caldera.', r: '4.94', t: 'Scenic', coord: [25.43, 36.40] },
-          { n: 'Athens', d: 'Cradle of Western civilization; the Acropolis needs no introduction.', r: '4.90', t: 'History', coord: [23.73, 37.98] },
-          { n: 'Mykonos', d: 'Windmills, whitewash and the Aegean\'s most vibrant party island.', r: '4.87', t: 'Beach', coord: [25.33, 37.45] },
-          { n: 'Crete', d: 'Greece\'s largest island: Minoan palaces, gorges and incredible food.', r: '4.86', t: 'Culture', coord: [25.14, 35.34] },
-          { n: 'Rhodes', d: 'A medieval walled city within a sun-drenched island gateway to Turkey.', r: '4.84', t: 'History', coord: [28.23, 36.43] },
-          { n: 'Meteora', d: 'Byzantine monasteries perched on impossible pinnacles of rock.', r: '4.93', t: 'Scenic', coord: [21.63, 39.72] },
-          { n: 'Delphi', d: 'Oracle of the ancient world set on the slopes of Mount Parnassus.', r: '4.83', t: 'History', coord: [22.50, 38.48] },
-          { n: 'Thessaloniki', d: 'Byzantine mosaics, vibrant café culture and the best food in Greece.', r: '4.81', t: 'Culture', coord: [22.94, 40.64] },
-          { n: 'Corfu', d: 'Lush Ionian island with Venetian architecture and crystal-clear coves.', r: '4.80', t: 'Beach', coord: [19.92, 39.62] },
-          { n: 'Olympia', d: 'Birthplace of the Olympic Games, surrounded by ancient ruins and pine forests.', r: '4.78', t: 'History', coord: [21.63, 37.64] },
-        ]
-      },
-      'Italy': {
-        flag: '🇮🇹', sub: 'Southern Europe · 10 destinations', center: [12.6, 42.5], zoom: 5,
-        list: [
-          { n: 'Rome', d: 'Two millennia of empire, art and the world\'s best espresso.', r: '4.94', t: 'History', coord: [12.49, 41.89] },
-          { n: 'Florence', d: 'Renaissance masterpieces at every corner: Uffizi, Duomo, Ponte Vecchio.', r: '4.93', t: 'Art', coord: [11.26, 43.77] },
-          { n: 'Venice', d: 'A city of canals defying logic, gravity and the passage of time.', r: '4.91', t: 'Scenic', coord: [12.33, 45.44] },
-          { n: 'Amalfi Coast', d: 'Vertical cliffs, turquoise sea and villages draped in lemon groves.', r: '4.90', t: 'Scenic', coord: [14.60, 40.63] },
-          { n: 'Cinque Terre', d: 'Five pastel fishing villages clinging to Ligurian sea cliffs.', r: '4.88', t: 'Scenic', coord: [9.73, 44.12] },
-          { n: 'Sicily', d: 'Ancient temples, volcanic landscapes and Italy\'s finest street food.', r: '4.86', t: 'Culture', coord: [13.36, 38.12] },
-          { n: 'Milan', d: 'Fashion capital with Leonardo\'s Last Supper and a world-class Duomo.', r: '4.84', t: 'Culture', coord: [9.19, 45.46] },
-          { n: 'Naples', d: 'Chaotic, delicious and home to the world\'s original pizza.', r: '4.83', t: 'Gastronomy', coord: [14.27, 40.85] },
-          { n: 'Pompeii', d: 'A Roman city frozen in time by the eruption of Vesuvius in AD 79.', r: '4.82', t: 'History', coord: [14.49, 40.75] },
-          { n: 'Tuscany', d: 'Cypress avenues, rolling vineyards and hilltop towns like Siena and Pienza.', r: '4.81', t: 'Scenic', coord: [11.33, 43.32] },
-        ]
-      },
-      'France': {
-        flag: '🇫🇷', sub: 'Western Europe · 10 destinations', center: [2.2, 46.2], zoom: 5,
-        list: [
-          { n: 'Paris', d: 'The City of Light: Eiffel Tower, Louvre, and the world\'s finest café culture.', r: '4.92', t: 'Culture', coord: [2.35, 48.86] },
-          { n: 'Provence', d: 'Lavender fields, Roman aqueducts and sun-soaked Provençal villages.', r: '4.89', t: 'Scenic', coord: [4.81, 43.95] },
-          { n: 'Mont Saint-Michel', d: 'A tidal abbey-island that rises from the sea like a fairy-tale fortress.', r: '4.93', t: 'Scenic', coord: [-1.51, 48.64] },
-          { n: 'Loire Valley', d: 'The Garden of France: Renaissance châteaux among vineyards and rivers.', r: '4.87', t: 'History', coord: [0.68, 47.39] },
-          { n: 'French Riviera', d: 'Azure Coast of glamour, art and brilliant Mediterranean light.', r: '4.86', t: 'Scenic', coord: [7.27, 43.70] },
-          { n: 'Normandy', d: 'D-Day beaches, half-timbered villages and the world\'s creamiest cuisine.', r: '4.84', t: 'History', coord: [-0.70, 49.27] },
-          { n: 'Alsace', d: 'Wine route through half-timbered villages straight out of a storybook.', r: '4.83', t: 'Culture', coord: [7.75, 48.57] },
-          { n: 'Bordeaux', d: 'World wine capital with grand 18th-century architecture along the Garonne.', r: '4.82', t: 'Gastronomy', coord: [-0.58, 44.84] },
-          { n: 'Chamonix', d: 'Mountain-town at the foot of Mont Blanc with legendary Alpine skiing.', r: '4.81', t: 'Adventure', coord: [6.87, 45.92] },
-          { n: 'Corsica', d: 'The Island of Beauty: maquis-covered mountains plunging into turquoise sea.', r: '4.80', t: 'Nature', coord: [8.74, 41.92] },
-        ]
-      },
-      'USA': {
-        flag: '🇺🇸', sub: 'North America · 10 destinations', center: [-95.7, 37.1], zoom: 4,
-        list: [
-          { n: 'New York City', d: 'Culture, food and skyline in every direction. The city that never sleeps.', r: '4.92', t: 'City', coord: [-74.01, 40.71] },
-          { n: 'Grand Canyon', d: 'A mile-deep gorge carved over 5 million years by the Colorado River.', r: '4.95', t: 'Nature', coord: [-112.11, 36.06] },
-          { n: 'Yellowstone', d: 'America\'s first national park: geysers, hot springs and bison herds.', r: '4.91', t: 'Nature', coord: [-110.59, 44.43] },
-          { n: 'San Francisco', d: 'Golden Gate, cable cars, Alcatraz and some of America\'s best food.', r: '4.89', t: 'City', coord: [-122.42, 37.77] },
-          { n: 'New Orleans', d: 'Jazz birthplace with French Quarter architecture and legendary Creole cuisine.', r: '4.88', t: 'Culture', coord: [-90.08, 29.95] },
-          { n: 'Hawaii', d: 'Volcanic islands with world-class surfing, lush rainforests and coral reefs.', r: '4.90', t: 'Beach', coord: [-157.82, 21.30] },
-          { n: 'Yosemite', d: 'Cathedral-like granite valleys, ancient sequoias and iconic waterfalls.', r: '4.93', t: 'Nature', coord: [-119.54, 37.75] },
-          { n: 'Miami', d: 'Art Deco beaches, vibrant nightlife and the best Cuban food outside Havana.', r: '4.85', t: 'Beach', coord: [-80.19, 25.77] },
-          { n: 'Chicago', d: 'Lakefront skyline, deep-dish pizza and world-class architecture.', r: '4.87', t: 'City', coord: [-87.63, 41.88] },
-          { n: 'Los Angeles', d: 'Hollywood, Pacific Coast Highway and the world\'s most diverse food scene.', r: '4.83', t: 'City', coord: [-118.24, 34.05] },
-        ]
-      },
-      'Australia': {
-        flag: '🇦🇺', sub: 'Oceania · 10 destinations', center: [133.8, -25.3], zoom: 4,
-        list: [
-          { n: 'Sydney', d: 'Opera House, Harbour Bridge and some of the world\'s best beaches.', r: '4.93', t: 'City', coord: [151.21, -33.87] },
-          { n: 'Great Barrier Reef', d: 'The world\'s largest coral reef system, visible from space.', r: '4.95', t: 'Wildlife', coord: [145.77, -16.92] },
-          { n: 'Uluru', d: 'A sacred monolith rising 348 m from the flat red centre of the continent.', r: '4.91', t: 'Culture', coord: [131.04, -25.35] },
-          { n: 'Melbourne', d: 'Laneways, coffee culture, street art and Australia\'s best restaurant scene.', r: '4.90', t: 'City', coord: [144.96, -37.81] },
-          { n: 'Tasmania', d: 'Wild, unspoiled wilderness at the edge of the world with world-class MONA.', r: '4.88', t: 'Nature', coord: [147.33, -42.88] },
-          { n: 'Whitsundays', d: '74 islands of turquoise water and the dazzling white Whitehaven Beach.', r: '4.87', t: 'Beach', coord: [148.96, -20.27] },
-          { n: 'Blue Mountains', d: 'Ancient sandstone escarpments with waterfalls and the iconic Three Sisters.', r: '4.85', t: 'Nature', coord: [150.31, -33.72] },
-          { n: 'Byron Bay', d: 'Laid-back surf town with the most easterly lighthouse on the continent.', r: '4.83', t: 'Beach', coord: [153.61, -28.65] },
-          { n: 'Kangaroo Island', d: 'An ark of unspoilt nature: koalas, sea lions and remarkable rock formations.', r: '4.82', t: 'Wildlife', coord: [137.17, -35.86] },
-          { n: 'Darwin', d: 'Tropical gateway to Kakadu, one of the oldest living cultures on earth.', r: '4.79', t: 'Culture', coord: [130.84, -12.46] },
-        ]
-      },
-      'Morocco': {
-        flag: '🇲🇦', sub: 'North Africa · 10 destinations', center: [-7.1, 31.8], zoom: 6,
-        list: [
-          { n: 'Marrakech', d: 'Labyrinthine medinas, vibrant souks and rooftop views over the Koutoubia.', r: '4.90', t: 'Culture', coord: [-7.99, 31.63] },
-          { n: 'Fes', d: 'The world\'s oldest living medieval city with a 9,000-alley medina.', r: '4.89', t: 'History', coord: [-4.99, 34.03] },
-          { n: 'Chefchaouen', d: 'The Blue City: an extraordinary mountain town painted in shades of cobalt.', r: '4.92', t: 'Scenic', coord: [-5.27, 35.17] },
-          { n: 'Sahara Desert', d: 'Erg Chebbi: towering orange dunes and camel treks under a dome of stars.', r: '4.93', t: 'Nature', coord: [-3.98, 31.10] },
-          { n: 'Essaouira', d: 'Atlantic-swept coastal ramparts, blue fishing boats and wind-swept beaches.', r: '4.86', t: 'Scenic', coord: [-9.76, 31.51] },
-          { n: 'Aït Benhaddou', d: 'UNESCO-listed ksar — mud-brick citadel immortalized in countless films.', r: '4.88', t: 'History', coord: [-7.13, 31.05] },
-          { n: 'Ouarzazate', d: 'Gateway to the Sahara and the Draa Valley of kasbahs and palm groves.', r: '4.84', t: 'Culture', coord: [-6.89, 30.93] },
-          { n: 'Casablanca', d: 'Art Deco grandeur, Hassan II Mosque and Morocco\'s cosmopolitan heart.', r: '4.82', t: 'Culture', coord: [-7.59, 33.57] },
-          { n: 'Rabat', d: 'Morocco\'s tranquil capital with UNESCO medina and the unfinished Hassan Tower.', r: '4.80', t: 'History', coord: [-6.84, 34.02] },
-          { n: 'Tangier', d: 'Mythic port city at the meeting point of Atlantic and Mediterranean.', r: '4.79', t: 'Culture', coord: [-5.80, 35.77] },
-        ]
-      },
-      'Indonesia': {
-        flag: '🇮🇩', sub: 'Southeast Asia · 10 destinations', center: [113.9, -0.8], zoom: 5,
-        list: [
-          { n: 'Ubud, Bali', d: 'Rice terraces, sacred temples, healers and a world-class wellness scene.', r: '4.92', t: 'Culture', coord: [115.26, -8.51] },
-          { n: 'Komodo Island', d: 'The only place on earth to witness Komodo dragons in the wild.', r: '4.91', t: 'Wildlife', coord: [119.49, -8.55] },
-          { n: 'Raja Ampat', d: 'The most biodiverse marine ecosystem on the planet, utterly pristine.', r: '4.95', t: 'Wildlife', coord: [130.52, -0.51] },
-          { n: 'Yogyakarta', d: 'Cultural heart of Java with Borobudur and Prambanan temples nearby.', r: '4.89', t: 'Culture', coord: [110.36, -7.80] },
-          { n: 'Lombok', d: 'Rinjani volcano, empty beaches and a quieter alternative to Bali.', r: '4.86', t: 'Nature', coord: [116.10, -8.65] },
-          { n: 'Gili Islands', d: 'Car-free coral-fringed islands with hammock-chic and sea turtles.', r: '4.85', t: 'Beach', coord: [116.05, -8.35] },
-          { n: 'Labuan Bajo', d: 'Dramatic pink-sand beaches and the gateway to Komodo National Park.', r: '4.84', t: 'Scenic', coord: [119.89, -8.52] },
-          { n: 'Mount Bromo', d: 'An active volcano set in a vast caldera — sunrise here is unforgettable.', r: '4.83', t: 'Nature', coord: [112.95, -7.94] },
-          { n: 'Lake Toba', d: 'The world\'s largest volcanic lake on Sumatra, with the island of Samosir.', r: '4.81', t: 'Nature', coord: [98.82, 2.68] },
-          { n: 'Jakarta', d: 'Mega-city melting pot of colonial history, ultra-modern malls and street food.', r: '4.75', t: 'City', coord: [106.85, -6.21] },
-        ]
-      },
-      'New Zealand': {
-        flag: '🇳🇿', sub: 'Oceania · 10 destinations', center: [172.0, -41.3], zoom: 5,
-        list: [
-          { n: 'Queenstown', d: 'Adventure capital of the world set against fjords and the Remarkables.', r: '4.94', t: 'Adventure', coord: [168.66, -45.03] },
-          { n: 'Milford Sound', d: 'Sheer 1,200 m fiord walls and cascading waterfalls in Fiordland.', r: '4.96', t: 'Scenic', coord: [167.93, -44.67] },
-          { n: 'Bay of Islands', d: 'Subtropical paradise of 144 islands in the birthplace of New Zealand.', r: '4.88', t: 'Nature', coord: [174.08, -35.26] },
-          { n: 'Rotorua', d: 'Geothermal wonderland and living Māori culture in the volcanic heartland.', r: '4.87', t: 'Culture', coord: [176.25, -38.14] },
-          { n: 'Franz Josef Glacier', d: 'A rare temperate rainforest glacier that descends almost to sea level.', r: '4.90', t: 'Nature', coord: [170.18, -43.39] },
-          { n: 'Abel Tasman', d: 'Golden sand beaches and clear-water coves in a coastal national park.', r: '4.86', t: 'Beach', coord: [172.99, -40.85] },
-          { n: 'Tongariro Alpine Crossing', d: 'New Zealand\'s greatest day hike past active craters and emerald lakes.', r: '4.93', t: 'Adventure', coord: [175.67, -39.20] },
-          { n: 'Coromandel Peninsula', d: 'Cathedral Cove sea cave and the iconic dig-your-own Hot Water Beach.', r: '4.84', t: 'Scenic', coord: [175.88, -37.02] },
-          { n: 'Kaikōura', d: 'Whale watching, sperm whales and a dramatic snowy mountain backdrop.', r: '4.83', t: 'Wildlife', coord: [173.68, -42.40] },
-          { n: 'Wellington', d: 'Compact capital with Te Papa museum, craft beer and epic windy character.', r: '4.82', t: 'Culture', coord: [174.78, -41.29] },
-        ]
-      },
-    };
 
     /* ══ COUNTRY SEARCH FUNCTIONS ══ */
     function openCountrySearch() {
@@ -4635,12 +4630,27 @@
       renderCountryResults(q);
     }
 
-    function renderCountryResults(q) {
+    // Country directory (flag + destination count) — fetched once from
+    // /api/top10/countries and cached, instead of a hardcoded client list.
+    let countryDirectory = null;
+    async function loadCountryDirectory() {
+      if (countryDirectory) return countryDirectory;
+      try {
+        const res = await fetch('/api/top10/countries');
+        const data = await res.json();
+        countryDirectory = data.countries || [];
+      } catch (err) {
+        countryDirectory = [];
+      }
+      return countryDirectory;
+    }
+
+    async function renderCountryResults(q) {
       const container = document.getElementById('cs-results');
-      const all = Object.keys(COUNTRY_TOP10);
+      const directory = await loadCountryDirectory();
       const matches = q.trim()
-        ? all.filter(c => c.toLowerCase().includes(q.trim().toLowerCase()))
-        : all;
+        ? directory.filter(d => d.country.toLowerCase().includes(q.trim().toLowerCase()))
+        : directory;
 
       if (!matches.length) {
         container.innerHTML = `<div class="cs-empty">No countries found for "<strong>${q}</strong>"</div>`;
@@ -4653,17 +4663,14 @@
         : name;
 
       container.innerHTML = `<div class="cs-results-hdr">${q.trim() ? 'Results' : 'All countries'}</div>` +
-        matches.map(c => {
-          const d = COUNTRY_TOP10[c];
-          return `<div class="cs-item" onclick="selectCountry('${c.replace(/'/g, "\\'")}')">
+        matches.map(d => `<div class="cs-item" onclick="selectCountry('${d.country.replace(/'/g, "\\'")}')">
             <div class="cs-flag">${d.flag}</div>
             <div class="cs-info">
-              <div class="cs-name">${hl(c)}</div>
+              <div class="cs-name">${hl(d.country)}</div>
               <div class="cs-sub">${d.sub}</div>
             </div>
             ${ARR}
-          </div>`;
-        }).join('');
+          </div>`).join('');
     }
 
     /* ══ RANKING PANEL ══ */
@@ -4824,30 +4831,15 @@
       }
     }
 
-    const TOP10_COUNTRY_FLAG = {
-      Chile: '🇨🇱', Argentina: '🇦🇷', Peru: '🇵🇪', Colombia: '🇨🇴',
-      Brazil: '🇧🇷', Ecuador: '🇪🇨', Uruguay: '🇺🇾',
-    };
-
     async function selectCountry(country) {
       closeCountrySearch();
 
       const rows = await fetchTop10({ type: 'country', country });
-      let list, flag, sub;
-
-      if (rows.length) {
-        // data sourced from /api/top10 (backed by the top10_places table)
-        list = rows.map(adaptTop10Item);
-        flag = TOP10_COUNTRY_FLAG[country] || '🌍';
-        sub = `${rows.length} destinations`;
-      } else {
-        // fall back to the legacy static list for countries not yet in top10_places
-        const d = COUNTRY_TOP10[country];
-        if (!d) return;
-        list = d.list;
-        flag = d.flag;
-        sub = d.sub;
-      }
+      if (!rows.length) return;
+      const list = rows.map(adaptTop10Item);
+      const directory = await loadCountryDirectory();
+      const flag = directory.find(d => d.country === country)?.flag || '🌍';
+      const sub = `${rows.length} destinations`;
 
       cleanMap();
 
@@ -5145,6 +5137,7 @@
         hasRoute = true;
         document.getElementById('save-plan-btn').style.display = 'flex';
         document.getElementById('transport-box').style.display = 'block';
+        document.getElementById('places-range-box').style.display = 'flex';
 
         renderRouteMode(fromVal, toVal);
         requestRoute(currentTransportMode, {
@@ -5152,9 +5145,10 @@
           onResult: async route => {
             if (route) {
               applyRouteStats(route);
+              lastRoutePath = route.overview_path;
 
               // Search Google Places for real tourist attractions along the driven path
-              STOPS = await findTouristStopsAlongRoute(route.overview_path);
+              STOPS = await findTouristStopsAlongRoute(lastRoutePath, placesCount);
               selectedId = STOPS[0]?.id ?? null;
               rebuildStopMarkers(STOPS);
               renderStops(STOPS);
@@ -5173,6 +5167,7 @@
               }
             } else {
               STOPS = [];
+              lastRoutePath = null;
               rebuildStopMarkers([]);
               renderStops([]);
             }
@@ -5184,9 +5179,11 @@
         hasRoute = false;
         document.getElementById('save-plan-btn').style.display = 'none';
         document.getElementById('transport-box').style.display = 'none';
+        document.getElementById('places-range-box').style.display = 'none';
         toMarker.map = null;
         clearRoutePolylines();
         STOPS = [];
+        lastRoutePath = null;
         rebuildStopMarkers([]);
         renderExploreMode(fromVal);
         map.panTo(toLatLng(FROM.coord));
@@ -5289,7 +5286,7 @@
         <div class="sec-lbl">Route overview</div>
         <div class="stats-row">
           <div class="stat-box"><div class="stat-lbl">Distance</div><div class="stat-val" id="route-distance">—</div><div class="stat-note">total route</div></div>
-          <div class="stat-box"><div class="stat-lbl">Driving time</div><div class="stat-val" id="route-duration">—</div><div class="stat-note">non-stop est.</div></div>
+          <div class="stat-box"><div class="stat-lbl" id="route-duration-label">${TRANSPORT_TIME_LABEL[currentTransportMode] || 'Driving time'}</div><div class="stat-val" id="route-duration">—</div><div class="stat-note">non-stop est.</div></div>
         </div>
         <div class="hr"></div>
         <div class="timeline" id="stops-list"></div>`;
@@ -5351,11 +5348,46 @@
       document.getElementById('sp-modal').classList.remove('open');
       document.body.style.overflow = '';
     }
-    function confirmSavePlan() {
+    async function confirmSavePlan() {
       const name = document.getElementById('sp-name-input').value.trim();
       if (!name) { document.getElementById('sp-name-input').focus(); return; }
       closeSavePlan();
-      showToast(`Plan "${name}" saved!`);
+
+      const distanceText = document.getElementById('route-distance')?.textContent || '';
+      const distance_km = parseInt(distanceText.replace(/[^\d]/g, ''), 10) || null;
+      const duration_text = document.getElementById('route-duration')?.textContent || null;
+
+      // Every marker currently on the map (the tourist stops found along the route),
+      // as plain {name, latitude, longitude} — not the internal [lng,lat] coord pairs.
+      const places = STOPS.map(s => ({
+        name: s.name,
+        latitude: s.coord[1],
+        longitude: s.coord[0],
+        rating: s.rating,
+      }));
+
+      try {
+        const res = await fetch('/api/saveplan', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: name,
+            user_id: CURRENT_USER_ID,
+            from_name: FROM.name || currentFrom,
+            from_lat: FROM.coord[1], from_lng: FROM.coord[0],
+            to_name: TO.name || currentTo,
+            to_lat: TO.coord[1], to_lng: TO.coord[0],
+            distance_km, duration_text,
+            transport_mode: currentTransportMode,
+            places,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to save plan');
+        showToast(`Plan "${name}" saved!`);
+      } catch (err) {
+        showToast(`Couldn't save plan — ${err.message}`);
+      }
     }
 
     function confirmLogout() {

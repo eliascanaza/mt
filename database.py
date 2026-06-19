@@ -131,15 +131,50 @@ def init_db():
         );
 
         CREATE TABLE IF NOT EXISTS saved_plans (
-            id          INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_name   TEXT    DEFAULT 'Alex Traveller',
-            route_id    INTEGER REFERENCES routes(id),
-            title       TEXT,
-            notes       TEXT,
-            created_at  DATETIME DEFAULT CURRENT_TIMESTAMP
+            id              INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_name       TEXT    DEFAULT 'Alex Traveller',
+            user_id         INTEGER DEFAULT 1111,
+            user_email      TEXT    DEFAULT 'test@gmail.com',
+            route_id        INTEGER REFERENCES routes(id),
+            title           TEXT,
+            notes           TEXT,
+            from_name       TEXT,
+            from_lat        REAL,
+            from_lng        REAL,
+            to_name         TEXT,
+            to_lat          REAL,
+            to_lng          REAL,
+            distance_km     INTEGER,
+            duration_text   TEXT,
+            transport_mode  TEXT,
+            stops_snapshot  TEXT    DEFAULT '[]',
+            created_at      DATETIME DEFAULT CURRENT_TIMESTAMP
         );
         """)
+        _migrate_saved_plans_columns(conn)
     print("✅  Schema ready")
+
+
+# saved_plans predates the /api/saveplan feature; this backfills the new
+# columns onto an already-existing maketrip.db without touching its data.
+def _migrate_saved_plans_columns(conn):
+    existing = {row[1] for row in conn.execute("PRAGMA table_info(saved_plans)")}
+    for name, decl in [
+        ("user_id", "INTEGER DEFAULT 1111"),
+        ("user_email", "TEXT DEFAULT 'test@gmail.com'"),
+        ("from_name", "TEXT"),
+        ("from_lat", "REAL"),
+        ("from_lng", "REAL"),
+        ("to_name", "TEXT"),
+        ("to_lat", "REAL"),
+        ("to_lng", "REAL"),
+        ("distance_km", "INTEGER"),
+        ("duration_text", "TEXT"),
+        ("transport_mode", "TEXT"),
+        ("stops_snapshot", "TEXT DEFAULT '[]'"),
+    ]:
+        if name not in existing:
+            conn.execute(f"ALTER TABLE saved_plans ADD COLUMN {name} {decl}")
 
 
 # ── Seed data ───────────────────────────────────────────────────────────
@@ -556,6 +591,141 @@ TOP10_PLACES_SEED = [
         ("Colonia del Sacramento", "History", 4.70, "A UNESCO World Heritage colonial town across the bay from Buenos Aires.", -34.4628, -57.8425),
         ("Cabo Polonio", "Nature", 4.40, "A secluded, road-free beach town known for its bohemian, off-grid atmosphere.", -34.0667, -53.7167),
     ])],
+    # Japan
+    *[{"list_type": "country", "country": "Japan", "rank": i + 1, "city": c, "category": cat, "rating": r,
+       "place_information": info, "latitude": lat, "longitude": lng}
+      for i, (c, cat, r, info, lat, lng) in enumerate([
+        ("Kyoto", "Culture", 4.95, "Ancient temples, bamboo forests, and the world's most refined tea culture.", 35.01, 135.77),
+        ("Tokyo", "City", 4.93, "Hyper-efficient, hyper-delicious, utterly unlike anywhere else on earth.", 35.68, 139.69),
+        ("Mount Fuji", "Nature", 4.91, "Japan's sacred volcano and iconic silhouette on the world's skyline.", 35.36, 138.73),
+        ("Osaka", "Gastronomy", 4.89, "Japan's kitchen: street food, neon and a wonderfully loud personality.", 34.69, 135.50),
+        ("Hiroshima", "History", 4.88, "A city reborn; the Peace Memorial is one of humanity's most moving places.", 34.39, 132.45),
+        ("Nara", "Culture", 4.86, "Free-roaming deer and thousand-year-old temples in a compact city.", 34.69, 135.84),
+        ("Hakone", "Nature", 4.85, "Volcanic hot springs and views of Fuji from steaming open-air baths.", 35.23, 139.07),
+        ("Nikko", "Culture", 4.83, "Ornate shrines and waterfalls in cedar forests north of Tokyo.", 36.75, 139.60),
+        ("Hokkaido", "Nature", 4.82, "Japan's wild north: lavender fields, powder snow and fresh seafood.", 43.06, 141.34),
+        ("Okinawa", "Beach", 4.80, "Tropical islands with turquoise reefs, unique culture and WWII history.", 26.21, 127.68),
+    ])],
+    # Greece
+    *[{"list_type": "country", "country": "Greece", "rank": i + 1, "city": c, "category": cat, "rating": r,
+       "place_information": info, "latitude": lat, "longitude": lng}
+      for i, (c, cat, r, info, lat, lng) in enumerate([
+        ("Santorini", "Scenic", 4.94, "Volcanic island with iconic white-domed architecture above a deep-blue caldera.", 36.40, 25.43),
+        ("Athens", "History", 4.90, "Cradle of Western civilization; the Acropolis needs no introduction.", 37.98, 23.73),
+        ("Meteora", "Scenic", 4.93, "Byzantine monasteries perched on impossible pinnacles of rock.", 39.72, 21.63),
+        ("Mykonos", "Beach", 4.87, "Windmills, whitewash and the Aegean's most vibrant party island.", 37.45, 25.33),
+        ("Crete", "Culture", 4.86, "Greece's largest island: Minoan palaces, gorges and incredible food.", 35.34, 25.14),
+        ("Rhodes", "History", 4.84, "A medieval walled city within a sun-drenched island gateway to Turkey.", 36.43, 28.23),
+        ("Delphi", "History", 4.83, "Oracle of the ancient world set on the slopes of Mount Parnassus.", 38.48, 22.50),
+        ("Thessaloniki", "Culture", 4.81, "Byzantine mosaics, vibrant café culture and the best food in Greece.", 40.64, 22.94),
+        ("Corfu", "Beach", 4.80, "Lush Ionian island with Venetian architecture and crystal-clear coves.", 39.62, 19.92),
+        ("Olympia", "History", 4.78, "Birthplace of the Olympic Games, surrounded by ancient ruins and pine forests.", 37.64, 21.63),
+    ])],
+    # Italy
+    *[{"list_type": "country", "country": "Italy", "rank": i + 1, "city": c, "category": cat, "rating": r,
+       "place_information": info, "latitude": lat, "longitude": lng}
+      for i, (c, cat, r, info, lat, lng) in enumerate([
+        ("Rome", "History", 4.94, "Two millennia of empire, art and the world's best espresso.", 41.89, 12.49),
+        ("Florence", "Art", 4.93, "Renaissance masterpieces at every corner: Uffizi, Duomo, Ponte Vecchio.", 43.77, 11.26),
+        ("Venice", "Scenic", 4.91, "A city of canals defying logic, gravity and the passage of time.", 45.44, 12.33),
+        ("Amalfi Coast", "Scenic", 4.90, "Vertical cliffs, turquoise sea and villages draped in lemon groves.", 40.63, 14.60),
+        ("Cinque Terre", "Scenic", 4.88, "Five pastel fishing villages clinging to Ligurian sea cliffs.", 44.12, 9.73),
+        ("Sicily", "Culture", 4.86, "Ancient temples, volcanic landscapes and Italy's finest street food.", 38.12, 13.36),
+        ("Milan", "Culture", 4.84, "Fashion capital with Leonardo's Last Supper and a world-class Duomo.", 45.46, 9.19),
+        ("Naples", "Gastronomy", 4.83, "Chaotic, delicious and home to the world's original pizza.", 40.85, 14.27),
+        ("Pompeii", "History", 4.82, "A Roman city frozen in time by the eruption of Vesuvius in AD 79.", 40.75, 14.49),
+        ("Tuscany", "Scenic", 4.81, "Cypress avenues, rolling vineyards and hilltop towns like Siena and Pienza.", 43.32, 11.33),
+    ])],
+    # France
+    *[{"list_type": "country", "country": "France", "rank": i + 1, "city": c, "category": cat, "rating": r,
+       "place_information": info, "latitude": lat, "longitude": lng}
+      for i, (c, cat, r, info, lat, lng) in enumerate([
+        ("Paris", "Culture", 4.92, "The City of Light: Eiffel Tower, Louvre, and the world's finest café culture.", 48.86, 2.35),
+        ("Mont Saint-Michel", "Scenic", 4.93, "A tidal abbey-island that rises from the sea like a fairy-tale fortress.", 48.64, -1.51),
+        ("Provence", "Scenic", 4.89, "Lavender fields, Roman aqueducts and sun-soaked Provençal villages.", 43.95, 4.81),
+        ("Loire Valley", "History", 4.87, "The Garden of France: Renaissance châteaux among vineyards and rivers.", 47.39, 0.68),
+        ("French Riviera", "Scenic", 4.86, "Azure Coast of glamour, art and brilliant Mediterranean light.", 43.70, 7.27),
+        ("Normandy", "History", 4.84, "D-Day beaches, half-timbered villages and the world's creamiest cuisine.", 49.27, -0.70),
+        ("Alsace", "Culture", 4.83, "Wine route through half-timbered villages straight out of a storybook.", 48.57, 7.75),
+        ("Bordeaux", "Gastronomy", 4.82, "World wine capital with grand 18th-century architecture along the Garonne.", 44.84, -0.58),
+        ("Chamonix", "Adventure", 4.81, "Mountain-town at the foot of Mont Blanc with legendary Alpine skiing.", 45.92, 6.87),
+        ("Corsica", "Nature", 4.80, "The Island of Beauty: maquis-covered mountains plunging into turquoise sea.", 41.92, 8.74),
+    ])],
+    # USA
+    *[{"list_type": "country", "country": "USA", "rank": i + 1, "city": c, "category": cat, "rating": r,
+       "place_information": info, "latitude": lat, "longitude": lng}
+      for i, (c, cat, r, info, lat, lng) in enumerate([
+        ("Grand Canyon", "Nature", 4.95, "A mile-deep gorge carved over 5 million years by the Colorado River.", 36.06, -112.11),
+        ("Yosemite", "Nature", 4.93, "Cathedral-like granite valleys, ancient sequoias and iconic waterfalls.", 37.75, -119.54),
+        ("New York City", "City", 4.92, "Culture, food and skyline in every direction. The city that never sleeps.", 40.71, -74.01),
+        ("Yellowstone", "Nature", 4.91, "America's first national park: geysers, hot springs and bison herds.", 44.43, -110.59),
+        ("Hawaii", "Beach", 4.90, "Volcanic islands with world-class surfing, lush rainforests and coral reefs.", 21.30, -157.82),
+        ("San Francisco", "City", 4.89, "Golden Gate, cable cars, Alcatraz and some of America's best food.", 37.77, -122.42),
+        ("New Orleans", "Culture", 4.88, "Jazz birthplace with French Quarter architecture and legendary Creole cuisine.", 29.95, -90.08),
+        ("Chicago", "City", 4.87, "Lakefront skyline, deep-dish pizza and world-class architecture.", 41.88, -87.63),
+        ("Miami", "Beach", 4.85, "Art Deco beaches, vibrant nightlife and the best Cuban food outside Havana.", 25.77, -80.19),
+        ("Los Angeles", "City", 4.83, "Hollywood, Pacific Coast Highway and the world's most diverse food scene.", 34.05, -118.24),
+    ])],
+    # Australia
+    *[{"list_type": "country", "country": "Australia", "rank": i + 1, "city": c, "category": cat, "rating": r,
+       "place_information": info, "latitude": lat, "longitude": lng}
+      for i, (c, cat, r, info, lat, lng) in enumerate([
+        ("Great Barrier Reef", "Wildlife", 4.95, "The world's largest coral reef system, visible from space.", -16.92, 145.77),
+        ("Sydney", "City", 4.93, "Opera House, Harbour Bridge and some of the world's best beaches.", -33.87, 151.21),
+        ("Uluru", "Culture", 4.91, "A sacred monolith rising 348 m from the flat red centre of the continent.", -25.35, 131.04),
+        ("Melbourne", "City", 4.90, "Laneways, coffee culture, street art and Australia's best restaurant scene.", -37.81, 144.96),
+        ("Tasmania", "Nature", 4.88, "Wild, unspoiled wilderness at the edge of the world with world-class MONA.", -42.88, 147.33),
+        ("Whitsundays", "Beach", 4.87, "74 islands of turquoise water and the dazzling white Whitehaven Beach.", -20.27, 148.96),
+        ("Blue Mountains", "Nature", 4.85, "Ancient sandstone escarpments with waterfalls and the iconic Three Sisters.", -33.72, 150.31),
+        ("Byron Bay", "Beach", 4.83, "Laid-back surf town with the most easterly lighthouse on the continent.", -28.65, 153.61),
+        ("Kangaroo Island", "Wildlife", 4.82, "An ark of unspoilt nature: koalas, sea lions and remarkable rock formations.", -35.86, 137.17),
+        ("Darwin", "Culture", 4.79, "Tropical gateway to Kakadu, one of the oldest living cultures on earth.", -12.46, 130.84),
+    ])],
+    # Morocco
+    *[{"list_type": "country", "country": "Morocco", "rank": i + 1, "city": c, "category": cat, "rating": r,
+       "place_information": info, "latitude": lat, "longitude": lng}
+      for i, (c, cat, r, info, lat, lng) in enumerate([
+        ("Marrakech", "Culture", 4.90, "Labyrinthine medinas, vibrant souks and rooftop views over the Koutoubia.", 31.63, -7.99),
+        ("Fes", "History", 4.89, "The world's oldest living medieval city with a 9,000-alley medina.", 34.03, -4.99),
+        ("Sahara Desert", "Nature", 4.93, "Erg Chebbi: towering orange dunes and camel treks under a dome of stars.", 31.10, -3.98),
+        ("Chefchaouen", "Scenic", 4.92, "The Blue City: an extraordinary mountain town painted in shades of cobalt.", 35.17, -5.27),
+        ("Aït Benhaddou", "History", 4.88, "UNESCO-listed ksar — mud-brick citadel immortalized in countless films.", 31.05, -7.13),
+        ("Essaouira", "Scenic", 4.86, "Atlantic-swept coastal ramparts, blue fishing boats and wind-swept beaches.", 31.51, -9.76),
+        ("Ouarzazate", "Culture", 4.84, "Gateway to the Sahara and the Draa Valley of kasbahs and palm groves.", 30.93, -6.89),
+        ("Casablanca", "Culture", 4.82, "Art Deco grandeur, Hassan II Mosque and Morocco's cosmopolitan heart.", 33.57, -7.59),
+        ("Rabat", "History", 4.80, "Morocco's tranquil capital with UNESCO medina and the unfinished Hassan Tower.", 34.02, -6.84),
+        ("Tangier", "Culture", 4.79, "Mythic port city at the meeting point of Atlantic and Mediterranean.", 35.77, -5.80),
+    ])],
+    # Indonesia
+    *[{"list_type": "country", "country": "Indonesia", "rank": i + 1, "city": c, "category": cat, "rating": r,
+       "place_information": info, "latitude": lat, "longitude": lng}
+      for i, (c, cat, r, info, lat, lng) in enumerate([
+        ("Raja Ampat", "Wildlife", 4.95, "The most biodiverse marine ecosystem on the planet, utterly pristine.", -0.51, 130.52),
+        ("Ubud, Bali", "Culture", 4.92, "Rice terraces, sacred temples, healers and a world-class wellness scene.", -8.51, 115.26),
+        ("Komodo Island", "Wildlife", 4.91, "The only place on earth to witness Komodo dragons in the wild.", -8.55, 119.49),
+        ("Yogyakarta", "Culture", 4.89, "Cultural heart of Java with Borobudur and Prambanan temples nearby.", -7.80, 110.36),
+        ("Lombok", "Nature", 4.86, "Rinjani volcano, empty beaches and a quieter alternative to Bali.", -8.65, 116.10),
+        ("Gili Islands", "Beach", 4.85, "Car-free coral-fringed islands with hammock-chic and sea turtles.", -8.35, 116.05),
+        ("Labuan Bajo", "Scenic", 4.84, "Dramatic pink-sand beaches and the gateway to Komodo National Park.", -8.52, 119.89),
+        ("Mount Bromo", "Nature", 4.83, "An active volcano set in a vast caldera — sunrise here is unforgettable.", -7.94, 112.95),
+        ("Lake Toba", "Nature", 4.81, "The world's largest volcanic lake on Sumatra, with the island of Samosir.", 2.68, 98.82),
+        ("Jakarta", "City", 4.75, "Mega-city melting pot of colonial history, ultra-modern malls and street food.", -6.21, 106.85),
+    ])],
+    # New Zealand
+    *[{"list_type": "country", "country": "New Zealand", "rank": i + 1, "city": c, "category": cat, "rating": r,
+       "place_information": info, "latitude": lat, "longitude": lng}
+      for i, (c, cat, r, info, lat, lng) in enumerate([
+        ("Milford Sound", "Scenic", 4.96, "Sheer 1,200 m fiord walls and cascading waterfalls in Fiordland.", -44.67, 167.93),
+        ("Queenstown", "Adventure", 4.94, "Adventure capital of the world set against fjords and the Remarkables.", -45.03, 168.66),
+        ("Tongariro Alpine Crossing", "Adventure", 4.93, "New Zealand's greatest day hike past active craters and emerald lakes.", -39.20, 175.67),
+        ("Franz Josef Glacier", "Nature", 4.90, "A rare temperate rainforest glacier that descends almost to sea level.", -43.39, 170.18),
+        ("Bay of Islands", "Nature", 4.88, "Subtropical paradise of 144 islands in the birthplace of New Zealand.", -35.26, 174.08),
+        ("Rotorua", "Culture", 4.87, "Geothermal wonderland and living Māori culture in the volcanic heartland.", -38.14, 176.25),
+        ("Abel Tasman", "Beach", 4.86, "Golden sand beaches and clear-water coves in a coastal national park.", -40.85, 172.99),
+        ("Coromandel Peninsula", "Scenic", 4.84, "Cathedral Cove sea cave and the iconic dig-your-own Hot Water Beach.", -37.02, 175.88),
+        ("Kaikōura", "Wildlife", 4.83, "Whale watching, sperm whales and a dramatic snowy mountain backdrop.", -42.40, 173.68),
+        ("Wellington", "Culture", 4.82, "Compact capital with Te Papa museum, craft beer and epic windy character.", -41.29, 174.78),
+    ])],
     # category (one destination per traveller type, for the "Top 10 by Category" view)
     *[{"list_type": "category", "country": None, "rank": i + 1, "city": c, "category": cat, "rating": r,
        "place_information": info, "latitude": lat, "longitude": lng}
@@ -732,6 +902,34 @@ def get_top10_countries():
         return [r["country"] for r in rows]
 
 
+# Flag emoji per country backing a top10_places by-country list — used by the
+# "Search by country" directory in the UI.
+COUNTRY_FLAGS = {
+    "Chile": "🇨🇱", "Argentina": "🇦🇷", "Peru": "🇵🇪", "Colombia": "🇨🇴",
+    "Brazil": "🇧🇷", "Ecuador": "🇪🇨", "Uruguay": "🇺🇾", "Japan": "🇯🇵",
+    "Greece": "🇬🇷", "Italy": "🇮🇹", "France": "🇫🇷", "USA": "🇺🇸",
+    "Australia": "🇦🇺", "Morocco": "🇲🇦", "Indonesia": "🇮🇩", "New Zealand": "🇳🇿",
+}
+
+
+def get_top10_country_directory():
+    """Every country with a by-country top10 list, with its flag and
+    destination count — backs the "Search by country" directory in the UI."""
+    with get_conn() as conn:
+        rows = conn.execute("""
+            SELECT country, COUNT(*) AS count FROM top10_places
+            WHERE list_type='country' GROUP BY country ORDER BY country
+        """).fetchall()
+        return [
+            {
+                "country": r["country"],
+                "flag": COUNTRY_FLAGS.get(r["country"], "🌍"),
+                "sub": f"{r['count']} destinations",
+            }
+            for r in rows
+        ]
+
+
 def search_places(query: str, limit: int = 6):
     """Autocomplete lookup: matches on name or subtitle, name-prefix matches first."""
     like = f"%{query}%"
@@ -808,6 +1006,45 @@ def save_plan(user_name: str, route_id: int, title: str, notes: str = ""):
             VALUES (?,?,?,?)
         """, (user_name, route_id, title, notes))
     return True
+
+
+def save_full_plan(title: str, from_name: str, from_lat: float, from_lng: float,
+                    to_name: str, to_lat: float, to_lng: float,
+                    user_id: int = 1111, user_email: str = "test@gmail.com",
+                    distance_km: int = None, duration_text: str = None,
+                    transport_mode: str = None, places: list = None, notes: str = ""):
+    """Saves a plan built from a live search: the real from/to points and the
+    Google Maps markers (tourist places, as {name, latitude, longitude}) found
+    along that route — associated with the given user."""
+    with get_conn() as conn:
+        conn.execute("""
+            INSERT INTO saved_plans (user_id, user_email, title, notes,
+                from_name, from_lat, from_lng, to_name, to_lat, to_lng,
+                distance_km, duration_text, transport_mode, stops_snapshot)
+            VALUES (:user_id,:user_email,:title,:notes,
+                :from_name,:from_lat,:from_lng,:to_name,:to_lat,:to_lng,
+                :distance_km,:duration_text,:transport_mode,:places)
+        """, {
+            "user_id": user_id, "user_email": user_email, "title": title, "notes": notes,
+            "from_name": from_name, "from_lat": from_lat, "from_lng": from_lng,
+            "to_name": to_name, "to_lat": to_lat, "to_lng": to_lng,
+            "distance_km": distance_km, "duration_text": duration_text,
+            "transport_mode": transport_mode, "places": json.dumps(places or []),
+        })
+        return conn.execute("SELECT last_insert_rowid()").fetchone()[0]
+
+
+def get_plans_for_user(user_id: int):
+    with get_conn() as conn:
+        rows = conn.execute("""
+            SELECT * FROM saved_plans WHERE user_id=? ORDER BY created_at DESC
+        """, (user_id,)).fetchall()
+        result = []
+        for r in rows:
+            d = dict(r)
+            d["stops_snapshot"] = json.loads(d["stops_snapshot"] or "[]")
+            result.append(d)
+        return result
 
 
 if __name__ == "__main__":

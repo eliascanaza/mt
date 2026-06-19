@@ -602,9 +602,9 @@
 
     /* ── PLANS ── */
     .plans-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 14px
+      display: flex;
+      flex-direction: column;
+      gap: 12px
     }
 
     .plan-card {
@@ -612,8 +612,8 @@
       border: 1px solid var(--border);
       border-radius: var(--r-lg);
       box-shadow: var(--sh-xs);
-      overflow: hidden;
       cursor: pointer;
+      padding: 14px 16px;
       transition: box-shadow .15s, border-color .15s;
     }
 
@@ -622,69 +622,18 @@
       border-color: var(--g300)
     }
 
-    .plan-cover {
-      height: 100px;
+    .plan-card-top {
       display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-      font-size: 44px;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
     }
 
-    .plan-cover-ov {
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(to bottom, rgba(0, 0, 0, .04), rgba(0, 0, 0, .28));
-    }
-
-    .plan-badge {
-      position: absolute;
-      top: 8px;
-      right: 8px;
-      font-size: 10px;
-      font-weight: 700;
-      padding: 3px 8px;
-      border-radius: 99px;
-    }
-
-    .plan-badge.active {
-      background: var(--green-bg);
-      color: var(--green)
-    }
-
-    .plan-badge.completed {
-      background: var(--blue-bg);
-      color: var(--blue)
-    }
-
-    .plan-badge.draft {
-      background: var(--g100);
-      color: var(--g600)
-    }
-
-    .plan-body {
-      padding: 13px 14px
-    }
-
-    .plan-route {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 13px;
+    .plan-card-title {
+      font-size: 14px;
       font-weight: 700;
       color: var(--black);
-      margin-bottom: 5px;
-    }
-
-    .plan-route svg {
-      width: 11px;
-      height: 11px;
-      stroke: var(--g400);
-      fill: none;
-      stroke-width: 2.5;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-      flex-shrink: 0;
     }
 
     .plan-meta {
@@ -693,6 +642,8 @@
       gap: 10px;
       font-size: 11px;
       color: var(--g600);
+      flex-shrink: 0;
+      white-space: nowrap;
     }
 
     .plan-meta span {
@@ -710,37 +661,65 @@
       stroke-linecap: round;
     }
 
-    .new-plan-card {
-      background: var(--white);
-      border: 2px dashed var(--border);
-      border-radius: var(--r-lg);
+    /* horizontal route strip: start ── place ── place ── end */
+    .plan-route-h {
+      display: flex;
+      align-items: flex-start;
+      overflow-x: auto;
+      scrollbar-width: thin;
+      scrollbar-color: var(--g200) transparent;
+      padding-bottom: 2px;
+    }
+
+    .prh-node {
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
-      gap: 8px;
-      min-height: 170px;
-      cursor: pointer;
-      color: var(--g400);
-      font-size: 13px;
-      font-weight: 500;
-      transition: border-color .15s, color .15s, background .15s;
+      flex-shrink: 0;
+      width: 90px;
+      gap: 6px;
     }
 
-    .new-plan-card:hover {
-      border-color: var(--black);
+    .prh-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      box-sizing: border-box;
+    }
+
+    .prh-dot.start {
+      background: var(--green);
+      box-shadow: 0 0 0 3px var(--green-bg);
+    }
+
+    .prh-dot.end {
+      background: var(--red);
+      box-shadow: 0 0 0 3px var(--red-bg);
+    }
+
+    .prh-dot.mid {
+      background: var(--white);
+      border: 2px solid var(--g400);
+    }
+
+    .prh-label {
+      font-size: 10.5px;
+      font-weight: 600;
       color: var(--black);
-      background: var(--g50);
+      text-align: center;
+      max-width: 88px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
-    .new-plan-card svg {
-      width: 26px;
-      height: 26px;
-      stroke: currentColor;
-      fill: none;
-      stroke-width: 1.5;
-      stroke-linecap: round;
-      stroke-linejoin: round;
+    .prh-line {
+      flex: 1;
+      min-width: 24px;
+      height: 2px;
+      background: var(--g300);
+      margin-top: 6px;
     }
 
     /* ── HISTORY ── */
@@ -1316,136 +1295,12 @@
     <!-- ══ MY PLANS TAB ══ -->
     <div class="tab-panel" id="tab-plans">
 
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
-        <div>
-          <div style="font-size:15px;font-weight:700;color:var(--black)">Your trip plans</div>
-          <div style="font-size:12px;color:var(--g600);margin-top:2px">3 plans · 2 active</div>
-        </div>
-        <button class="btn btn-primary" onclick="showToast('Opening trip builder…')">
-          <svg viewBox="0 0 24 24">
-            <line x1="12" y1="5" x2="12" y2="19" />
-            <line x1="5" y1="12" x2="19" y2="12" />
-          </svg>
-          New plan
-        </button>
+      <div style="margin-bottom:16px;">
+        <div style="font-size:15px;font-weight:700;color:var(--black)">Your trip plans</div>
+        <div style="font-size:12px;color:var(--g600);margin-top:2px" id="plans-count">Loading…</div>
       </div>
 
-      <div class="plans-grid">
-
-        <div class="plan-card" onclick="showToast('Opening: Santiago → Puerto Natales')">
-          <div class="plan-cover" style="background:linear-gradient(135deg,#1a5c4a,#0a3a18)">
-            <div class="plan-cover-ov"></div>
-            <span style="position:relative;z-index:1">🧊</span>
-            <div class="plan-badge active">Active</div>
-          </div>
-          <div class="plan-body">
-            <div class="plan-route">
-              Santiago
-              <svg viewBox="0 0 24 24">
-                <line x1="5" y1="12" x2="19" y2="12" />
-                <polyline points="12 5 19 12 12 19" />
-              </svg>
-              Puerto Natales
-            </div>
-            <div class="plan-meta">
-              <span>
-                <svg viewBox="0 0 24 24">
-                  <circle cx="12" cy="12" r="10" />
-                  <polyline points="12 6 12 12 16 14" />
-                </svg>
-                10 stops
-              </span>
-              <span>
-                <svg viewBox="0 0 24 24">
-                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                  <circle cx="12" cy="10" r="3" />
-                </svg>
-                1,285 km
-              </span>
-              <span>Last edited 2 days ago</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="plan-card" onclick="showToast('Opening: Buenos Aires → Ushuaia')">
-          <div class="plan-cover" style="background:linear-gradient(135deg,#1e3a5f,#0a1929)">
-            <div class="plan-cover-ov"></div>
-            <span style="position:relative;z-index:1">🌨️</span>
-            <div class="plan-badge completed">Completed</div>
-          </div>
-          <div class="plan-body">
-            <div class="plan-route">
-              Buenos Aires
-              <svg viewBox="0 0 24 24">
-                <line x1="5" y1="12" x2="19" y2="12" />
-                <polyline points="12 5 19 12 12 19" />
-              </svg>
-              Ushuaia
-            </div>
-            <div class="plan-meta">
-              <span>
-                <svg viewBox="0 0 24 24">
-                  <circle cx="12" cy="12" r="10" />
-                  <polyline points="12 6 12 12 16 14" />
-                </svg>
-                7 stops
-              </span>
-              <span>
-                <svg viewBox="0 0 24 24">
-                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                  <circle cx="12" cy="10" r="3" />
-                </svg>
-                3,200 km
-              </span>
-              <span>January 2024</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="plan-card" onclick="showToast('Opening: Cusco → Machu Picchu')">
-          <div class="plan-cover" style="background:linear-gradient(135deg,#78350f,#451a03)">
-            <div class="plan-cover-ov"></div>
-            <span style="position:relative;z-index:1">🗿</span>
-            <div class="plan-badge draft">Draft</div>
-          </div>
-          <div class="plan-body">
-            <div class="plan-route">
-              Cusco
-              <svg viewBox="0 0 24 24">
-                <line x1="5" y1="12" x2="19" y2="12" />
-                <polyline points="12 5 19 12 12 19" />
-              </svg>
-              Machu Picchu
-            </div>
-            <div class="plan-meta">
-              <span>
-                <svg viewBox="0 0 24 24">
-                  <circle cx="12" cy="12" r="10" />
-                  <polyline points="12 6 12 12 16 14" />
-                </svg>
-                3 stops
-              </span>
-              <span>
-                <svg viewBox="0 0 24 24">
-                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                  <circle cx="12" cy="10" r="3" />
-                </svg>
-                120 km
-              </span>
-              <span>In progress</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="new-plan-card" onclick="showToast('Opening trip builder…')">
-          <svg viewBox="0 0 24 24">
-            <line x1="12" y1="5" x2="12" y2="19" />
-            <line x1="5" y1="12" x2="19" y2="12" />
-          </svg>
-          Start a new plan
-        </div>
-
-      </div>
+      <div class="plans-grid" id="plans-grid"></div>
     </div><!-- /tab-plans -->
 
     <!-- ══ HISTORY TAB ══ -->
@@ -1815,6 +1670,87 @@
     // Activate tab from URL param (?tab=settings etc.)
     const urlTab = new URLSearchParams(location.search).get('tab');
     if (urlTab) switchTab(urlTab);
+
+    /* ══ MY PLANS (loaded from /api/getsavedplan) ══ */
+    const CURRENT_USER_ID = 1111;
+
+    function timeAgo(sqlTimestamp) {
+      // SQLite's CURRENT_TIMESTAMP has no timezone suffix — it's UTC, so add 'Z'
+      const then = new Date(sqlTimestamp.replace(' ', 'T') + 'Z').getTime();
+      const mins = Math.round((Date.now() - then) / 60000);
+      if (mins < 1) return 'Just now';
+      if (mins < 60) return `${mins} min ago`;
+      const hours = Math.round(mins / 60);
+      if (hours < 24) return `${hours} h ago`;
+      const days = Math.round(hours / 24);
+      if (days === 1) return 'Yesterday';
+      if (days < 30) return `${days} days ago`;
+      return new Date(then).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+    }
+
+    function shortName(full) { return (full || '').split(',')[0].trim(); }
+
+    // Horizontal start ── place ── place ── end strip for one plan.
+    function planRouteHtml(plan) {
+      const places = plan.stops_snapshot || [];
+      const nodes = [
+        { cls: 'start', label: shortName(plan.from_name) || 'Start' },
+        ...places.map(p => ({ cls: 'mid', label: p.name })),
+        { cls: 'end', label: shortName(plan.to_name) || 'End' },
+      ];
+      return nodes.map((n, i) => `
+        ${i > 0 ? '<div class="prh-line"></div>' : ''}
+        <div class="prh-node">
+          <div class="prh-dot ${n.cls}"></div>
+          <div class="prh-label">${(n.label || '').replace(/</g, '&lt;')}</div>
+        </div>`).join('');
+    }
+
+    function planCardHtml(plan) {
+      const stopCount = (plan.stops_snapshot || []).length;
+      const distance = plan.distance_km ? `${Number(plan.distance_km).toLocaleString()} km` : '—';
+      const hasRoute = plan.from_name && plan.to_name;
+      const title = (plan.title || (hasRoute ? `${shortName(plan.from_name)} trip` : 'Saved plan')).replace(/</g, '&lt;');
+      const fromTo = (hasRoute ? `${shortName(plan.from_name)} → ${shortName(plan.to_name)}` : title).replace(/'/g, "\\'");
+      return `
+        <div class="plan-card" onclick="showToast('Opening: ${fromTo}')">
+          <div class="plan-card-top">
+            <div class="plan-card-title">${title}</div>
+            <div class="plan-meta">
+              <span>
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
+                ${stopCount} stop${stopCount === 1 ? '' : 's'}
+              </span>
+              <span>
+                <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>
+                ${distance}
+              </span>
+              <span>${timeAgo(plan.created_at)}</span>
+            </div>
+          </div>
+          ${hasRoute
+          ? `<div class="plan-route-h">${planRouteHtml(plan)}</div>`
+          : `<div style="font-size:12px;color:var(--g600);">Route details unavailable</div>`}
+        </div>`;
+    }
+
+    async function loadMyPlans() {
+      const grid = document.getElementById('plans-grid');
+      const countEl = document.getElementById('plans-count');
+      try {
+        const res = await fetch(`/api/getsavedplan?user_id=${CURRENT_USER_ID}`);
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to load plans');
+        const plans = data.plans || []; // API already orders most-recent-first
+        countEl.textContent = plans.length ? `${plans.length} plan${plans.length === 1 ? '' : 's'}` : 'No plans yet';
+        grid.innerHTML = plans.map(planCardHtml).join('');
+      } catch (err) {
+        countEl.textContent = "Couldn't load plans";
+        grid.innerHTML = '';
+      }
+    }
+
+    loadMyPlans();
 
     let _tt;
     function showToast(msg) {

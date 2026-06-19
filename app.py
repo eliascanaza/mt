@@ -11,8 +11,11 @@ Endpoints:
   GET  /api/routes                 → saved routes
   GET  /api/top10/<list_type>      → top10 list (worldwide|country|city|category)
   GET  /api/top10                  → top10 places (?type=worldwide or ?type=country&country=Chile)
+  GET  /api/top10/countries        → country directory (flag + destination count)
   GET  /api/plans                  → saved plans
   POST /api/plans                  → save a new plan
+  GET  /api/getsavedplan            → plans for a user (?user_id=1111), most recent first
+  POST /api/saveplan                → save a plan from a live search (from/to + stops found)
   GET  /api/autocomplete           → place suggestions for the search bar
   GET  /api/placeinformation        → place details (rating, weather, AI tip) by name
 """
@@ -147,6 +150,12 @@ def api_top10_places():
         "count": len(items),
     })
 
+
+# ── Top 10 country directory (flag + destination count, for "Search by country") ─
+@app.route("/api/top10/countries", methods=["GET"])
+def api_top10_country_directory():
+    return jsonify({"countries": db.get_top10_country_directory()})
+
 # ── Autocomplete ─────────────────────────────────────────────────────────
 @app.route("/api/autocomplete", methods=["GET"])
 def api_autocomplete():
@@ -193,6 +202,38 @@ def api_save_plan():
         notes=data.get("notes", ""),
     )
     return jsonify({"ok": True, "message": "Plan saved"}), 201
+
+
+# ── Fetch saved plans (for the "My Plans" tab, most recently saved first) ──
+@app.route("/api/getsavedplan", methods=["GET"])
+def api_get_saved_plans():
+    user_id = request.args.get("user_id", 1111, type=int)
+    plans = db.get_plans_for_user(user_id)
+    return jsonify({"plans": plans, "count": len(plans)})
+
+
+# ── Save plan (from a live search: real from/to + tourist stops found) ────
+@app.route("/api/saveplan", methods=["POST"])
+def api_save_plan_full():
+    data = request.get_json(silent=True) or {}
+    required = ["title", "from_name", "from_lat", "from_lng", "to_name", "to_lat", "to_lng"]
+    missing = [f for f in required if data.get(f) in (None, "")]
+    if missing:
+        return jsonify({"error": f"Missing fields: {', '.join(missing)}"}), 400
+
+    plan_id = db.save_full_plan(
+        title=data["title"],
+        from_name=data["from_name"], from_lat=float(data["from_lat"]), from_lng=float(data["from_lng"]),
+        to_name=data["to_name"], to_lat=float(data["to_lat"]), to_lng=float(data["to_lng"]),
+        user_id=data.get("user_id", 1111),
+        user_email=data.get("user_email", "test@gmail.com"),
+        distance_km=data.get("distance_km"),
+        duration_text=data.get("duration_text"),
+        transport_mode=data.get("transport_mode"),
+        places=data.get("places", []),
+        notes=data.get("notes", ""),
+    )
+    return jsonify({"ok": True, "message": "Plan saved", "plan_id": plan_id}), 201
 
 
 # ── Health check ────────────────────────────────────────────────────────────
