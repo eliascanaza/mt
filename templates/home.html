@@ -770,24 +770,19 @@
     }
 
     .search-empty-icon {
-      width: 52px;
-      height: 52px;
-      border-radius: 50%;
-      background: var(--g100);
+      width: 348px;
+      height: 348px;
       display: flex;
       align-items: center;
       justify-content: center;
-      margin-bottom: 16px
+      margin-bottom: 8px
     }
 
-    .search-empty-icon svg {
-      width: 22px;
-      height: 22px;
-      stroke: var(--g400);
-      fill: none;
-      stroke-width: 2;
-      stroke-linecap: round;
-      stroke-linejoin: round
+    .search-empty-icon img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      filter: drop-shadow(0 10px 18px rgba(0, 0, 0, .12))
     }
 
     .search-empty-title {
@@ -922,31 +917,54 @@
       background: var(--g50)
     }
 
+    .rp-item.rp-gold,
+    .rp-item.rp-silver,
+    .rp-item.rp-bronze {
+      margin: 8px;
+      border-radius: 12px;
+      border-bottom: none;
+      border-left-width: 4px;
+      box-shadow: 0 3px 12px rgba(0, 0, 0, .07);
+      transition: background .12s, box-shadow .12s, transform .12s
+    }
+
+    .rp-item.rp-gold:hover,
+    .rp-item.rp-silver:hover,
+    .rp-item.rp-bronze:hover {
+      transform: translateY(-1px)
+    }
+
     .rp-item.rp-gold {
-      background: linear-gradient(to right, rgba(251, 191, 36, .13), transparent);
-      border-left-color: #f59e0b
+      background: linear-gradient(to right, rgba(251, 191, 36, .22), rgba(251, 191, 36, .03));
+      border-left-color: #f59e0b;
+      box-shadow: 0 4px 16px rgba(245, 158, 11, .18)
     }
 
     .rp-item.rp-gold:hover {
-      background: linear-gradient(to right, rgba(251, 191, 36, .20), transparent)
+      background: linear-gradient(to right, rgba(251, 191, 36, .30), rgba(251, 191, 36, .05));
+      box-shadow: 0 6px 18px rgba(245, 158, 11, .26)
     }
 
     .rp-item.rp-silver {
-      background: linear-gradient(to right, rgba(148, 163, 184, .11), transparent);
-      border-left-color: #94a3b8
+      background: linear-gradient(to right, rgba(148, 163, 184, .20), rgba(148, 163, 184, .03));
+      border-left-color: #94a3b8;
+      box-shadow: 0 4px 14px rgba(148, 163, 184, .16)
     }
 
     .rp-item.rp-silver:hover {
-      background: linear-gradient(to right, rgba(148, 163, 184, .18), transparent)
+      background: linear-gradient(to right, rgba(148, 163, 184, .28), rgba(148, 163, 184, .05));
+      box-shadow: 0 6px 16px rgba(148, 163, 184, .22)
     }
 
     .rp-item.rp-bronze {
-      background: linear-gradient(to right, rgba(217, 119, 6, .09), transparent);
-      border-left-color: #d97706
+      background: linear-gradient(to right, rgba(217, 119, 6, .18), rgba(217, 119, 6, .03));
+      border-left-color: #d97706;
+      box-shadow: 0 4px 14px rgba(217, 119, 6, .14)
     }
 
     .rp-item.rp-bronze:hover {
-      background: linear-gradient(to right, rgba(217, 119, 6, .16), transparent)
+      background: linear-gradient(to right, rgba(217, 119, 6, .25), rgba(217, 119, 6, .05));
+      box-shadow: 0 6px 16px rgba(217, 119, 6, .20)
     }
 
     .rp-rank {
@@ -1020,8 +1038,14 @@
       border-color: var(--red)
     }
 
-    .rp-item.rp-gold .rp-name-link {
+    .rp-item.rp-gold .rp-name-link,
+    .rp-item.rp-silver .rp-name-link,
+    .rp-item.rp-bronze .rp-name-link {
       font-size: 14px
+    }
+
+    .rp-item.rp-gold .rp-name-link {
+      font-size: 15px
     }
 
     .rp-desc {
@@ -3507,7 +3531,7 @@
   <div class="main">
 
     <!-- LEFT PANEL -->
-    <div class="left collapsed panel-hidden" id="left-panel">
+    <div class="left" id="left-panel">
 
       <!-- ranking panel — slides in over the route content -->
       <div class="ranking-panel" id="ranking-panel">
@@ -3534,10 +3558,7 @@
           <!-- shown until the user searches a place -->
           <div class="search-empty-state" id="search-empty-state">
             <div class="search-empty-icon">
-              <svg viewBox="0 0 24 24">
-                <circle cx="11" cy="11" r="7" />
-                <path d="m21 21-4.3-4.3" />
-              </svg>
+              <img src="/assets/img/explorer.png" alt="Explorer" />
             </div>
             <div class="search-empty-title">Plan your next trip</div>
             <p class="search-empty-sub">Search a starting point above — and optionally a destination — to see it on the
@@ -3550,7 +3571,7 @@
 
     <!-- MAP -->
     <div class="map-side">
-      <div class="panel-toggle flipped" id="panel-toggle" onclick="togglePanel()">
+      <div class="panel-toggle" id="panel-toggle" onclick="togglePanel()">
         <svg viewBox="0 0 24 24">
           <polyline points="15 18 9 12 15 6" />
         </svg>
@@ -3559,7 +3580,7 @@
         <span class="st-start">Start </span>
       </button>
       <div id="map"></div>
-      <div class="transport-box">
+      <div class="transport-box" id="transport-box" style="display:none">
         <div class="transport-title">Travel by</div>
         <div class="transport-btns">
           <div class="tbtn active" onclick="setTransport(this,'Car')"><svg viewBox="0 0 24 24">
@@ -3589,7 +3610,7 @@
             </svg><span>Train</span></div>
         </div>
       </div>
-      <div class="save-btn" onclick="openSavePlan()">
+      <div class="save-btn" id="save-plan-btn" onclick="openSavePlan()" style="display:none">
         <svg viewBox="0 0 24 24">
           <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
         </svg>
@@ -3908,7 +3929,7 @@
     const SVG_CAR = `<svg viewBox="0 0 24 24" style="width:11px;height:11px;stroke:var(--g600);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v9a2 2 0 0 1-2 2h-3"/><circle cx="7.5" cy="17.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>`;
     const SVG_PIN = `<svg viewBox="0 0 24 24" style="width:10px;height:10px;stroke:var(--g600);fill:none;stroke-width:2;stroke-linecap:round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>`;
 
-    let selectedId = 1, panelOpen_ = false;
+    let selectedId = 1, panelOpen_ = true;
     let currentFrom = '', currentTo = '';
     let currentStopsFilter = 'all', currentTransportMode = 'Car';
     let hasRoute = false;
@@ -5005,10 +5026,6 @@
       currentFrom = fromVal;
       PLACE_DATA.from.name = fromVal;
 
-      // fetch place details for each place (from/to) once the user hits search
-      MT_INFO.from = await fetchPlaceInformation(fromVal);
-      MT_INFO.to = toVal ? await fetchPlaceInformation(toVal) : null;
-
       // fetch place details (rating, weather, AI tip) to populate the left panel
       MT_INFO.from = await fetchMtPlace(fromVal);
       MT_INFO.to = toVal ? await fetchMtPlace(toVal) : null;
@@ -5024,6 +5041,8 @@
         currentTo = toVal;
         PLACE_DATA.to.name = toVal;
         hasRoute = true;
+        document.getElementById('save-plan-btn').style.display = 'flex';
+        document.getElementById('transport-box').style.display = 'block';
 
         renderRouteMode(fromVal, toVal);
         requestRoute(currentTransportMode, {
@@ -5042,6 +5061,8 @@
       } else {
         currentTo = '';
         hasRoute = false;
+        document.getElementById('save-plan-btn').style.display = 'none';
+        document.getElementById('transport-box').style.display = 'none';
         toMarker.map = null;
         clearRoutePolylines();
         renderExploreMode(fromVal);
