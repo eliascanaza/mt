@@ -10,8 +10,10 @@ Endpoints:
   POST /api/stops/<id>/reviews     → add a review
   GET  /api/routes                 → saved routes
   GET  /api/top10/<list_type>      → top10 list (worldwide|country|city|category)
+  GET  /api/top10                  → top10 places (?type=worldwide or ?type=country&country=Chile)
   GET  /api/plans                  → saved plans
   POST /api/plans                  → save a new plan
+  GET  /api/placeinformation       → place details (rating, weather, AI tip) by name
 """
 
 import os
@@ -120,6 +122,43 @@ def api_top10(list_type):
         return jsonify({"error": f"list_type must be one of: {', '.join(VALID_TYPES)}"}), 400
     items = db.get_top10(list_type)
     return jsonify({"list_type": list_type, "items": items, "count": len(items)})
+
+
+# ── Top 10 places (worldwide / by country / by category) ──────────────────
+@app.route("/api/top10", methods=["GET"])
+def api_top10_places():
+    list_type = request.args.get("type", "worldwide").strip().lower()
+    if list_type not in {"worldwide", "country", "category"}:
+        return jsonify({"error": "type must be 'worldwide', 'country' or 'category'"}), 400
+
+    country = request.args.get("country", "").strip()
+    if list_type == "country" and not country:
+        return jsonify({
+            "error": "country is required when type=country",
+            "available_countries": db.get_top10_countries(),
+        }), 400
+
+    items = db.get_top10_places(list_type, country or None)
+    return jsonify({
+        "list_type": list_type,
+        "country": country or None,
+        "items": items,
+        "count": len(items),
+    })
+
+
+# ── Place information ────────────────────────────────────────────────────
+@app.route("/api/placeinformation", methods=["GET"])
+def api_place_information():
+    """Place details (rating, weather, AI tip) for a place typed into the search bar.
+    Called once per place (from/to) when the user hits the search button."""
+    name = request.args.get("name", "").strip()
+    if not name:
+        return jsonify({"error": "Missing required query param: name"}), 400
+    place = db.get_mt_place(name)
+    if not place:
+        return jsonify({"error": f"No place data found for '{name}'"}), 404
+    return jsonify({"place": place})
 
 
 # ── Saved plans ────────────────────────────────────────────────────────────
