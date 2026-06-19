@@ -11,7 +11,7 @@
     href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap"
     rel="stylesheet">
   <script
-    src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&libraries=marker&v=weekly"></script>
+    src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&libraries=marker,places&v=weekly"></script>
   <style>
     /* ── reset ── */
     *,
@@ -3836,7 +3836,9 @@
     const FROM = { name: 'Santiago, Chile', coord: [-70.6693, -33.4489] };
     const TO = { name: 'Puerto Natales, Chile', coord: [-72.5083, -51.7319] };
 
-    const STOPS = [
+    // STOPS starts with a demo route; doSearch() replaces it with real tourist
+    // attractions found along whatever route the user searches for.
+    let STOPS = [
       {
         id: 1, emoji: '🌋', name: 'Chillán — Hot Springs', cat: 'trek',
         desc: 'Volcanic hot springs and ski resort at 1,800 m. The perfect first overnight stop — soak in thermal pools after the drive south.',
@@ -3976,18 +3978,124 @@
       routePolylines = [];
     }
 
-    function drawRoutePath(path, geodesic = false) {
+    // Walking gets a dotted line; driving/flying/train get a bold solid line.
+    function drawRoutePath(path, { geodesic = false, dashed = false } = {}) {
       clearRoutePolylines();
-      routePolylines.push(new google.maps.Polyline({ map, path, geodesic, strokeColor: '#FF385C', strokeOpacity: .16, strokeWeight: 18 }));
-      routePolylines.push(new google.maps.Polyline({ map, path, geodesic, strokeColor: '#ffffff', strokeOpacity: .95, strokeWeight: 10 }));
-      routePolylines.push(new google.maps.Polyline({
-        map, path, geodesic, strokeOpacity: 0,
-        icons: [{ icon: { path: 'M 0,-1 0,1', strokeOpacity: 1, strokeColor: '#FF385C', strokeWeight: 4.5, scale: 2.4 }, offset: '0', repeat: '10px' }],
-      }));
+      routePolylines.push(new google.maps.Polyline({ map, path, geodesic, strokeColor: '#FF385C', strokeOpacity: .16, strokeWeight: 20 }));
+      routePolylines.push(new google.maps.Polyline({ map, path, geodesic, strokeColor: '#ffffff', strokeOpacity: .95, strokeWeight: 11 }));
+      if (dashed) {
+        routePolylines.push(new google.maps.Polyline({
+          map, path, geodesic, strokeOpacity: 0,
+          icons: [{ icon: { path: 'M 0,-1 0,1', strokeOpacity: 1, strokeColor: '#FF385C', strokeWeight: 6, scale: 3 }, offset: '0', repeat: '14px' }],
+        }));
+      } else {
+        routePolylines.push(new google.maps.Polyline({ map, path, geodesic, strokeColor: '#FF385C', strokeOpacity: .95, strokeWeight: 6 }));
+      }
     }
 
     const directionsService = new google.maps.DirectionsService();
     const geocoder = new google.maps.Geocoder();
+    const placesService = new google.maps.places.PlacesService(map);
+
+    function nearbyTouristAttractions(location, radius = 25000) {
+      return new Promise(resolve => {
+        placesService.nearbySearch({ location, radius, type: 'tourist_attraction' }, (results, status) => {
+          resolve(status === google.maps.places.PlacesServiceStatus.OK ? results : []);
+        });
+      });
+    }
+
+    function haversineKm([lng1, lat1], [lng2, lat2]) {
+      const R = 6371, toRad = d => d * Math.PI / 180;
+      const dLat = toRad(lat2 - lat1), dLng = toRad(lng2 - lng1);
+      const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    }
+
+    function estimateDriveTime(km) {
+      const totalMin = Math.round((km / 70) * 60); // rough 70 km/h average
+      const h = Math.floor(totalMin / 60), m = totalMin % 60;
+      return h ? `${h} h${m ? ` ${m} min` : ''}` : `${m} min`;
+    }
+
+    // Writes a Directions route's total distance/time into the left panel —
+    // shared by the initial search and any re-route through found stops.
+    function applyRouteStats(route) {
+      const distEl = document.getElementById('route-distance');
+      const durEl = document.getElementById('route-duration');
+      if (!route || !distEl || !durEl) return;
+      const meters = route.legs.reduce((a, l) => a + l.distance.value, 0);
+      const seconds = route.legs.reduce((a, l) => a + l.duration.value, 0);
+      const h = Math.floor(seconds / 3600), m = Math.round((seconds % 3600) / 60);
+      distEl.textContent = `${Math.round(meters / 1000).toLocaleString()} km`;
+      durEl.textContent = m ? `${h} h ${m} min` : `${h} h`;
+    }
+
+    const STOP_BGS = [
+      'linear-gradient(135deg,#c94b0c,#7b2d0a)', 'linear-gradient(135deg,#0a4a7b,#0d2b52)',
+      'linear-gradient(135deg,#0a5c4a,#052e25)', 'linear-gradient(135deg,#7c3aed,#3a0d6e)',
+      'linear-gradient(135deg,#b45309,#5c2c06)', 'linear-gradient(135deg,#065f46,#022c22)',
+    ];
+
+    // Samples points evenly along the driven path and, for each, asks Google
+    // Places for the best-rated tourist attraction nearby — giving stops that
+    // are both real places and already ordered along the route.
+    async function findTouristStopsAlongRoute(path, maxStops = 5) {
+      if (!path || path.length < 2) return [];
+
+      const fractions = Array.from({ length: maxStops }, (_, i) => (i + 1) / (maxStops + 1));
+      const sampleIdx = [...new Set(fractions.map(f => Math.min(path.length - 1, Math.round(f * (path.length - 1)))))];
+
+      const seenIds = new Set();
+      const stops = [];
+      let prevCoord = FROM.coord, prevName = currentFrom;
+
+      for (const idx of sampleIdx) {
+        const pt = path[idx];
+        const results = [...await nearbyTouristAttractions(pt)].sort((a, b) => (b.rating || 0) - (a.rating || 0));
+        const best = results.find(r => r.place_id && !seenIds.has(r.place_id));
+        if (!best) continue;
+        seenIds.add(best.place_id);
+
+        const loc = best.geometry.location;
+        const coord = [loc.lng(), loc.lat()];
+        const distKm = Math.round(haversineKm(prevCoord, coord));
+
+        stops.push({
+          id: stops.length + 1,
+          emoji: '📍',
+          name: best.name,
+          cat: 'attraction',
+          desc: best.vicinity || '',
+          rating: best.rating ? best.rating.toFixed(1) : '—',
+          reviews: (best.user_ratings_total || 0).toLocaleString(),
+          loc: best.vicinity || '',
+          alt: '—', altNote: 'Along the route', temp: '—',
+          time: estimateDriveTime(distKm),
+          distance: `${distKm} km`, distFrom: prevName,
+          bg: STOP_BGS[stops.length % STOP_BGS.length],
+          coord,
+          tags: (best.types || []).slice(0, 3).map(t => t.replace(/_/g, ' ')),
+        });
+        prevCoord = coord;
+        prevName = best.name;
+      }
+      return stops;
+    }
+
+    // (Re)builds the numbered map markers for the current STOPS list.
+    function rebuildStopMarkers(list) {
+      Object.values(markers).forEach(({ marker }) => { marker.map = null; });
+      Object.keys(markers).forEach(k => delete markers[k]);
+      list.forEach((s, i) => {
+        const el = document.createElement('div');
+        el.className = 'ww-marker-wrap';
+        el.innerHTML = `<div class="ww-marker-dot">${i + 1}</div><div class="ww-marker-lbl">${s.name}</div>`;
+        el.addEventListener('click', e => { e.stopPropagation(); selectStop(s.id); openPlacePopupFromStop(s.id); });
+        const marker = new AdvancedMarkerElement({ map, position: toLatLng(s.coord), content: el });
+        markers[s.id] = { marker };
+      });
+    }
 
     function geocodePlace(query) {
       return new Promise((resolve, reject) => {
@@ -4008,10 +4116,9 @@
 
     function requestRoute(mode, { useStops = true, onResult } = {}) {
       const routeStops = mode === 'Plane' || !useStops ? [] : visibleStopsForFilter();
-      const routeCoords = [FROM.coord, ...routeStops.map(s => s.coord), TO.coord];
 
       if (mode === 'Plane') {
-        drawRoutePath([toLatLng(FROM.coord), toLatLng(TO.coord)], true);
+        drawRoutePath([toLatLng(FROM.coord), toLatLng(TO.coord)], { geodesic: true });
         if (onResult) onResult(null);
         return;
       }
@@ -4026,12 +4133,12 @@
       }
       directionsService.route(request, (result, status) => {
         if (status === google.maps.DirectionsStatus.OK) {
-          drawRoutePath(result.routes[0].overview_path);
+          drawRoutePath(result.routes[0].overview_path, { dashed: mode === 'Walk' });
           if (onResult) onResult(result.routes[0]);
         } else {
-          console.warn(`${mode} directions failed (${status}), falling back to a straight line`);
-          drawRoutePath(routeCoords.map(toLatLng));
-          showToast(`No ${mode.toLowerCase()} route available for this distance — showing a straight line instead`);
+          console.warn(`${mode} directions failed (${status}), removing the path`);
+          clearRoutePolylines();
+          showToast(`No ${mode.toLowerCase()} route available for this distance`);
           if (onResult) onResult(null);
         }
       });
@@ -4078,9 +4185,11 @@
       </div>`;
       });
 
+      const lastCoord = list.length ? list[list.length - 1].coord : FROM.coord;
+      const finalLegTime = estimateDriveTime(Math.round(haversineKm(lastCoord, TO.coord)));
       html += `
     <div class="tl-drive">
-      <div class="tl-drive-pill">${SVG_CAR} 14 h · Carretera Austral</div>
+      <div class="tl-drive-pill">${SVG_CAR} ${finalLegTime} drive</div>
     </div>
     <div class="tl-ep">
       <div class="tl-ep-dot dest"><svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z"/></svg></div>
@@ -4907,7 +5016,7 @@
           m.marker.map = null;
         }
       });
-      const coords = [FROM.coord, ...list.map(s => s.coord)];
+      const coords = [FROM.coord, TO.coord, ...list.map(s => s.coord)];
       if (list.length) {
         map.fitBounds(boundsOf(coords), 80);
       }
@@ -4926,17 +5035,10 @@
       showToast(msgs[mode] || 'Route updated');
       currentTransportMode = mode;
       requestRoute(mode, {
-        useStops: false,
+        useStops: true,
         onResult: route => {
-          const distEl = document.getElementById('route-distance');
-          const durEl = document.getElementById('route-duration');
-          if (route && distEl && durEl) {
-            const meters = route.legs.reduce((a, l) => a + l.distance.value, 0);
-            const seconds = route.legs.reduce((a, l) => a + l.duration.value, 0);
-            const h = Math.floor(seconds / 3600), m = Math.round((seconds % 3600) / 60);
-            distEl.textContent = `${Math.round(meters / 1000).toLocaleString()} km`;
-            durEl.textContent = m ? `${h} h ${m} min` : `${h} h`;
-          }
+          applyRouteStats(route);
+          if (route) map.fitBounds(boundsOf([FROM.coord, TO.coord, ...STOPS.map(s => s.coord)]), 80);
         },
       });
     }
@@ -5047,13 +5149,32 @@
         renderRouteMode(fromVal, toVal);
         requestRoute(currentTransportMode, {
           useStops: false,
-          onResult: route => {
+          onResult: async route => {
             if (route) {
-              const meters = route.legs.reduce((a, l) => a + l.distance.value, 0);
-              const seconds = route.legs.reduce((a, l) => a + l.duration.value, 0);
-              const h = Math.floor(seconds / 3600), m = Math.round((seconds % 3600) / 60);
-              document.getElementById('route-distance').textContent = `${Math.round(meters / 1000).toLocaleString()} km`;
-              document.getElementById('route-duration').textContent = m ? `${h} h ${m} min` : `${h} h`;
+              applyRouteStats(route);
+
+              // Search Google Places for real tourist attractions along the driven path
+              STOPS = await findTouristStopsAlongRoute(route.overview_path);
+              selectedId = STOPS[0]?.id ?? null;
+              rebuildStopMarkers(STOPS);
+              renderStops(STOPS);
+              if (STOPS.length) showToast(`Found ${STOPS.length} tourist spot${STOPS.length > 1 ? 's' : ''} along the way`);
+
+              // Re-route through the discovered stops so the line, distance and
+              // time on the left panel reflect the actual trip with those stops.
+              if (STOPS.length) {
+                requestRoute(currentTransportMode, {
+                  useStops: true,
+                  onResult: routedThroughStops => {
+                    if (routedThroughStops) applyRouteStats(routedThroughStops);
+                    map.fitBounds(boundsOf([FROM.coord, TO.coord, ...STOPS.map(s => s.coord)]), 80);
+                  },
+                });
+              }
+            } else {
+              STOPS = [];
+              rebuildStopMarkers([]);
+              renderStops([]);
             }
           },
         });
@@ -5065,6 +5186,8 @@
         document.getElementById('transport-box').style.display = 'none';
         toMarker.map = null;
         clearRoutePolylines();
+        STOPS = [];
+        rebuildStopMarkers([]);
         renderExploreMode(fromVal);
         map.panTo(toLatLng(FROM.coord));
         map.setZoom(11);
