@@ -10,6 +10,7 @@ Endpoints:
   POST /api/stops/<id>/reviews     → add a review
   GET  /api/routes                 → saved routes
   GET  /api/top10/<list_type>      → top10 list (worldwide|country|city|category)
+  GET  /api/top10                  → top10 places (?type=worldwide or ?type=country&country=Chile)
   GET  /api/plans                  → saved plans
   POST /api/plans                  → save a new plan
   GET  /api/autocomplete           → place suggestions for the search bar
@@ -123,6 +124,28 @@ def api_top10(list_type):
     items = db.get_top10(list_type)
     return jsonify({"list_type": list_type, "items": items, "count": len(items)})
 
+
+# ── Top 10 places (worldwide / by country / by category) ──────────────────
+@app.route("/api/top10", methods=["GET"])
+def api_top10_places():
+    list_type = request.args.get("type", "worldwide").strip().lower()
+    if list_type not in {"worldwide", "country", "category"}:
+        return jsonify({"error": "type must be 'worldwide', 'country' or 'category'"}), 400
+
+    country = request.args.get("country", "").strip()
+    if list_type == "country" and not country:
+        return jsonify({
+            "error": "country is required when type=country",
+            "available_countries": db.get_top10_countries(),
+        }), 400
+
+    items = db.get_top10_places(list_type, country or None)
+    return jsonify({
+        "list_type": list_type,
+        "country": country or None,
+        "items": items,
+        "count": len(items),
+    })
 
 # ── Autocomplete ─────────────────────────────────────────────────────────
 @app.route("/api/autocomplete", methods=["GET"])

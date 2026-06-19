@@ -117,6 +117,19 @@ def init_db():
             ai_recommendation  TEXT
         );
 
+        CREATE TABLE IF NOT EXISTS top10_places (
+            id                 INTEGER PRIMARY KEY AUTOINCREMENT,
+            list_type          TEXT    NOT NULL,   -- worldwide / country
+            country            TEXT,               -- NULL for worldwide entries
+            city               TEXT    NOT NULL,
+            category           TEXT    NOT NULL,
+            rating             REAL    NOT NULL,
+            place_information  TEXT    NOT NULL,
+            latitude           REAL,
+            longitude          REAL,
+            rank               INTEGER NOT NULL
+        );
+
         CREATE TABLE IF NOT EXISTS saved_plans (
             id          INTEGER PRIMARY KEY AUTOINCREMENT,
             user_name   TEXT    DEFAULT 'Alex Traveller',
@@ -361,6 +374,115 @@ TOP10_SEED = [
     ])],
 ]
 
+# Top10_places: a richer ranking table (city/country/category/rating) used by /api/top10.
+# Worldwide entries reflect well-known global bucket-list destinations; country entries
+# are grounded in real, widely-cited top picks for each South American country this app covers.
+TOP10_PLACES_SEED = [
+    # worldwide
+    *[{"list_type": "worldwide", "country": None, "rank": i + 1, "city": c, "category": cat, "rating": r,
+       "place_information": info, "latitude": lat, "longitude": lng}
+      for i, (c, cat, r, info, lat, lng) in enumerate([
+        ("London, UK", "Culture", 4.90, "TripAdvisor's top global destination for 2025, blending iconic landmarks with world-class museums and theatre.", 51.5074, -0.1278),
+        ("Paris, France", "Culture", 4.90, "The world's most visited romantic capital, home to the Eiffel Tower, the Louvre and timeless boulevards.", 48.8566, 2.3522),
+        ("Bali, Indonesia", "Beach", 4.88, "Rice terraces, sacred temples and surf breaks make Bali Asia's most-loved island escape.", -8.4095, 115.1889),
+        ("Machu Picchu, Peru", "History", 4.90, "The 15th-century Inca citadel perched above the Sacred Valley, one of the New Seven Wonders.", -13.1631, -72.5450),
+        ("Patagonia, Chile", "Nature", 4.95, "Glaciers, granite towers and end-of-the-world wilderness shared by Chile and Argentina.", -51.0, -73.0),
+        ("Rome, Italy", "History", 4.87, "Three thousand years of history packed into the Colosseum, the Vatican and the Roman Forum.", 41.9028, 12.4964),
+        ("Santorini, Greece", "Scenic", 4.86, "Whitewashed cliffside villages above a deep-blue volcanic caldera.", 36.3932, 25.4615),
+        ("Dubai, UAE", "Luxury", 4.85, "A futuristic skyline, desert safaris and luxury shopping in one of the world's fastest-growing destinations.", 25.2048, 55.2708),
+        ("Bangkok, Thailand", "Culture", 4.83, "One of the most-visited cities on Earth, famed for ornate temples, street food and floating markets.", 13.7563, 100.5018),
+        ("Marrakech, Morocco", "Culture", 4.80, "Labyrinthine souks, rooftop riads and the Koutoubia mosque in Morocco's red city.", 31.6295, -7.9811),
+    ])],
+    # Chile
+    *[{"list_type": "country", "country": "Chile", "rank": i + 1, "city": c, "category": cat, "rating": r,
+       "place_information": info, "latitude": lat, "longitude": lng}
+      for i, (c, cat, r, info, lat, lng) in enumerate([
+        ("Patagonia", "Nature", 4.97, "End-of-the-world wilderness of glaciers, granite towers and unmatched silence.", -51.0, -73.0),
+        ("Torres del Paine", "Nature", 4.95, "National park famed for granite towers, turquoise lakes and Patagonian steppe.", -50.9423, -72.9587),
+        ("Valparaíso", "Culture", 4.80, "UNESCO-listed port city known for its hillside funiculars and vivid street art.", -33.0472, -71.6127),
+        ("Atacama Desert", "Nature", 4.85, "The world's driest desert, with salt flats, geysers and some of the clearest night skies on Earth.", -23.8859, -68.1947),
+        ("Futaleufú", "Adventure", 4.90, "World-class whitewater rafting on glacial turquoise rivers in Patagonia.", -43.1863, -71.8698),
+        ("Puerto Natales", "Nature", 4.70, "Gateway to Torres del Paine, with a charming waterfront and outfitter scene.", -51.7319, -72.5083),
+        ("Santiago", "Culture", 4.50, "The capital, framed by the Andes, mixing colonial architecture with a modern skyline.", -33.4489, -70.6693),
+        ("Puerto Varas", "Nature", 4.60, "Lake-district town with volcano views, German colonial heritage and water sports.", -41.3195, -72.9854),
+        ("Viña del Mar", "Beach", 4.50, "Pacific coast resort city an hour from Santiago, known as the 'Garden City'.", -33.0153, -71.5500),
+        ("La Serena", "History", 4.40, "Chile's second-oldest city, prized for colonial architecture and nearby observatories.", -29.9027, -71.2519),
+    ])],
+    # Argentina
+    *[{"list_type": "country", "country": "Argentina", "rank": i + 1, "city": c, "category": cat, "rating": r,
+       "place_information": info, "latitude": lat, "longitude": lng}
+      for i, (c, cat, r, info, lat, lng) in enumerate([
+        ("Buenos Aires", "Culture", 4.60, "The tango capital, known for European-style architecture and grand boulevards.", -34.6037, -58.3816),
+        ("El Calafate", "Nature", 4.90, "Gateway to Los Glaciares National Park and the spectacular Perito Moreno Glacier.", -50.3379, -72.2648),
+        ("Bariloche", "Nature", 4.70, "Lake-district town on Nahuel Huapi, Argentina's premier ski and chocolate destination.", -41.1335, -71.3103),
+        ("Ushuaia", "Adventure", 4.60, "The southernmost city in the world and the main embarkation point for Antarctic cruises.", -54.8019, -68.3030),
+        ("Mendoza", "Wine", 4.70, "Argentina's wine capital at the foot of the Andes, home to most of the country's vineyards.", -32.8895, -68.8458),
+        ("Córdoba", "History", 4.40, "Argentina's second-largest city, founded in 1573 and rich in colonial history.", -31.4201, -64.1888),
+    ])],
+    # Peru
+    *[{"list_type": "country", "country": "Peru", "rank": i + 1, "city": c, "category": cat, "rating": r,
+       "place_information": info, "latitude": lat, "longitude": lng}
+      for i, (c, cat, r, info, lat, lng) in enumerate([
+        ("Machu Picchu", "History", 4.90, "The Inca citadel perched in the Andes at 2,430 m above sea level.", -13.1631, -72.5450),
+        ("Cusco", "History", 4.80, "The Inca Empire's historic capital and the gateway to Machu Picchu.", -13.5320, -71.9675),
+        ("Lima", "Culture", 4.40, "Peru's coastal capital and most-visited city, celebrated for its culinary scene.", -12.0464, -77.0428),
+        ("Arequipa", "History", 4.50, "Peru's second city, framed by three volcanoes and striking colonial architecture.", -16.4090, -71.5375),
+        ("Puno (Lake Titicaca)", "Culture", 4.60, "Gateway to Lake Titicaca and the floating Uros Islands.", -15.8402, -70.0219),
+    ])],
+    # Colombia
+    *[{"list_type": "country", "country": "Colombia", "rank": i + 1, "city": c, "category": cat, "rating": r,
+       "place_information": info, "latitude": lat, "longitude": lng}
+      for i, (c, cat, r, info, lat, lng) in enumerate([
+        ("Cartagena", "History", 4.80, "A walled Caribbean city with colorful colonial streets and seaside ramparts.", 10.3910, -75.4794),
+        ("Medellín", "Culture", 4.60, "The 'city of eternal spring', reborn through innovation, art and cable cars.", 6.2442, -75.5812),
+        ("Bogotá", "Culture", 4.30, "The capital, home to the Gold Museum, La Candelaria and Monserrate.", 4.7110, -74.0721),
+        ("Santa Marta", "Nature", 4.50, "Caribbean coastal city and gateway to Tayrona National Park.", 11.2408, -74.1990),
+    ])],
+    # Brazil
+    *[{"list_type": "country", "country": "Brazil", "rank": i + 1, "city": c, "category": cat, "rating": r,
+       "place_information": info, "latitude": lat, "longitude": lng}
+      for i, (c, cat, r, info, lat, lng) in enumerate([
+        ("Rio de Janeiro", "Beach", 4.70, "Iconic beaches, Christ the Redeemer, and a carnival spirit year-round.", -22.9068, -43.1729),
+        ("Foz do Iguaçu", "Nature", 4.80, "Home to the thundering Iguazu Falls on the border with Argentina.", -25.5478, -54.5882),
+        ("Florianópolis", "Beach", 4.60, "An island city famed for its beaches and laid-back surf culture.", -27.5954, -48.5480),
+        ("Salvador", "Culture", 4.50, "Brazil's Afro-Brazilian heritage capital, known for its colorful colonial center.", -12.9777, -38.5016),
+        ("São Paulo", "Culture", 4.40, "Brazil's largest city, celebrated for museums, nightlife and its culinary scene.", -23.5505, -46.6333),
+    ])],
+    # Ecuador
+    *[{"list_type": "country", "country": "Ecuador", "rank": i + 1, "city": c, "category": cat, "rating": r,
+       "place_information": info, "latitude": lat, "longitude": lng}
+      for i, (c, cat, r, info, lat, lng) in enumerate([
+        ("Galapagos Islands", "Wildlife", 4.89, "Darwin's living laboratory: wildlife found nowhere else on Earth.", -0.9538, -90.9656),
+        ("Quito", "History", 4.60, "A UNESCO-listed colonial old town set high in the Andes.", -0.1807, -78.4678),
+        ("Baños", "Adventure", 4.50, "An adventure-sports hub known for waterfalls, rafting and hot springs.", -1.3958, -78.4247),
+        ("Cotopaxi", "Nature", 4.60, "One of the world's highest active volcanoes, with a near-perfect snow-capped cone.", -0.6798, -78.4368),
+    ])],
+    # Uruguay
+    *[{"list_type": "country", "country": "Uruguay", "rank": i + 1, "city": c, "category": cat, "rating": r,
+       "place_information": info, "latitude": lat, "longitude": lng}
+      for i, (c, cat, r, info, lat, lng) in enumerate([
+        ("Punta del Este", "Beach", 4.60, "Uruguay's glamorous resort city, known for beaches and a lively summer scene.", -34.9608, -54.9511),
+        ("Montevideo", "Culture", 4.50, "The capital, with a famous waterfront rambla and laid-back tango roots.", -34.9011, -56.1645),
+        ("Colonia del Sacramento", "History", 4.70, "A UNESCO World Heritage colonial town across the bay from Buenos Aires.", -34.4628, -57.8425),
+        ("Cabo Polonio", "Nature", 4.40, "A secluded, road-free beach town known for its bohemian, off-grid atmosphere.", -34.0667, -53.7167),
+    ])],
+    # category (one destination per traveller type, for the "Top 10 by Category" view)
+    *[{"list_type": "category", "country": None, "rank": i + 1, "city": c, "category": cat, "rating": r,
+       "place_information": info, "latitude": lat, "longitude": lng}
+      for i, (c, cat, r, info, lat, lng) in enumerate([
+        ("Maldives", "Beach", 4.95, "Overwater bungalows above the clearest lagoons on the planet.", 3.2028, 73.2207),
+        ("Patagonia, Chile", "Trekking", 4.97, "The world's finest trekking through raw, uncrowded wilderness.", -51.0, -73.0),
+        ("Kyoto, Japan", "Culture", 4.94, "The single best destination for immersing in traditional culture.", 35.0116, 135.7681),
+        ("Swiss Alps", "Mountains", 4.92, "Skiing, hiking and mountain railways through Europe's dramatic peaks.", 46.58, 7.90),
+        ("Galapagos Islands", "Wildlife", 4.91, "Snorkelling with sea lions and penguins in an untouched ocean ecosystem.", -0.9538, -90.9656),
+        ("Cartagena, Colombia", "Romantic", 4.87, "Romantic walled city with vibrant street life and perfect Caribbean evenings.", 10.3910, -75.4794),
+        ("Queenstown, NZ", "Adventure", 4.85, "Bungee, skydive, ski, raft — the greatest concentration of adventure on Earth.", -45.0312, 168.6626),
+        ("Florence, Italy", "Art & Food", 4.84, "Renaissance art, architecture and food that justify every art history class.", 43.7696, 11.2558),
+        ("Atacama Desert, Chile", "Stargazing", 4.83, "Stargazing in the world's driest desert, where the Milky Way is unobscured.", -23.8859, -68.1947),
+        ("Bali, Indonesia", "Wellness", 4.82, "Yoga retreats, surf schools and wellness culture set among rice terraces.", -8.4095, 115.1889),
+    ])],
+]
+
 
 def seed_db():
     with get_conn() as conn:
@@ -372,8 +494,9 @@ def seed_db():
             DELETE FROM top10;
             DELETE FROM routes;
             DELETE FROM stops;
-            DELETE FROM places;
             DELETE FROM mt_places;
+            DELETE FROM top10_places;
+            DELETE FROM places;
         """)
 
         # Insert stops and collect their real IDs
@@ -432,6 +555,13 @@ def seed_db():
                 VALUES (:list_type,:rank,:name,:description,:rating,:tag)
             """, item)
 
+        # Insert top10_places (richer worldwide / by-country rankings for /api/top10)
+        for item in TOP10_PLACES_SEED:
+            conn.execute("""
+                INSERT INTO top10_places (list_type,country,city,category,rating,place_information,latitude,longitude,rank)
+                VALUES (:list_type,:country,:city,:category,:rating,:place_information,:latitude,:longitude,:rank)
+            """, item)
+
         # Default saved plan
         conn.execute("""
             INSERT INTO saved_plans (user_name, route_id, title, notes)
@@ -482,6 +612,36 @@ def get_top10(list_type: str):
         return [dict(r) for r in rows]
 
 
+def get_top10_places(list_type: str, country: str = None):
+    """Worldwide, by-country, or by-category top10 rankings
+    (city/country/category/rating/place_information)."""
+    with get_conn() as conn:
+        if list_type == "country":
+            rows = conn.execute("""
+                SELECT * FROM top10_places
+                WHERE list_type='country' AND country=? COLLATE NOCASE
+                ORDER BY rank
+            """, (country,)).fetchall()
+        elif list_type == "category":
+            rows = conn.execute("""
+                SELECT * FROM top10_places WHERE list_type='category' ORDER BY rank
+            """).fetchall()
+        else:
+            rows = conn.execute("""
+                SELECT * FROM top10_places WHERE list_type='worldwide' ORDER BY rank
+            """).fetchall()
+        return [dict(r) for r in rows]
+
+
+def get_top10_countries():
+    """Distinct countries that have a by-country top10 list, for building UI filters."""
+    with get_conn() as conn:
+        rows = conn.execute("""
+            SELECT DISTINCT country FROM top10_places WHERE list_type='country' ORDER BY country
+        """).fetchall()
+        return [r["country"] for r in rows]
+
+
 def search_places(query: str, limit: int = 6):
     """Autocomplete lookup: matches on name or subtitle, name-prefix matches first."""
     like = f"%{query}%"
@@ -497,8 +657,8 @@ def search_places(query: str, limit: int = 6):
 
 
 def get_mt_place(name: str):
-    """Look up a place's details by the autocomplete selection, e.g. 'Santiago, Chile'
-    or 'Galapagos Islands'. Matches on 'city, country' first, then city alone."""
+    """Look up a place's details by the value typed into the search bar, e.g.
+    'Santiago, Chile' or 'Galapagos Islands'. Matches on 'city, country' first, then city alone."""
     name = name.strip()
     city_guess = name.split(",")[0].strip()
     with get_conn() as conn:

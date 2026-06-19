@@ -2970,210 +2970,6 @@
       background: #eff6ff;
     }
 
-    /* ── top10 modal ── */
-    .t10-bg {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, .72);
-      z-index: 9100;
-      align-items: center;
-      justify-content: center;
-      padding: 24px
-    }
-
-    .t10-bg.open {
-      display: flex
-    }
-
-    .t10-modal {
-      background: var(--white);
-      border-radius: var(--r-xl);
-      width: 100%;
-      max-width: 560px;
-      max-height: 88vh;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      animation: slideUp .22s ease
-    }
-
-    .t10-hdr {
-      padding: 20px 24px 16px;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      flex-shrink: 0
-    }
-
-    .t10-icon-wrap {
-      width: 40px;
-      height: 40px;
-      border-radius: var(--r-md);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 10px
-    }
-
-    .t10-icon-wrap svg {
-      width: 20px;
-      height: 20px;
-      fill: none;
-      stroke-width: 1.8;
-      stroke-linecap: round;
-      stroke-linejoin: round
-    }
-
-    .t10-title {
-      font-size: 20px;
-      font-weight: 800;
-      color: var(--black);
-      letter-spacing: -.3px
-    }
-
-    .t10-sub {
-      font-size: 13px;
-      color: var(--g600);
-      margin-top: 3px
-    }
-
-    .t10-x {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      background: var(--g100);
-      border: none;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 14px;
-      color: var(--g800);
-      flex-shrink: 0;
-      transition: background .15s
-    }
-
-    .t10-x:hover {
-      background: var(--g200)
-    }
-
-    .t10-list {
-      overflow-y: auto;
-      flex: 1;
-      padding: 8px 0 16px
-    }
-
-    .t10-row {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      padding: 14px 24px;
-      border-bottom: 1px solid var(--border);
-      cursor: pointer;
-      transition: background .12s
-    }
-
-    .t10-row:last-child {
-      border-bottom: none
-    }
-
-    .t10-row:hover {
-      background: var(--g50)
-    }
-
-    .t10-rank {
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      flex-shrink: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 14px;
-      font-weight: 800;
-      font-family: var(--font)
-    }
-
-    .t10-rank.r1 {
-      background: #fef3c7;
-      color: #92400e;
-      border: 1.5px solid #fde68a
-    }
-
-    .t10-rank.r2 {
-      background: #f3f4f6;
-      color: #374151;
-      border: 1.5px solid #d1d5db
-    }
-
-    .t10-rank.r3 {
-      background: #fdf2e9;
-      color: #92400e;
-      border: 1.5px solid #f5cba7
-    }
-
-    .t10-rank.rn {
-      background: var(--g50);
-      color: var(--g600);
-      border: 1px solid var(--border);
-      font-size: 13px
-    }
-
-    .t10-rb {
-      flex: 1;
-      min-width: 0
-    }
-
-    .t10-rname {
-      font-size: 14px;
-      font-weight: 700;
-      color: var(--black);
-      margin-bottom: 3px
-    }
-
-    .t10-rdesc {
-      font-size: 12px;
-      color: var(--g600);
-      line-height: 1.5;
-      margin-bottom: 5px
-    }
-
-    .t10-rmeta {
-      display: flex;
-      align-items: center;
-      gap: 8px
-    }
-
-    .t10-rrat {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--black)
-    }
-
-    .t10-rrat svg {
-      width: 11px;
-      height: 11px;
-      fill: var(--black);
-      stroke: none
-    }
-
-    .t10-rtag {
-      display: inline-flex;
-      align-items: center;
-      gap: 3px;
-      padding: 2px 8px;
-      border-radius: 99px;
-      background: var(--g100);
-      font-size: 10px;
-      font-weight: 600;
-      color: var(--g800)
-    }
-
     /* ── toast ── */
     .toast {
       position: fixed;
@@ -3510,25 +3306,12 @@
         align-items: center
       }
 
-      .t10-bg {
-        padding: 0;
-        align-items: flex-end
-      }
-
       .pp-modal {
         width: 100%;
         min-width: 0;
         max-width: 480px;
         max-height: 85vh;
         border-radius: 20px
-      }
-
-      .t10-modal {
-        width: 100%;
-        min-width: 0;
-        max-width: 100%;
-        border-radius: 20px 20px 0 0;
-        max-height: 90vh
       }
 
       .ac-list {
@@ -3673,7 +3456,7 @@
               <polyline points="9 18 15 12 9 6" />
             </svg>
           </div>
-          <div class="t10-opt" onclick="openT10Modal('category')">
+          <div class="t10-opt" onclick="showCategoryTop10()">
             <div class="t10-icon" style="background:#fff7ed;"><svg viewBox="0 0 24 24" stroke="#ea580c">
                 <path d="M4 6h16M4 12h16M4 18h7" />
                 <circle cx="18" cy="18" r="3" />
@@ -3751,10 +3534,14 @@
           <!-- shown until the user searches a place -->
           <div class="search-empty-state" id="search-empty-state">
             <div class="search-empty-icon">
-              <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></svg>
+              <svg viewBox="0 0 24 24">
+                <circle cx="11" cy="11" r="7" />
+                <path d="m21 21-4.3-4.3" />
+              </svg>
             </div>
             <div class="search-empty-title">Plan your next trip</div>
-            <p class="search-empty-sub">Search a starting point above — and optionally a destination — to see it on the map.</p>
+            <p class="search-empty-sub">Search a starting point above — and optionally a destination — to see it on the
+              map.</p>
           </div>
 
         </div>
@@ -3896,19 +3683,6 @@
     </div>
   </div>
 
-  <div class="t10-bg" id="t10-modal" onclick="if(event.target===this)closeT10Modal()">
-    <div class="t10-modal">
-      <div class="t10-hdr">
-        <div>
-          <div class="t10-icon-wrap" id="t10-icon"></div>
-          <div class="t10-title" id="t10-title">Top 10</div>
-          <div class="t10-sub" id="t10-sub"></div>
-        </div>
-        <button class="t10-x" onclick="closeT10Modal()">✕</button>
-      </div>
-      <div class="t10-list" id="t10-list"></div>
-    </div>
-  </div>
 
   <!-- ══ PLACE DETAIL POPUP ══ -->
   <div class="pp-bg" id="pp-modal" onclick="if(event.target===this)closePP()">
@@ -4115,16 +3889,6 @@
       },
     };
 
-    const TOP10 = {
-      worldwide: {
-        list: [{ n: 'Patagonia, Chile', d: 'End-of-the-world wilderness: glaciers, granite towers, and unmatched silence.', r: '4.97', t: 'Nature' }, { n: 'Kyoto, Japan', d: 'Ancient temples, bamboo forests, and the world\'s most refined tea culture.', r: '4.94', t: 'Culture' }, { n: 'Santorini, Greece', d: 'Volcanic island with iconic white-domed architecture above a deep-blue caldera.', r: '4.91', t: 'Scenic' }, { n: 'Machu Picchu, Peru', d: '15th-century Inca citadel perched in the Andes at 2,430 m above sea level.', r: '4.90', t: 'History' }, { n: 'Galápagos Islands', d: 'Darwin\'s living laboratory: wildlife found nowhere else on earth.', r: '4.89', t: 'Wildlife' }, { n: 'Amalfi Coast, Italy', d: 'Vertical cliffs, turquoise sea, and villages draped in lemon groves.', r: '4.88', t: 'Scenic' }, { n: 'Bali, Indonesia', d: 'Rice terraces, sacred temples, surf breaks, and some of Asia\'s best sunsets.', r: '4.86', t: 'Culture' }, { n: 'Queenstown, NZ', d: 'Adventure capital of the world set against fjords and the Remarkables range.', r: '4.85', t: 'Adventure' }, { n: 'Marrakech, Morocco', d: 'Labyrinthine medinas, vibrant souks, and rooftop views over the Koutoubia.', r: '4.83', t: 'Culture' }, { n: 'Norwegian Fjords', d: 'Sheer cliffs, cascading waterfalls, and mirror-calm water into the distance.', r: '4.82', t: 'Nature' }]
-      },
-      category: {
-        title: 'Top 10 by Category', sub: 'Best destinations for every traveller type',
-        iconBg: '#fff7ed', icon: `<svg viewBox="0 0 24 24" fill="none" stroke="#ea580c" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h7"/><circle cx="18" cy="18" r="3"/></svg>`,
-        list: [{ n: 'Maldives', d: 'Overwater bungalows above the clearest lagoons on the planet.', r: '4.95', t: 'Beach' }, { n: 'Patagonia, Chile', d: 'The world\'s finest trekking through raw, uncrowded wilderness.', r: '4.97', t: 'Trekking' }, { n: 'Kyoto, Japan', d: 'The single best destination for immersing in traditional culture.', r: '4.94', t: 'Culture' }, { n: 'Swiss Alps', d: 'Skiing, hiking, and mountain railways through Europe\'s dramatic peaks.', r: '4.92', t: 'Mountains' }, { n: 'Galápagos Islands', d: 'Snorkelling with sea lions and penguins in an untouched ocean ecosystem.', r: '4.91', t: 'Wildlife' }, { n: 'Cartagena, Colombia', d: 'Romantic walled city with vibrant street life and perfect Caribbean evenings.', r: '4.87', t: 'Romantic' }, { n: 'Queenstown, NZ', d: 'Bungee, skydive, ski, raft — the greatest concentration of adventure on earth.', r: '4.85', t: 'Adventure' }, { n: 'Florence, Italy', d: 'Renaissance art, architecture, and food that justify every art history class.', r: '4.84', t: 'Art & Food' }, { n: 'Atacama Desert, Chile', d: 'Stargazing at the world\'s driest desert where the Milky Way is unobscured.', r: '4.83', t: 'Stargazing' }, { n: 'Bali, Indonesia', d: 'Yoga retreats, surf schools, and wellness culture set among rice terraces.', r: '4.82', t: 'Wellness' }]
-      },
-    };
 
     const NEARBY_PLACES = [
       { emoji: '🏔️', name: 'Cajón del Maipo', desc: 'A dramatic Andean canyon with glaciers, hot springs, and dark skies perfect for stargazing.', rating: '4.7', reviews: '892', tag: 'Nature', dist: '65 km', time: '1 h 15 min', cat: 'trek', coord: [-70.47, -33.60] },
@@ -4353,20 +4117,21 @@
     /* ══ PLACE POPUP ══ */
     function openPlacePopup(type) {
       const d = PLACE_DATA[type];
+      const mt = MT_INFO[type]; // reuse whatever /api/placeinformation already fetched for this place
       document.getElementById('pp-badge').textContent = d.badge;
       document.getElementById('pp-name').textContent = d.name;
-      document.getElementById('pp-rn').textContent = d.rn;
+      document.getElementById('pp-rn').textContent = mt ? mt.rating.toFixed(1) : d.rn;
       document.getElementById('pp-loc').textContent = d.loc;
-      document.getElementById('pp-desc').textContent = d.desc;
-      document.getElementById('pp-temp').textContent = d.temp;
+      document.getElementById('pp-desc').textContent = mt ? mt.short_description : d.desc;
+      document.getElementById('pp-temp').textContent = mt ? mt.temperature : d.temp;
       document.getElementById('pp-tnote').textContent = d.tnote;
-      document.getElementById('pp-season').textContent = d.season;
+      document.getElementById('pp-season').textContent = mt ? mt.best_season : d.season;
       document.getElementById('pp-snote').textContent = d.snote;
-      document.getElementById('pp-alt').textContent = d.alt;
+      document.getElementById('pp-alt').textContent = mt ? mt.altitude : d.alt;
       document.getElementById('pp-anote').textContent = d.anote;
-      document.getElementById('pp-rtxt').textContent = d.rtxt;
+      document.getElementById('pp-rtxt').textContent = mt ? mt.ai_recommendation : d.rtxt;
       document.getElementById('pp-rname').textContent = 'AI Summary';
-      document.getElementById('pp-rmeta').textContent = `Based on ${d.rv}`;
+      document.getElementById('pp-rmeta').textContent = `Based on ${mt ? mt.total_reviews.toLocaleString() + ' reviews' : d.rv}`;
       document.getElementById('pp-av').textContent = '✨';
       document.getElementById('pp-av').style.background = 'linear-gradient(135deg,#7c3aed,#2563eb)';
       document.getElementById('pp-fn').textContent = d.fn;
@@ -4483,30 +4248,36 @@
     }
 
     /* ══ TOP 10 ══ */
-    function openT10Modal(type) {
+    async function showCategoryTop10() {
       closeTop10();
-      const d = TOP10[type];
-      const iconEl = document.getElementById('t10-icon');
-      iconEl.style.background = d.iconBg;
-      iconEl.innerHTML = d.icon;
-      document.getElementById('t10-title').textContent = d.title;
-      document.getElementById('t10-sub').textContent = d.sub;
-      document.getElementById('t10-list').innerHTML = d.list.map((item, i) => {
-        const rank = i + 1;
-        const rClass = rank === 1 ? 'r1' : rank === 2 ? 'r2' : rank === 3 ? 'r3' : 'rn';
-        const rLabel = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `#${rank}`;
-        return `<div class="t10-row">
-      <div class="t10-rank ${rClass}">${rLabel}</div>
-      <div class="t10-rb">
-        <div class="t10-rname">${item.n}</div>
-        <div class="t10-rdesc">${item.d}</div>
-        <div class="t10-rmeta"><div class="t10-rrat">${SVG_STAR_MD} ${item.r}</div><span class="t10-rtag">${item.t}</span></div>
-      </div>
-    </div>`;
-      }).join('');
-      openModal('t10-modal');
+      cleanMap();
+
+      const rows = await fetchTop10({ type: 'category' });
+      const list = rows.map(adaptTop10Item);
+      const coords = list.map(item => item.coord);
+
+      list.forEach((item, i) => {
+        const el = document.createElement('div');
+        el.className = 'ww-marker-wrap';
+        const shortName = item.n.split(',')[0].split('·')[0].trim();
+        el.innerHTML = `<div class="ww-marker-dot">${i + 1}</div><div class="ww-marker-lbl">${shortName}</div>`;
+        el.addEventListener('click', e => {
+          e.stopPropagation();
+          openPlacePopupFromRanking(i);
+        });
+        const m = new AdvancedMarkerElement({ map, position: toLatLng(item.coord), content: el });
+        worldwideMarkers.push(m);
+      });
+
+      if (coords.length) map.fitBounds(boundsOf(coords), 60);
+
+      openRankingPanel(
+        'Top 10 by Category',
+        'Best destinations for every traveller type',
+        `<svg viewBox="0 0 24 24" style="width:22px;height:22px;" fill="none" stroke="#ea580c" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h7"/><circle cx="18" cy="18" r="3"/></svg>`,
+        list
+      );
     }
-    function closeT10Modal() { closeModal('t10-modal'); }
 
     /* ══ MODAL HELPERS ══ */
     function openModal(id) { document.getElementById(id).classList.add('open'); document.body.style.overflow = 'hidden'; }
@@ -4923,14 +4694,34 @@
       }
     }
 
-    function selectCountry(country) {
+    const TOP10_COUNTRY_FLAG = {
+      Chile: '🇨🇱', Argentina: '🇦🇷', Peru: '🇵🇪', Colombia: '🇨🇴',
+      Brazil: '🇧🇷', Ecuador: '🇪🇨', Uruguay: '🇺🇾',
+    };
+
+    async function selectCountry(country) {
       closeCountrySearch();
-      const d = COUNTRY_TOP10[country];
-      if (!d) return;
+
+      const rows = await fetchTop10({ type: 'country', country });
+      let list, flag, sub;
+
+      if (rows.length) {
+        // data sourced from /api/top10 (backed by the top10_places table)
+        list = rows.map(adaptTop10Item);
+        flag = TOP10_COUNTRY_FLAG[country] || '🌍';
+        sub = `${rows.length} destinations`;
+      } else {
+        // fall back to the legacy static list for countries not yet in top10_places
+        const d = COUNTRY_TOP10[country];
+        if (!d) return;
+        list = d.list;
+        flag = d.flag;
+        sub = d.sub;
+      }
 
       cleanMap();
 
-      d.list.forEach((item, i) => {
+      list.forEach((item, i) => {
         const el = document.createElement('div');
         el.className = 'ww-marker-wrap';
         const shortName = item.n.split(',')[0].split('·')[0].trim();
@@ -4943,13 +4734,13 @@
         worldwideMarkers.push(m);
       });
 
-      map.fitBounds(boundsOf(d.list.map(item => item.coord)), 70);
+      map.fitBounds(boundsOf(list.map(item => item.coord)), 70);
 
       openRankingPanel(
         `Top 10 · ${country}`,
-        d.sub,
-        `<span style="font-size:22px">${d.flag}</span>`,
-        d.list
+        sub,
+        `<span style="font-size:22px">${flag}</span>`,
+        list
       );
     }
 
@@ -4984,24 +4775,29 @@
       map.fitBounds(boundsOf(allCoords), 60);
     }
 
-    function showWorldwideOnMap() {
+    /* adapts an /api/top10 row into the {n,d,r,t,coord} shape used by the ranking panel */
+    function adaptTop10Item(row) {
+      return {
+        n: row.city, d: row.place_information, r: row.rating, t: row.category,
+        coord: [row.longitude, row.latitude],
+      };
+    }
+
+    async function fetchTop10(params) {
+      const res = await fetch(`/api/top10?${new URLSearchParams(params)}`);
+      const data = await res.json();
+      return res.ok ? (data.items || []) : [];
+    }
+
+    async function showWorldwideOnMap() {
       closeTop10();
       cleanMap();
 
-      const WW_COORDS = [
-        [-72.00, -50.90],
-        [135.75, 35.01],
-        [25.43, 36.40],
-        [-72.54, -13.16],
-        [-90.38, -0.95],
-        [14.60, 40.63],
-        [115.19, -8.41],
-        [168.66, -45.03],
-        [-7.99, 31.63],
-        [6.83, 60.47],
-      ];
+      const rows = await fetchTop10({ type: 'worldwide' });
+      const wwData = rows.map(adaptTop10Item);
+      const coords = wwData.map(item => item.coord);
 
-      TOP10.worldwide.list.forEach((item, i) => {
+      wwData.forEach((item, i) => {
         const el = document.createElement('div');
         el.className = 'ww-marker-wrap';
         const shortName = item.n.split(',')[0].split('·')[0].trim();
@@ -5010,13 +4806,12 @@
           e.stopPropagation();
           openPlacePopupFromRanking(i);
         });
-        const m = new AdvancedMarkerElement({ map, position: toLatLng(WW_COORDS[i]), content: el });
+        const m = new AdvancedMarkerElement({ map, position: toLatLng(item.coord), content: el });
         worldwideMarkers.push(m);
       });
 
-      map.fitBounds(boundsOf(WW_COORDS), 60);
+      if (coords.length) map.fitBounds(boundsOf(coords), 60);
 
-      const wwData = TOP10.worldwide.list.map((item, i) => ({ ...item, coord: WW_COORDS[i] }));
       openRankingPanel(
         'Top 10 World Wide',
         'The planet\'s most celebrated destinations',
@@ -5208,6 +5003,11 @@
       fromMarker.map = map;
       fe.querySelector('.m-lbl').textContent = fromVal;
       currentFrom = fromVal;
+      PLACE_DATA.from.name = fromVal;
+
+      // fetch place details for each place (from/to) once the user hits search
+      MT_INFO.from = await fetchPlaceInformation(fromVal);
+      MT_INFO.to = toVal ? await fetchPlaceInformation(toVal) : null;
 
       // fetch place details (rating, weather, AI tip) to populate the left panel
       MT_INFO.from = await fetchMtPlace(fromVal);
@@ -5222,6 +5022,7 @@
         toMarker.map = map;
         te.querySelector('.m-lbl').textContent = toVal;
         currentTo = toVal;
+        PLACE_DATA.to.name = toVal;
         hasRoute = true;
 
         renderRouteMode(fromVal, toVal);
