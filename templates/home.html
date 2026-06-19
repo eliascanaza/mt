@@ -3534,10 +3534,14 @@
           <!-- shown until the user searches a place -->
           <div class="search-empty-state" id="search-empty-state">
             <div class="search-empty-icon">
-              <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></svg>
+              <svg viewBox="0 0 24 24">
+                <circle cx="11" cy="11" r="7" />
+                <path d="m21 21-4.3-4.3" />
+              </svg>
             </div>
             <div class="search-empty-title">Plan your next trip</div>
-            <p class="search-empty-sub">Search a starting point above — and optionally a destination — to see it on the map.</p>
+            <p class="search-empty-sub">Search a starting point above — and optionally a destination — to see it on the
+              map.</p>
           </div>
 
         </div>
@@ -3886,19 +3890,6 @@
     };
 
 
-    const AC_PLACES = [
-      { n: 'Santiago, Chile', s: 'Capital · South America', e: '🏙️' }, { n: 'Buenos Aires, Argentina', s: 'Capital · South America', e: '🎭' },
-      { n: 'Lima, Peru', s: 'Capital · South America', e: '🏛️' }, { n: 'Bogotá, Colombia', s: 'Capital · South America', e: '☁️' },
-      { n: 'Rio de Janeiro, Brazil', s: 'Coastal city · South America', e: '🌊' }, { n: 'Cusco, Peru', s: 'Inca capital · South America', e: '🏔️' },
-      { n: 'Patagonia, Chile', s: 'Region · Southern Chile', e: '🧊' }, { n: 'Puerto Natales, Chile', s: 'Patagonia gateway · Chile', e: '🏔️' },
-      { n: 'Torres del Paine, Chile', s: 'National park · Patagonia', e: '⛰️' }, { n: 'Puerto Montt, Chile', s: 'Lake district · Chile', e: '⛵' },
-      { n: 'Futaleufú, Chile', s: 'Whitewater · Patagonia', e: '🏄' }, { n: 'Ushuaia, Argentina', s: 'End of the world · Argentina', e: '🌨️' },
-      { n: 'Mendoza, Argentina', s: 'Wine country · Argentina', e: '🍷' }, { n: 'Cartagena, Colombia', s: 'Walled city · Caribbean', e: '🏰' },
-      { n: 'Medellín, Colombia', s: 'City of eternal spring', e: '🌸' }, { n: 'Machu Picchu, Peru', s: 'Inca ruins · UNESCO site', e: '🗿' },
-      { n: 'Galapagos Islands', s: 'Ecuador · Pacific Ocean', e: '🐢' }, { n: 'Atacama Desert, Chile', s: 'World\'s driest desert', e: '🌵' },
-      { n: 'Bariloche, Argentina', s: 'Lakes district · Patagonia', e: '🏔️' }, { n: 'Montevideo, Uruguay', s: 'Capital · South America', e: '🎶' },
-    ];
-
     const NEARBY_PLACES = [
       { emoji: '🏔️', name: 'Cajón del Maipo', desc: 'A dramatic Andean canyon with glaciers, hot springs, and dark skies perfect for stargazing.', rating: '4.7', reviews: '892', tag: 'Nature', dist: '65 km', time: '1 h 15 min', cat: 'trek', coord: [-70.47, -33.60] },
       { emoji: '🎭', name: 'Valparaíso', desc: 'Bohemian port city on Pacific hills, famous for street art, colorful houses, and funiculars.', rating: '4.8', reviews: '3,210', tag: 'Culture', dist: '120 km', time: '1 h 30 min', cat: 'town', coord: [-71.63, -33.05] },
@@ -3923,16 +3914,17 @@
     let hasRoute = false;
     const markers = {};
 
-    /* ══ PLACE INFORMATION (fetched from /api/placeinformation on search) ══ */
+    /* ══ MT_PLACES (left-panel place details, fetched on search) ══ */
     let MT_INFO = { from: null, to: null };
     const mtPlaceCache = {};
 
-    async function fetchPlaceInformation(name) {
+    async function fetchMtPlace(name) {
       if (mtPlaceCache.hasOwnProperty(name)) return mtPlaceCache[name];
       try {
         const res = await fetch(`/api/placeinformation?name=${encodeURIComponent(name)}`);
+        if (!res.ok) { mtPlaceCache[name] = null; return null; }
         const data = await res.json();
-        mtPlaceCache[name] = res.ok ? (data.place || null) : null;
+        mtPlaceCache[name] = data.place || null;
       } catch (err) {
         mtPlaceCache[name] = null;
       }
@@ -4840,21 +4832,39 @@
       document.getElementById('t10-btn').classList.remove('open');
     }
 
-    /* ══ AUTOCOMPLETE ══ */
+    /* ══ AUTOCOMPLETE (server-backed via /api/autocomplete) ══ */
+    const acDebounceTimers = {};
+    const acRequestSeq = { from: 0, to: 0 };
+
     function handleAC(side, query) {
       const listEl = document.getElementById(side + '-ac');
-      const q = query.trim().toLowerCase();
+      const q = query.trim();
       if (!q) { listEl.classList.remove('open'); return; }
-      const matches = AC_PLACES.filter(p => p.n.toLowerCase().includes(q) || p.s.toLowerCase().includes(q)).slice(0, 6);
-      if (!matches.length) { listEl.classList.remove('open'); return; }
-      listEl.innerHTML = `<div class="ac-header">Suggestions</div>` +
-        matches.map(p => {
-          const hl = p.n.replace(new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi'), '<span class="ac-match">$1</span>');
-          return `<div class="ac-item" onclick="selectAC('${side}','${p.n.replace(/'/g, "\\'")}')">
-        <div class="ac-info"><div class="ac-name">${hl}</div><div class="ac-sub">${p.s}</div></div>
-      </div>`;
-        }).join('');
-      listEl.classList.add('open');
+
+      clearTimeout(acDebounceTimers[side]);
+      acDebounceTimers[side] = setTimeout(async () => {
+        const seq = ++acRequestSeq[side];
+        let places = [];
+        try {
+          const res = await fetch(`/api/autocomplete?q=${encodeURIComponent(q)}`);
+          const data = await res.json();
+          places = data.results || [];
+        } catch (err) {
+          return; // network hiccup — leave the list as-is
+        }
+        if (seq !== acRequestSeq[side]) return; // a newer keystroke superseded this request
+
+        if (!places.length) { listEl.classList.remove('open'); return; }
+        const esc = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        listEl.innerHTML = `<div class="ac-header">Suggestions</div>` +
+          places.map(p => {
+            const hl = p.name.replace(new RegExp(`(${esc})`, 'gi'), '<span class="ac-match">$1</span>');
+            return `<div class="ac-item" onclick="selectAC('${side}','${p.name.replace(/'/g, "\\'")}')">
+          <div class="ac-info"><div class="ac-name">${hl}</div><div class="ac-sub">${p.subtitle}</div></div>
+        </div>`;
+          }).join('');
+        listEl.classList.add('open');
+      }, 200);
     }
     function selectAC(side, name) { document.getElementById(side + '-input').value = name; closeAllAC(); hideClear(side); }
     function closeAllAC() { document.getElementById('from-ac').classList.remove('open'); document.getElementById('to-ac').classList.remove('open'); }
@@ -4998,6 +5008,10 @@
       // fetch place details for each place (from/to) once the user hits search
       MT_INFO.from = await fetchPlaceInformation(fromVal);
       MT_INFO.to = toVal ? await fetchPlaceInformation(toVal) : null;
+
+      // fetch place details (rating, weather, AI tip) to populate the left panel
+      MT_INFO.from = await fetchMtPlace(fromVal);
+      MT_INFO.to = toVal ? await fetchMtPlace(toVal) : null;
 
       openLeftPanel();
 

@@ -94,6 +94,13 @@ def init_db():
             UNIQUE(list_type, rank)
         );
 
+        CREATE TABLE IF NOT EXISTS places (
+            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            emoji       TEXT    NOT NULL,
+            name        TEXT    NOT NULL,
+            subtitle    TEXT    NOT NULL
+        );
+
         CREATE TABLE IF NOT EXISTS mt_places (
             id                 INTEGER PRIMARY KEY AUTOINCREMENT,
             city               TEXT    NOT NULL,
@@ -184,6 +191,29 @@ STOPS_SEED = [
             {"icon": "car", "label": "Drive via Carretera Austral", "note": "Scenic dirt road sections", "time": "3 h 30 min"},
         ]),
     },
+]
+
+PLACES_SEED = [
+    {"emoji": "🏙️", "name": "Santiago, Chile", "subtitle": "Capital · South America"},
+    {"emoji": "🎭", "name": "Buenos Aires, Argentina", "subtitle": "Capital · South America"},
+    {"emoji": "🏛️", "name": "Lima, Peru", "subtitle": "Capital · South America"},
+    {"emoji": "☁️", "name": "Bogotá, Colombia", "subtitle": "Capital · South America"},
+    {"emoji": "🌊", "name": "Rio de Janeiro, Brazil", "subtitle": "Coastal city · South America"},
+    {"emoji": "🏔️", "name": "Cusco, Peru", "subtitle": "Inca capital · South America"},
+    {"emoji": "🧊", "name": "Patagonia, Chile", "subtitle": "Region · Southern Chile"},
+    {"emoji": "🏔️", "name": "Puerto Natales, Chile", "subtitle": "Patagonia gateway · Chile"},
+    {"emoji": "⛰️", "name": "Torres del Paine, Chile", "subtitle": "National park · Patagonia"},
+    {"emoji": "⛵", "name": "Puerto Montt, Chile", "subtitle": "Lake district · Chile"},
+    {"emoji": "🏄", "name": "Futaleufú, Chile", "subtitle": "Whitewater · Patagonia"},
+    {"emoji": "🌨️", "name": "Ushuaia, Argentina", "subtitle": "End of the world · Argentina"},
+    {"emoji": "🍷", "name": "Mendoza, Argentina", "subtitle": "Wine country · Argentina"},
+    {"emoji": "🏰", "name": "Cartagena, Colombia", "subtitle": "Walled city · Caribbean"},
+    {"emoji": "🌸", "name": "Medellín, Colombia", "subtitle": "City of eternal spring"},
+    {"emoji": "🗿", "name": "Machu Picchu, Peru", "subtitle": "Inca ruins · UNESCO site"},
+    {"emoji": "🐢", "name": "Galapagos Islands", "subtitle": "Ecuador · Pacific Ocean"},
+    {"emoji": "🌵", "name": "Atacama Desert, Chile", "subtitle": "World's driest desert"},
+    {"emoji": "🏔️", "name": "Bariloche, Argentina", "subtitle": "Lakes district · Patagonia"},
+    {"emoji": "🎶", "name": "Montevideo, Uruguay", "subtitle": "Capital · South America"},
 ]
 
 MT_PLACES_SEED = [
@@ -466,6 +496,7 @@ def seed_db():
             DELETE FROM stops;
             DELETE FROM mt_places;
             DELETE FROM top10_places;
+            DELETE FROM places;
         """)
 
         # Insert stops and collect their real IDs
@@ -504,7 +535,11 @@ def seed_db():
             """, (actual_stop_id, r["reviewer"], r["location"], r["rating"],
                   r["comment"], r["avatar_color"], r["initials"], r["visited_at"]))
 
-        # Insert mt_places (place details fetched when the user hits search)
+        # Insert places (autocomplete source)
+        for p in PLACES_SEED:
+            conn.execute("INSERT INTO places (emoji,name,subtitle) VALUES (:emoji,:name,:subtitle)", p)
+
+        # Insert mt_places (left-panel place details, keyed off the autocomplete selection)
         for mp in MT_PLACES_SEED:
             conn.execute("""
                 INSERT INTO mt_places (city,country,region,rating,total_reviews,short_description,
@@ -605,6 +640,20 @@ def get_top10_countries():
             SELECT DISTINCT country FROM top10_places WHERE list_type='country' ORDER BY country
         """).fetchall()
         return [r["country"] for r in rows]
+
+
+def search_places(query: str, limit: int = 6):
+    """Autocomplete lookup: matches on name or subtitle, name-prefix matches first."""
+    like = f"%{query}%"
+    with get_conn() as conn:
+        rows = conn.execute("""
+            SELECT *, (name LIKE :prefix) AS is_prefix
+            FROM places
+            WHERE name LIKE :like OR subtitle LIKE :like
+            ORDER BY is_prefix DESC, name
+            LIMIT :limit
+        """, {"like": like, "prefix": f"{query}%", "limit": limit}).fetchall()
+        return [dict(r) for r in rows]
 
 
 def get_mt_place(name: str):

@@ -13,7 +13,8 @@ Endpoints:
   GET  /api/top10                  → top10 places (?type=worldwide or ?type=country&country=Chile)
   GET  /api/plans                  → saved plans
   POST /api/plans                  → save a new plan
-  GET  /api/placeinformation       → place details (rating, weather, AI tip) by name
+  GET  /api/autocomplete           → place suggestions for the search bar
+  GET  /api/placeinformation        → place details (rating, weather, AI tip) by name
 """
 
 import os
@@ -146,12 +147,22 @@ def api_top10_places():
         "count": len(items),
     })
 
+# ── Autocomplete ─────────────────────────────────────────────────────────
+@app.route("/api/autocomplete", methods=["GET"])
+def api_autocomplete():
+    """Place suggestions for the from/to search bar, queried from the DB."""
+    query = request.args.get("q", "").strip()
+    if not query:
+        return jsonify({"query": query, "results": []})
+    results = db.search_places(query)
+    return jsonify({"query": query, "results": results, "count": len(results)})
 
-# ── Place information ────────────────────────────────────────────────────
+
+# ── Place details (mt_places) ───────────────────────────────────────────
 @app.route("/api/placeinformation", methods=["GET"])
-def api_place_information():
-    """Place details (rating, weather, AI tip) for a place typed into the search bar.
-    Called once per place (from/to) when the user hits the search button."""
+def api_mt_place():
+    """Stands in for an external place-data provider: fetches rating, weather,
+    season and AI-recommendation info for a place selected in the search bar."""
     name = request.args.get("name", "").strip()
     if not name:
         return jsonify({"error": "Missing required query param: name"}), 400
