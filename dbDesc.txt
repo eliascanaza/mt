@@ -1,0 +1,172 @@
+makeTrip — Database Description (maketrip.db, SQLite)
+Source of truth: database.py (init_db / _migrate_saved_plans_columns)
+=======================================================================
+
+TABLE: stops
+Purpose: Curated "demo route" stops (recommended places along the seeded
+Santiago -> Puerto Natales road trip). Backs the original /api/stops
+endpoints and the timeline UI before live-search stop discovery existed.
+Fields:
+  id           INTEGER PK        Unique stop id.
+  emoji        TEXT  NOT NULL    Emoji icon shown in the timeline/card.
+  name         TEXT  NOT NULL    Stop name (e.g. "Chillán — Hot Springs").
+  category     TEXT  NOT NULL    Category tag: trek / lake / town / trail.
+  description  TEXT  NOT NULL    Short description shown in the UI.
+  rating       REAL  DEFAULT 0   Average review rating (recalculated on add_review).
+  review_count INTEGER DEFAULT 0 Number of reviews (recalculated on add_review).
+  location     TEXT  NOT NULL    Human-readable region/distance label.
+  altitude     TEXT              Altitude label (e.g. "1,800 m").
+  temperature  TEXT              Typical temperature range.
+  drive_time   TEXT              Drive time from the previous stop.
+  drive_note   TEXT              Note about the driving route.
+  distance_km  TEXT              Distance from the previous stop (display string).
+  dist_from    TEXT              Name of the previous stop/origin.
+  bg_gradient  TEXT              CSS gradient used as a card background.
+  lat          REAL  NOT NULL    Latitude.
+  lng          REAL  NOT NULL    Longitude.
+  tags         TEXT  DEFAULT '[]'  JSON array of tag strings.
+  commutes     TEXT  DEFAULT '[]'  JSON array of {icon, label, note, time} objects.
+
+-----------------------------------------------------------------------
+
+TABLE: routes
+Purpose: A saved origin -> destination route (currently only the seeded
+demo route uses this table; live searches in the UI do not insert here).
+Referenced by route_stops and (optionally) saved_plans.route_id.
+Fields:
+  id           INTEGER PK        Unique route id.
+  from_name    TEXT  NOT NULL    Origin display name.
+  from_lat     REAL  NOT NULL    Origin latitude.
+  from_lng     REAL  NOT NULL    Origin longitude.
+  to_name      TEXT  NOT NULL    Destination display name.
+  to_lat       REAL  NOT NULL    Destination latitude.
+  to_lng       REAL  NOT NULL    Destination longitude.
+  distance_km  INTEGER           Total route distance.
+  drive_hours  INTEGER           Total non-stop driving time, in hours.
+  stop_count   INTEGER DEFAULT 0 Number of stops linked via route_stops.
+  days_min     INTEGER           Suggested minimum trip length, in days.
+  days_max     INTEGER           Suggested maximum trip length, in days.
+  created_at   DATETIME          Row creation timestamp (UTC, auto).
+
+-----------------------------------------------------------------------
+
+TABLE: route_stops
+Purpose: Join table ordering which stops belong to which route.
+Fields:
+  route_id     INTEGER  FK -> routes(id), ON DELETE CASCADE.
+  stop_id      INTEGER  FK -> stops(id),  ON DELETE CASCADE.
+  position     INTEGER  NOT NULL   1-based order of the stop within the route.
+  PRIMARY KEY (route_id, stop_id)
+
+-----------------------------------------------------------------------
+
+TABLE: reviews
+Purpose: User reviews attached to a curated stop (stops table). Adding a
+review recalculates that stop's rating/review_count.
+Fields:
+  id           INTEGER PK        Unique review id.
+  stop_id      INTEGER           FK -> stops(id), ON DELETE CASCADE.
+  reviewer     TEXT  NOT NULL    Reviewer's display name.
+  location     TEXT              Reviewer's location (e.g. "Tokyo, Japan").
+  rating       INTEGER NOT NULL  1-5, enforced by CHECK constraint.
+  comment      TEXT  NOT NULL    Review text.
+  avatar_color TEXT  DEFAULT '#c94b0c'  Hex color for the reviewer's avatar.
+  initials     TEXT  DEFAULT 'TR'       Initials shown in the avatar.
+  visited_at   TEXT              Free-text "when visited" (e.g. "March 2024").
+  created_at   DATETIME          Row creation timestamp (UTC, auto).
+
+-----------------------------------------------------------------------
+
+TABLE: top10
+Purpose: Legacy curated top-10 lists (simple name/description/rating/tag
+shape), predating the richer top10_places table. Backs /api/top10/<list_type>.
+Fields:
+  id           INTEGER PK        Unique row id.
+  list_type    TEXT  NOT NULL    worldwide / country / city / category.
+  rank         INTEGER NOT NULL  1-10 position within that list_type.
+  name         TEXT  NOT NULL    Destination name.
+  description  TEXT  NOT NULL    Short description.
+  rating       REAL  NOT NULL    Rating out of 5.
+  tag          TEXT  NOT NULL    Category tag (e.g. "Nature", "Culture").
+  UNIQUE(list_type, rank)
+
+-----------------------------------------------------------------------
+
+TABLE: places
+Purpose: Autocomplete source for the home page's From/To search bar.
+Backs /api/autocomplete (search_places: matches on name or subtitle).
+Fields:
+  id           INTEGER PK        Unique place id.
+  emoji        TEXT  NOT NULL    Emoji icon shown in the suggestion row.
+  name         TEXT  NOT NULL    Place name (e.g. "Santiago, Chile").
+  subtitle     TEXT  NOT NULL    Secondary label (e.g. "Capital · South America").
+
+-----------------------------------------------------------------------
+
+TABLE: mt_places
+Purpose: Rich place details (rating, weather, season, AI tip) shown in the
+left panel when a place is selected in the search bar. Backs
+/api/placeinformation (get_mt_place, matched by "city, country" or city).
+Fields:
+  id                 INTEGER PK        Unique row id.
+  city               TEXT  NOT NULL    City name.
+  country            TEXT  NOT NULL    Country name.
+  region             TEXT              Region/state within the country.
+  rating             REAL  DEFAULT 0   Aggregate rating out of 5.
+  total_reviews      INTEGER DEFAULT 0 Number of reviews backing the rating.
+  short_description  TEXT              One-line description shown in the panel.
+  latitude           REAL  NOT NULL    Latitude.
+  longitude          REAL  NOT NULL    Longitude.
+  temperature        TEXT              Typical temperature range.
+  best_season        TEXT              Best season/months to visit.
+  altitude           TEXT              Altitude label.
+  ai_recommendation  TEXT              Short AI-style travel tip.
+
+-----------------------------------------------------------------------
+
+TABLE: top10_places
+Purpose: Main top-10 rankings used by the UI today — worldwide, by country
+(16 countries), and by category. Backs /api/top10 and /api/top10/countries
+(get_top10_places, get_top10_countries, get_top10_country_directory).
+Fields:
+  id                 INTEGER PK        Unique row id.
+  list_type          TEXT  NOT NULL    worldwide / country / category.
+  country            TEXT              Country name; NULL for worldwide/category rows.
+  city               TEXT  NOT NULL    Destination name (e.g. "Kyoto").
+  category           TEXT  NOT NULL    Category tag (e.g. "Nature", "History").
+  rating             REAL  NOT NULL    Rating out of 5.
+  place_information  TEXT  NOT NULL    Description shown in the ranking panel.
+  latitude           REAL              Latitude, used to plot the map marker.
+  longitude          REAL              Longitude, used to plot the map marker.
+  rank               INTEGER NOT NULL  1-10 position within that list_type/country.
+
+-----------------------------------------------------------------------
+
+TABLE: saved_plans
+Purpose: Trip plans saved from the home page's "Save plan" flow. Backs
+POST /api/saveplan (save_full_plan) and GET /api/getsavedplan
+(get_plans_for_user), which feeds the "My Plans" tab on the profile page.
+No real auth system exists yet, so every plan defaults to the mock user
+(user_id 1111, test@gmail.com). Columns from_name.../stops_snapshot were
+added after the table's original (route_id-based) design; the legacy
+columns (user_name, route_id) remain for the older /api/plans endpoint.
+Fields:
+  id              INTEGER PK              Unique plan id.
+  user_name       TEXT  DEFAULT 'Alex Traveller'  Legacy display name (old /api/plans flow).
+  user_id         INTEGER DEFAULT 1111    Owning user's id (mock user, no auth yet).
+  user_email      TEXT  DEFAULT 'test@gmail.com'  Owning user's email.
+  route_id        INTEGER                 FK -> routes(id); only set by the legacy /api/plans flow.
+  title           TEXT                    Plan name, chosen by the user when saving.
+  notes           TEXT                    Free-text notes about the plan.
+  from_name       TEXT                    Origin display name (live-search flow).
+  from_lat        REAL                    Origin latitude.
+  from_lng        REAL                    Origin longitude.
+  to_name         TEXT                    Destination display name.
+  to_lat          REAL                    Destination latitude.
+  to_lng          REAL                    Destination longitude.
+  distance_km     INTEGER                 Total route distance shown in the left panel at save time.
+  duration_text   TEXT                    Total route time shown in the left panel at save time (e.g. "3 h 29 min").
+  transport_mode  TEXT                    Selected transport mode at save time (Car/Walk/Plane/Train).
+  stops_snapshot  TEXT  DEFAULT '[]'      JSON array of the tourist places (Google Maps markers) found
+                                          along the route: [{name, latitude, longitude, rating}, ...].
+  created_at      DATETIME                Row creation timestamp (UTC, auto) — used to sort "My Plans" newest-first.

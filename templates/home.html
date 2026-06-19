@@ -270,6 +270,14 @@
       box-shadow: 0 3px 10px rgba(255, 56, 92, .40)
     }
 
+    /* highlights whatever marker's list row (nearby places or route stops)
+       was clicked — shared by both lists rather than duplicated per list */
+    .ww-marker-dot.ww-marker-selected {
+      transform: scale(1.3);
+      box-shadow: 0 0 0 3px #fff, 0 0 0 6px #FF385C, 0 4px 14px rgba(0, 0, 0, .35);
+      z-index: 5
+    }
+
     .ww-marker-dot {
       width: 34px;
       height: 34px;
@@ -284,6 +292,11 @@
       color: #fff;
       font-family: var(--font);
       box-shadow: 0 3px 10px rgba(29, 111, 243, .40)
+    }
+
+    .ww-marker-remove .ww-marker-dot {
+      background: #FF385C;
+      box-shadow: 0 3px 10px rgba(255, 56, 92, .40)
     }
 
     .ww-marker-lbl {
@@ -967,6 +980,12 @@
       box-shadow: 0 6px 16px rgba(217, 119, 6, .20)
     }
 
+    /* marks the row whose marker is currently selected on the map — layers
+       on top of the gold/silver/bronze tint rather than replacing it */
+    .rp-item.active {
+      box-shadow: 0 0 0 2px var(--red), 0 3px 12px rgba(0, 0, 0, .07)
+    }
+
     .rp-rank {
       width: 34px;
       height: 34px;
@@ -1290,6 +1309,86 @@
       margin-top: 2px
     }
 
+    /* "compare flight prices" CTA — only shown in the route overview while
+       the Plane travel mode is selected */
+    .flights-cta {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      background: linear-gradient(135deg, #0a4a7b, #0d2b52);
+      border-radius: var(--r-md);
+      padding: 12px 13px;
+      margin-bottom: 18px;
+      cursor: pointer;
+      transition: transform .15s, box-shadow .15s
+    }
+
+    .flights-cta:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, .22)
+    }
+
+    .fc-icon {
+      position: relative;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, .16);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0
+    }
+
+    .fc-icon-badge {
+      position: absolute;
+      bottom: -3px;
+      right: -3px;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #16a34a;
+      border: 2px solid #0d2b52;
+      color: #fff;
+      font-size: 9px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center
+    }
+
+    .fc-body {
+      flex: 1;
+      min-width: 0
+    }
+
+    .fc-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #fff
+    }
+
+    .fc-sub {
+      font-size: 10.5px;
+      color: rgba(255, 255, 255, .75);
+      margin-top: 1px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis
+    }
+
+    .fc-arrow svg {
+      width: 14px;
+      height: 14px;
+      stroke: rgba(255, 255, 255, .85);
+      fill: none;
+      stroke-width: 2.2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      flex-shrink: 0
+    }
+
     /* filter tabs */
     .filter-row {
       display: flex;
@@ -1538,6 +1637,34 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis
+    }
+
+    .tl-name-row {
+      display: flex;
+      align-items: center;
+      gap: 6px
+    }
+
+    .tl-name-row .tl-name {
+      flex: 1;
+      min-width: 0;
+      margin-bottom: 0
+    }
+
+    .tl-duration {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      flex-shrink: 0;
+      background: #fff7e6;
+      border: 1px solid #ffe8b8;
+      color: #8a5a00;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 99px;
+      white-space: nowrap;
+      margin-bottom: 3px
     }
 
     .tl-meta {
@@ -1789,12 +1916,67 @@
       background: var(--g50)
     }
 
-    /* places range slider (bottom-right, vertical, 1-10) */
-    .places-range-box {
+    /* wraps the add/remove buttons and the places range slider (bottom-right) */
+    .places-controls {
       position: absolute;
       bottom: 14px;
       right: 14px;
       z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px
+    }
+
+    .places-actions-box {
+      width: 34px;
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--r-sm);
+      box-shadow: var(--sh-sm);
+      overflow: hidden
+    }
+
+    .places-action-btn {
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      border: none;
+      background: var(--white);
+      transition: background .15s
+    }
+
+    .places-action-btn:first-child {
+      border-bottom: 1px solid var(--border)
+    }
+
+    .places-action-btn:hover {
+      background: var(--g50)
+    }
+
+    .places-action-btn svg {
+      width: 15px;
+      height: 15px;
+      stroke: var(--g800);
+      fill: none;
+      stroke-width: 2.1;
+      stroke-linecap: round;
+      stroke-linejoin: round
+    }
+
+    .places-action-btn.active {
+      background: #ffe4e9
+    }
+
+    .places-action-btn.active svg {
+      stroke: #FF385C
+    }
+
+    /* places range slider (1-10) */
+    .places-range-box {
       width: 34px;
       background: var(--white);
       border: 1px solid var(--border);
@@ -1975,7 +2157,7 @@
     }
 
     .pp-pic {
-      height: 160px;
+      height: 380px;
       position: relative;
       overflow: hidden;
       display: flex;
@@ -2005,6 +2187,14 @@
     .pp-pic-bg {
       position: absolute;
       inset: 0
+    }
+
+    .pp-pic-img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover
     }
 
     .pp-pic-ov {
@@ -2461,6 +2651,84 @@
       font-size: 10px;
       color: var(--g400);
       margin-top: 2px
+    }
+
+    /* temperature card gets a live weather background (sunny/cloudy/rain/
+       night) once /api/climate resolves — everything inside needs to switch
+       to light text to stay readable over it */
+    .pp-temp-card {
+      position: relative;
+      overflow: hidden;
+      color: #fff;
+      background: linear-gradient(135deg, #64748b, #2c3a4a);
+      transition: background .4s ease
+    }
+
+    .pp-temp-card .pp-ci,
+    .pp-temp-card .pp-cl,
+    .pp-temp-card .pp-cn,
+    .pp-temp-card .pp-temp-row {
+      position: relative;
+      z-index: 1
+    }
+
+    .pp-temp-card .pp-cl {
+      color: rgba(255, 255, 255, .75)
+    }
+
+    .pp-temp-card .pp-cn {
+      color: rgba(255, 255, 255, .65)
+    }
+
+    .pp-temp-card.weather-sunny {
+      background: linear-gradient(135deg, #fbbf24, #f97316)
+    }
+
+    .pp-temp-card.weather-cloudy {
+      background: linear-gradient(135deg, #94a3b8, #475569)
+    }
+
+    .pp-temp-card.weather-rain {
+      background: linear-gradient(135deg, #51687d, #1e3a5f)
+    }
+
+    .pp-temp-card.weather-rain::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: repeating-linear-gradient(115deg, rgba(255, 255, 255, .22) 0 2px, transparent 2px 14px)
+    }
+
+    .pp-temp-card.weather-night {
+      background: linear-gradient(135deg, #28265c, #0a0a1a)
+    }
+
+    .pp-temp-card.weather-night::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image:
+        radial-gradient(1px 1px at 20% 30%, rgba(255, 255, 255, .8) 50%, transparent 51%),
+        radial-gradient(1px 1px at 60% 20%, rgba(255, 255, 255, .6) 50%, transparent 51%),
+        radial-gradient(1px 1px at 80% 65%, rgba(255, 255, 255, .7) 50%, transparent 51%),
+        radial-gradient(1px 1px at 35% 75%, rgba(255, 255, 255, .5) 50%, transparent 51%)
+    }
+
+    .pp-temp-row {
+      display: flex;
+      align-items: baseline;
+      gap: 6px
+    }
+
+    .pp-temp-now {
+      font-size: 19px;
+      font-weight: 800
+    }
+
+    .pp-temp-side {
+      font-size: 11px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, .75)
     }
 
     .pp-review {
@@ -3304,16 +3572,33 @@
       }
 
       /* sits just above the "Route details" / "Hide details" pill, tracking it as it moves */
-      .places-range-box {
-        width: 48px;
+      .places-controls {
         bottom: calc(52vh + 12px + 56px);
         right: 16px;
-        padding: 10px 0 8px;
         transition: bottom .32s cubic-bezier(.4, 0, .2, 1)
       }
 
-      .panel-toggle.flipped~.places-range-box {
+      .panel-toggle.flipped~.places-controls {
         bottom: 72px
+      }
+
+      .places-range-box,
+      .places-actions-box {
+        width: 48px
+      }
+
+      .places-range-box {
+        padding: 10px 0 8px
+      }
+
+      .places-action-btn {
+        width: 46px;
+        height: 46px
+      }
+
+      .places-action-btn svg {
+        width: 19px;
+        height: 19px
       }
 
       .places-range-title {
@@ -3753,14 +4038,66 @@
         <button class="zoom-btn" onclick="map.setZoom(map.getZoom()+1)">+</button>
         <button class="zoom-btn" onclick="map.setZoom(map.getZoom()-1)">−</button>
       </div>
-      <div class="places-range-box" id="places-range-box" title="Places along the route" style="display:none">
-        <div class="places-range-title">Places</div>
-        <div class="places-range-track-wrap">
-          <input type="range" class="places-range-input" id="places-range" min="1" max="10" step="1" value="5"
-            oninput="onPlacesRangeChange(this.value)" />
+      <div class="places-controls" id="places-controls" style="display:none">
+        <div class="places-actions-box">
+          <button class="places-action-btn" id="remove-place-btn" title="Remove a place from the route"
+            onclick="toggleRemoveMode()">
+            <svg viewBox="0 0 24 24">
+              <polyline points="3 6 5 6 21 6" />
+              <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+              <path d="M10 11v6M14 11v6" />
+              <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+            </svg>
+          </button>
+          <button class="places-action-btn" title="Add a place to the route" onclick="openAddPlace()">
+            <svg viewBox="0 0 24 24">
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+          </button>
         </div>
-        <div class="places-range-value" id="places-range-value">5</div>
+        <div class="places-range-box" id="places-range-box" title="Places along the route">
+          <div class="places-range-title">Places</div>
+          <div class="places-range-track-wrap">
+            <input type="range" class="places-range-input" id="places-range" min="1" max="10" step="1" value="5"
+              oninput="onPlacesRangeChange(this.value)" />
+          </div>
+          <div class="places-range-value" id="places-range-value">5</div>
+        </div>
       </div>
+    </div>
+  </div>
+
+  <!-- ══ ADD PLACE OVERLAY ══ -->
+  <div class="cs-overlay" id="ap-overlay" onclick="if(event.target===this)closeAddPlace()">
+    <div class="cs-box">
+      <div class="cs-hdr">
+        <div class="cs-icon-wrap">
+          <svg viewBox="0 0 24 24">
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+        </div>
+        <div class="cs-hdr-text">
+          <div class="cs-hdr-title">Add a stop</div>
+          <div class="cs-hdr-sub">Search a place to add to your route</div>
+        </div>
+        <button class="cs-x" onclick="closeAddPlace()">✕</button>
+      </div>
+      <div class="cs-input-row">
+        <svg viewBox="0 0 24 24">
+          <circle cx="11" cy="11" r="8" />
+          <path d="m21 21-4.35-4.35" />
+        </svg>
+        <input class="cs-input" id="ap-input" type="text" placeholder="Search a city, town or landmark…"
+          oninput="handleAddPlaceAC(this.value)" autocomplete="off" />
+        <button class="cs-clear" id="ap-clear-btn" onclick="clearAddPlaceInput()" tabindex="-1">
+          <svg viewBox="0 0 24 24">
+            <path d="M18 6 6 18M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <div class="cs-results" id="ap-results"></div>
     </div>
   </div>
 
@@ -3886,13 +4223,14 @@
         <div class="pp-div"></div>
         <div class="pp-slbl">Climate</div>
         <div class="pp-climate">
-          <div class="pp-cc">
-            <div class="pp-ci" style="background:#fff3ed;"><svg viewBox="0 0 24 24" fill="none" stroke="#e8621a"
-                stroke-width="2" stroke-linecap="round">
-                <path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z" />
-              </svg></div>
-            <div class="pp-cl">Temperature</div>
-            <div class="pp-cv" id="pp-temp">8°–28°C</div>
+          <div class="pp-cc pp-temp-card" id="pp-temp-card">
+            <div class="pp-ci pp-weather-icon" id="pp-weather-icon" style="background:rgba(255,255,255,.25);">🌡️</div>
+            <div class="pp-cl" id="pp-temp-label">Temperature</div>
+            <div class="pp-temp-row">
+              <span class="pp-temp-side" id="pp-temp-min"></span>
+              <span class="pp-temp-now" id="pp-temp-now">8°–28°C</span>
+              <span class="pp-temp-side" id="pp-temp-max"></span>
+            </div>
             <div class="pp-cn" id="pp-tnote">Warm summers</div>
           </div>
           <div class="pp-cc">
@@ -4054,16 +4392,9 @@
     };
 
 
-    const NEARBY_PLACES = [
-      { emoji: '🏔️', name: 'Cajón del Maipo', desc: 'A dramatic Andean canyon with glaciers, hot springs, and dark skies perfect for stargazing.', rating: '4.7', reviews: '892', tag: 'Nature', dist: '65 km', time: '1 h 15 min', cat: 'trek', coord: [-70.47, -33.60] },
-      { emoji: '🎭', name: 'Valparaíso', desc: 'Bohemian port city on Pacific hills, famous for street art, colorful houses, and funiculars.', rating: '4.8', reviews: '3,210', tag: 'Culture', dist: '120 km', time: '1 h 30 min', cat: 'town', coord: [-71.63, -33.05] },
-      { emoji: '🍷', name: 'Maipo Valley', desc: 'Chile\'s most famous wine region just 30 minutes south of the city. World-class Cabernet Sauvignon.', rating: '4.6', reviews: '1,540', tag: 'Gastronomy', dist: '50 km', time: '45 min', cat: 'town', coord: [-70.59, -33.72] },
-      { emoji: '🏞️', name: 'Laguna de Aculeo', desc: 'A beautiful natural lake surrounded by hills, popular for swimming, kayaking, and relaxed picnics.', rating: '4.3', reviews: '760', tag: 'Lake', dist: '70 km', time: '1 h 10 min', cat: 'lake', coord: [-70.93, -33.97] },
-      { emoji: '⛷️', name: 'Valle Nevado', desc: 'Top ski resort in the Andes at 3,025 m with incredible views and powder snow from June to October.', rating: '4.5', reviews: '654', tag: 'Adventure', dist: '95 km', time: '1 h 30 min', cat: 'trail', coord: [-70.32, -33.38] },
-      { emoji: '🌊', name: 'Viña del Mar', desc: 'Chile\'s Garden City — a beach resort with casinos, flower clocks, and warm Pacific summers.', rating: '4.4', reviews: '1,876', tag: 'Beach', dist: '125 km', time: '1 h 45 min', cat: 'town', coord: [-71.55, -33.02] },
-      { emoji: '🏔️', name: 'Farellones', desc: 'Mountainside village at the edge of Santiago with access to Andean trails and winter sports.', rating: '4.5', reviews: '420', tag: 'Adventure', dist: '35 km', time: '1 h', cat: 'trail', coord: [-70.34, -33.36] },
-      { emoji: '💧', name: 'Embalse el Yeso', desc: 'Stunning high-altitude reservoir at 2,475 m with crystal-clear turquoise waters deep in the Andes.', rating: '4.6', reviews: '380', tag: 'Lake', dist: '100 km', time: '2 h', cat: 'lake', coord: [-70.09, -33.64] },
-    ];
+    // Populated per-search by loadSuggestedPlaces() from /api/suggestion —
+    // real tourist attractions near whatever FROM place the user searched.
+    let NEARBY_PLACES = [];
 
     const SVG_STAR = `<svg viewBox="0 0 24 24" style="width:10px;height:10px;fill:var(--black);stroke:none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`;
     const SVG_STAR_MD = `<svg viewBox="0 0 24 24" style="width:11px;height:11px;fill:var(--black);stroke:none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`;
@@ -4071,6 +4402,16 @@
     const SVG_STAR_HALF = `<svg viewBox="0 0 24 24" class="half"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`;
     const SVG_CAR = `<svg viewBox="0 0 24 24" style="width:11px;height:11px;stroke:var(--g600);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v9a2 2 0 0 1-2 2h-3"/><circle cx="7.5" cy="17.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>`;
     const SVG_PIN = `<svg viewBox="0 0 24 24" style="width:10px;height:10px;stroke:var(--g600);fill:none;stroke-width:2;stroke-linecap:round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>`;
+    const SVG_CLOCK = `<svg viewBox="0 0 24 24" style="width:10px;height:10px;stroke:#8a5a00;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>`;
+
+    // Typical time to spend at a stop, by category — shown on each stops-list
+    // card so a route can be planned realistically, not just driven through.
+    const VISIT_DURATION_BY_CAT = {
+      trek: '2–4 h', lake: '1–3 h', town: '3–5 h', trail: '2–4 h', attraction: '1–2 h',
+    };
+    function estimateVisitDuration(cat) {
+      return VISIT_DURATION_BY_CAT[cat] || VISIT_DURATION_BY_CAT.attraction;
+    }
 
     // No auth system yet — every save is attributed to this mock user.
     const CURRENT_USER_ID = 1111;
@@ -4085,6 +4426,7 @@
     let currentFrom = '', currentTo = '';
     let currentStopsFilter = 'all', currentTransportMode = 'Car';
     let hasRoute = false;
+    let removeMode = false;
     const markers = {};
 
     /* ══ MT_PLACES (left-panel place details, fetched on search) ══ */
@@ -4168,6 +4510,21 @@
       return h ? `${h} h${m ? ` ${m} min` : ''}` : `${m} min`;
     }
 
+    // Re-derives id / distance / time / distFrom for a stop list from scratch,
+    // based purely on the order the stops are given in. Needed whenever that
+    // order changes — a manual add, a removal, or Directions reordering the
+    // waypoints for a more efficient trip.
+    function recomputeStopSequence(list) {
+      let prevCoord = FROM.coord, prevName = currentFrom;
+      return list.map((s, i) => {
+        const distKm = Math.round(haversineKm(prevCoord, s.coord));
+        const next = { ...s, id: i + 1, distance: `${distKm} km`, distFrom: prevName, time: estimateDriveTime(distKm) };
+        prevCoord = s.coord;
+        prevName = s.name;
+        return next;
+      });
+    }
+
     // Writes a Directions route's total distance/time into the left panel —
     // shared by the initial search and any re-route through found stops.
     const TRANSPORT_TIME_LABEL = { Car: 'Driving time', Walk: 'Walking time', Plane: 'Flying time', Train: 'Train time' };
@@ -4237,17 +4594,60 @@
       return stops;
     }
 
-    // (Re)builds the numbered map markers for the current STOPS list.
+    // (Re)builds the numbered map markers for the current STOPS list. While
+    // removeMode is on, markers show a "−" and a click removes that stop
+    // instead of opening its popup.
     function rebuildStopMarkers(list) {
       Object.values(markers).forEach(({ marker }) => { marker.map = null; });
       Object.keys(markers).forEach(k => delete markers[k]);
       list.forEach((s, i) => {
         const el = document.createElement('div');
-        el.className = 'ww-marker-wrap';
-        el.innerHTML = `<div class="ww-marker-dot">${i + 1}</div><div class="ww-marker-lbl">${s.name}</div>`;
-        el.addEventListener('click', e => { e.stopPropagation(); selectStop(s.id); openPlacePopupFromStop(s.id); });
+        el.className = removeMode ? 'ww-marker-wrap ww-marker-remove' : 'ww-marker-wrap';
+        el.innerHTML = `<div class="ww-marker-dot">${removeMode ? '−' : i + 1}</div><div class="ww-marker-lbl">${s.name}</div>`;
+        el.addEventListener('click', e => {
+          e.stopPropagation();
+          if (removeMode) { removeStop(s.id); return; }
+          selectStop(s.id); openPlacePopupFromStop(s.id);
+        });
         const marker = new AdvancedMarkerElement({ map, position: toLatLng(s.coord), content: el });
         markers[s.id] = { marker };
+      });
+      refreshStopMarkerSelection();
+    }
+
+    // Highlights whichever stop marker matches selectedId — same selection
+    // style the nearby-places list uses (.ww-marker-selected), reapplied
+    // after every rebuild since markers are recreated from scratch.
+    function refreshStopMarkerSelection() {
+      Object.entries(markers).forEach(([id, { marker }]) => {
+        marker.content?.querySelector('.ww-marker-dot')?.classList.toggle('ww-marker-selected', Number(id) === selectedId);
+      });
+    }
+
+    // Toggled by the trash icon above the places slider — turns every stop
+    // marker into a "−" that removes the stop (and re-routes) on click.
+    function toggleRemoveMode() {
+      removeMode = !removeMode;
+      document.getElementById('remove-place-btn').classList.toggle('active', removeMode);
+      rebuildStopMarkers(STOPS);
+      if (removeMode) showToast('Tap a marker on the map to remove it from the route');
+    }
+
+    function removeStop(id) {
+      const removed = STOPS.find(s => s.id === id);
+      STOPS = recomputeStopSequence(STOPS.filter(s => s.id !== id));
+      selectedId = STOPS[0]?.id ?? null;
+      removeMode = false;
+      document.getElementById('remove-place-btn').classList.remove('active');
+      rebuildStopMarkers(STOPS);
+      renderStops(STOPS);
+      if (removed) showToast(`Removed ${removed.name} from the route`);
+      requestRoute(currentTransportMode, {
+        useStops: true,
+        onResult: route => {
+          applyRouteStats(route);
+          map.fitBounds(boundsOf([FROM.coord, TO.coord, ...STOPS.map(s => s.coord)]), 80);
+        },
       });
     }
 
@@ -4294,6 +4694,10 @@
 
     function requestRoute(mode, { useStops = true, onResult } = {}) {
       const routeStops = mode === 'Plane' || !useStops ? [] : visibleStopsForFilter();
+      // Only safe to let Directions reorder the stops (and write that order
+      // back into STOPS) when routeStops is the whole list, unfiltered —
+      // otherwise we'd lose track of the hidden ones.
+      const canOptimize = mode !== 'Train' && routeStops.length > 0 && routeStops === STOPS;
 
       if (mode === 'Plane') {
         drawRoutePath([toLatLng(FROM.coord), toLatLng(TO.coord)], { geodesic: true });
@@ -4308,11 +4712,25 @@
       // TRANSIT directions reject the waypoints param outright
       if (mode !== 'Train') {
         request.waypoints = routeStops.map(s => ({ location: toLatLng(s.coord), stopover: true }));
+        // Let Google pick the most efficient order to visit the stops in,
+        // rather than trusting whatever order they were searched/added in.
+        request.optimizeWaypoints = canOptimize;
       }
       directionsService.route(request, (result, status) => {
         if (status === google.maps.DirectionsStatus.OK) {
-          drawRoutePath(result.routes[0].overview_path, { dashed: mode === 'Walk' });
-          if (onResult) onResult(result.routes[0]);
+          const route = result.routes[0];
+          drawRoutePath(route.overview_path, { dashed: mode === 'Walk' });
+
+          // route.waypoint_order maps Directions' chosen order back to indices
+          // in routeStops; resync STOPS (and its markers/timeline) to match.
+          if (canOptimize && route.waypoint_order?.some((idx, i) => idx !== i)) {
+            STOPS = recomputeStopSequence(route.waypoint_order.map(i => routeStops[i]));
+            selectedId = STOPS[0]?.id ?? null;
+            rebuildStopMarkers(STOPS);
+            renderStops(STOPS);
+          }
+
+          if (onResult) onResult(route);
         } else {
           console.warn(`${mode} directions failed (${status}), removing the path`);
           clearRoutePolylines();
@@ -4351,7 +4769,10 @@
         <div class="tl-card">
           <div class="tl-emoji">${s.emoji}</div>
           <div class="tl-body">
-            <div class="tl-name">${s.name}</div>
+            <div class="tl-name-row">
+              <div class="tl-name"><span class="rp-name-link" onclick="event.stopPropagation();openPlacePopupFromStop(${s.id})">${s.name}</span></div>
+              <div class="tl-duration">${SVG_CLOCK} ${estimateVisitDuration(s.cat)}</div>
+            </div>
             <div class="tl-meta">
               <div class="tl-rating">${SVG_STAR} ${s.rating}</div>
               <span class="tl-pipe">|</span>
@@ -4383,6 +4804,7 @@
       const s = STOPS.find(x => x.id === id);
       document.querySelectorAll('.tl-stop').forEach(c => c.classList.toggle('active', +c.dataset.id === id));
       document.querySelector(`.tl-stop[data-id="${id}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      refreshStopMarkerSelection();
       if (flyMap) {
         map.panTo(toLatLng(s.coord));
         map.setZoom(9);
@@ -4392,19 +4814,18 @@
     function openPlacePopupFromStop(id) {
       const s = STOPS.find(x => x.id === id);
       if (!s) return;
-      const rev = MOCK_REVIEWS[(id - 1) % MOCK_REVIEWS.length];
       document.getElementById('pp-badge').textContent = `Stop ${s.id} of ${STOPS.length}`;
       document.getElementById('pp-name').textContent = s.name;
       document.getElementById('pp-rn').textContent = s.rating;
       document.getElementById('pp-loc').textContent = s.loc;
       document.getElementById('pp-desc').textContent = s.desc;
-      document.getElementById('pp-temp').textContent = s.temp;
+      resetTempCardFallback(s.temp);
       document.getElementById('pp-tnote').textContent = 'Pack layers';
       document.getElementById('pp-season').textContent = 'Year-round';
       document.getElementById('pp-snote').textContent = 'Check local calendar';
       document.getElementById('pp-alt').textContent = s.alt;
       document.getElementById('pp-anote').textContent = s.altNote;
-      document.getElementById('pp-rtxt').textContent = rev.rtxt;
+      document.getElementById('pp-rtxt').innerHTML = buildTravelerSummary({ name: s.name, rating: s.rating, reviews: s.reviews, cat: s.cat });
       document.getElementById('pp-rname').textContent = 'AI Summary';
       document.getElementById('pp-rmeta').textContent = `Based on ${s.reviews} traveler reviews`;
       document.getElementById('pp-av').textContent = '✨';
@@ -4413,6 +4834,8 @@
       ppPhotos = [{ bg: s.bg, emoji: s.emoji }];
       ppPhotoIndex = 0;
       ppRenderCarousel();
+      loadRealPhotosIntoPopup(s.name, s.coord);
+      loadClimateIntoPopup(s.coord);
       const sources = ['google', 'tripadvisor', 'booking'];
       const comments = [0, 1, 2].map(i => {
         const r = MOCK_REVIEWS[(id - 1 + i) % MOCK_REVIEWS.length];
@@ -4431,13 +4854,17 @@
       document.getElementById('pp-rn').textContent = mt ? mt.rating.toFixed(1) : d.rn;
       document.getElementById('pp-loc').textContent = d.loc;
       document.getElementById('pp-desc').textContent = mt ? mt.short_description : d.desc;
-      document.getElementById('pp-temp').textContent = mt ? mt.temperature : d.temp;
+      resetTempCardFallback(mt ? mt.temperature : d.temp);
       document.getElementById('pp-tnote').textContent = d.tnote;
       document.getElementById('pp-season').textContent = mt ? mt.best_season : d.season;
       document.getElementById('pp-snote').textContent = d.snote;
       document.getElementById('pp-alt').textContent = mt ? mt.altitude : d.alt;
       document.getElementById('pp-anote').textContent = d.anote;
-      document.getElementById('pp-rtxt').textContent = mt ? mt.ai_recommendation : d.rtxt;
+      const popupCoord = type === 'from' ? FROM.coord : TO.coord;
+      document.getElementById('pp-rtxt').innerHTML = buildTravelerSummary({
+        name: d.name, rating: mt ? mt.rating.toFixed(1) : d.rn,
+        reviews: mt ? mt.total_reviews.toLocaleString() : d.rv, cat: 'city',
+      });
       document.getElementById('pp-rname').textContent = 'AI Summary';
       document.getElementById('pp-rmeta').textContent = `Based on ${mt ? mt.total_reviews.toLocaleString() + ' reviews' : d.rv}`;
       document.getElementById('pp-av').textContent = '✨';
@@ -4446,6 +4873,8 @@
       ppPhotos = d.photos && d.photos.length ? d.photos : [{ bg: d.bg, emoji: d.emoji }];
       ppPhotoIndex = 0;
       ppRenderCarousel();
+      loadRealPhotosIntoPopup(d.name, popupCoord);
+      loadClimateIntoPopup(popupCoord);
       ppRenderComments(d.comments || []);
       openModal('pp-modal');
     }
@@ -4487,7 +4916,106 @@
     let ppPhotoIndex = 0;
 
     function ppSlideHTML(p) {
+      if (p.url) {
+        return `<div class="pp-pic-slide" onclick="ppOpenFullscreen()"><img class="pp-pic-img" src="${p.url}" loading="lazy" alt="" /></div>`;
+      }
       return `<div class="pp-pic-slide" onclick="ppOpenFullscreen()"><div class="pp-pic-bg" style="background:${p.bg}"></div><span class="pp-emoji">${p.emoji}</span></div>`;
+    }
+
+    // Fetches up to 10 real photos for a place from Google Places (live network
+    // call) and swaps them into the gallery once the popup they belong to is
+    // still the one open — ppPhotoRequestSeq guards against a stale response
+    // from a popup the user already closed/replaced.
+    let ppPhotoRequestSeq = 0;
+
+    function fetchPlacePhotos(name, coord) {
+      return new Promise(resolve => {
+        if (!name) { resolve([]); return; }
+        const request = { query: name, fields: ['photos'] };
+        if (coord) request.locationBias = new google.maps.Circle({ center: toLatLng(coord), radius: 10000 });
+        placesService.findPlaceFromQuery(request, (results, status) => {
+          if (status === google.maps.places.PlacesServiceStatus.OK && results?.[0]?.photos?.length) {
+            resolve(results[0].photos.slice(0, 10).map(p => p.getUrl({ maxWidth: 1000, maxHeight: 750 })));
+          } else {
+            resolve([]);
+          }
+        });
+      });
+    }
+
+    async function loadRealPhotosIntoPopup(name, coord) {
+      const seq = ++ppPhotoRequestSeq;
+      const urls = await fetchPlacePhotos(name, coord);
+      if (seq !== ppPhotoRequestSeq) return; // a newer popup superseded this fetch
+      if (!urls.length) return; // keep the gradient/emoji placeholder already shown
+      ppPhotos = urls.map(url => ({ url }));
+      ppPhotoIndex = 0;
+      ppRenderCarousel();
+    }
+
+    // Live temperature range / best season / altitude (Open-Meteo, server-side)
+    // for any coordinate — cached by rounded lat/lng so reopening the same
+    // popup, or two nearby stops, doesn't refetch.
+    const climateCache = {};
+    function fetchClimateInfo(coord) {
+      if (!coord) return Promise.resolve(null);
+      const [lng, lat] = coord;
+      const key = `${lat.toFixed(2)},${lng.toFixed(2)}`;
+      if (climateCache.hasOwnProperty(key)) return Promise.resolve(climateCache[key]);
+      return fetch(`/api/climate?lat=${lat}&lng=${lng}`)
+        .then(res => res.json().then(data => (climateCache[key] = res.ok ? data : null)))
+        .catch(() => (climateCache[key] = null));
+    }
+
+    // Resets the temperature card to a plain fallback (e.g. a curated mock
+    // range, or '—') before live data has loaded — clears any weather
+    // background/min/max left over from whichever place's popup was open before.
+    function resetTempCardFallback(text) {
+      document.getElementById('pp-temp-now').textContent = text;
+      document.getElementById('pp-temp-min').textContent = '';
+      document.getElementById('pp-temp-max').textContent = '';
+      document.getElementById('pp-temp-card').className = 'pp-cc pp-temp-card';
+      document.getElementById('pp-weather-icon').textContent = '🌡️';
+    }
+
+    const WEATHER_DISPLAY = {
+      sunny: { cls: 'weather-sunny', icon: '☀️' },
+      cloudy: { cls: 'weather-cloudy', icon: '☁️' },
+      rain: { cls: 'weather-rain', icon: '🌧️' },
+      night: { cls: 'weather-night', icon: '🌙' },
+    };
+
+    // Swaps live values into an already-open popup once they arrive — mirrors
+    // loadRealPhotosIntoPopup's "upgrade in place, keep the fallback on
+    // failure" pattern. ppClimateRequestSeq guards against a stale response
+    // landing after the user opened a different place's popup.
+    let ppClimateRequestSeq = 0;
+    async function loadClimateIntoPopup(coord) {
+      const seq = ++ppClimateRequestSeq;
+      const info = await fetchClimateInfo(coord);
+      if (seq !== ppClimateRequestSeq) return; // a newer popup superseded this fetch
+      if (!info) return; // keep whatever fallback values are already shown
+      if (info.now_temp != null) {
+        document.getElementById('pp-temp-now').textContent = `${info.now_temp}°C`;
+        document.getElementById('pp-temp-min').textContent = info.today_min != null ? `${info.today_min}°` : '';
+        document.getElementById('pp-temp-max').textContent = info.today_max != null ? `${info.today_max}°` : '';
+      }
+      if (info.condition && WEATHER_DISPLAY[info.condition]) {
+        const { cls, icon } = WEATHER_DISPLAY[info.condition];
+        document.getElementById('pp-temp-card').className = `pp-cc pp-temp-card ${cls}`;
+        document.getElementById('pp-weather-icon').textContent = icon;
+      }
+      if (info.temperature) {
+        document.getElementById('pp-tnote').textContent = `Annual range ${info.temperature} · Open-Meteo`;
+      }
+      if (info.best_season) {
+        document.getElementById('pp-season').textContent = info.best_season;
+        document.getElementById('pp-snote').textContent = 'Mildest 3-month window';
+      }
+      if (info.altitude) {
+        document.getElementById('pp-alt').textContent = info.altitude;
+        document.getElementById('pp-anote').textContent = 'Open-Meteo elevation';
+      }
     }
 
     function ppRenderCarousel() {
@@ -4526,8 +5054,16 @@
 
     function ppFsRender() {
       const p = ppPhotos[ppPhotoIndex];
-      document.getElementById('pp-fs-img').style.background = p.bg;
-      document.getElementById('pp-fs-emoji').textContent = p.emoji;
+      const imgEl = document.getElementById('pp-fs-img');
+      const emojiEl = document.getElementById('pp-fs-emoji');
+      if (p.url) {
+        imgEl.style.background = `center / cover no-repeat url("${p.url}")`;
+        emojiEl.style.display = 'none';
+      } else {
+        imgEl.style.background = p.bg;
+        emojiEl.style.display = '';
+        emojiEl.textContent = p.emoji;
+      }
       document.getElementById('pp-fs-counter').textContent = `${ppPhotoIndex + 1} / ${ppPhotos.length}`;
       const multi = ppPhotos.length > 1;
       document.getElementById('pp-fs-prev').style.display = multi ? 'flex' : 'none';
@@ -4709,6 +5245,67 @@
       { rtxt: 'This place humbles you. Whatever stress you carried there dissolves in about ten minutes. Pure, raw, magnificent.', rname: 'Carlos Vega', rmeta: 'Buenos Aires · January 2024', av: 'CV', ac: '#065f46' },
     ];
 
+    // Templated "AI recommendation" block for the place popup — built from
+    // category-specific do/avoid advice plus the app's existing mock review
+    // voices, not a live AI call. Deterministic per place (seeded by name) so
+    // reopening the same popup shows the same write-up instead of reshuffling.
+    const TRAVELER_TODO_BY_CAT = {
+      trek: ['Lace up real hiking boots — trails here can be steep and rocky.', 'Start early to catch the best light and avoid afternoon wind.', 'Carry a refillable water bottle; services are limited on the trail.', 'Hire a local guide for anything resembling a multi-day route.'],
+      lake: ['Rent a kayak or paddleboard to get out on the water.', 'Pack a picnic — the shoreline has plenty of spots to relax.', 'Check the water temperature before swimming; it runs colder than it looks.', 'Visit early morning for the calmest water and best reflections.'],
+      town: ['Wander the old town on foot — most highlights are walkable.', 'Try the local specialty dish at a family-run restaurant.', 'Visit the main square or market for a feel of daily life.', 'Ask locals for their favorite under-the-radar spot.'],
+      trail: ['Check weather and trail conditions before heading out.', 'Wear layers — temperatures shift fast once you gain elevation.', 'Carry an offline map; signal drops out in the backcountry.', 'Pace yourself if you are not acclimatized yet.'],
+      city: ['Spend your first day just getting oriented in the historic center.', 'Use public transit or rideshares to skip the parking hassle.', 'Book popular restaurants a day ahead.', 'Ask your accommodation for a few local-only recommendations.'],
+      attraction: ['Arrive early to beat the tour groups.', 'Buy tickets online ahead of time if that option exists.', 'Set aside at least half a day to see it properly.', 'Pair the visit with a nearby café or viewpoint.'],
+    };
+    const TRAVELER_AVOID_POOL = [
+      'Avoid exchanging money at airport kiosks — rates are usually worse.',
+      'Don\'t leave bags or valuables visible in a parked car.',
+      'Avoid the midday crowds; early morning or late afternoon is calmer.',
+      'Skip unlicensed taxis — use a metered or app-based ride instead.',
+      'Don\'t skip travel insurance, especially around outdoor activities.',
+      'Avoid drinking tap water if locals don\'t — check first.',
+    ];
+    // Maps the broader Top10-style tags onto the same buckets above.
+    const TRAVELER_CAT_ALIASES = {
+      Nature: 'trek', Trekking: 'trek', Wildlife: 'trek', Stargazing: 'trek',
+      Mountains: 'trail', Adventure: 'trail',
+      Beach: 'lake',
+      City: 'town', Culture: 'town', History: 'town', Gastronomy: 'town', Art: 'town', Romantic: 'town', Wellness: 'town', 'Art & Food': 'town', Science: 'town', Scenic: 'town',
+    };
+
+    function hashStr(s) {
+      let h = 0;
+      for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
+      return Math.abs(h);
+    }
+
+    function pickRotated(list, count, seed) {
+      const start = seed % list.length;
+      return Array.from({ length: Math.min(count, list.length) }, (_, i) => list[(start + i) % list.length]);
+    }
+
+    function buildTravelerSummary({ name, rating, reviews, cat }) {
+      const seed = hashStr(name || 'place');
+      const bucket = TRAVELER_TODO_BY_CAT[cat] ? cat : (TRAVELER_CAT_ALIASES[cat] || 'attraction');
+      const todo = pickRotated(TRAVELER_TODO_BY_CAT[bucket], 4, seed);
+      const avoid = pickRotated(TRAVELER_AVOID_POOL, 4, seed + 3);
+      const tips = pickRotated(MOCK_REVIEWS, 3, seed + 7).map(r => `"${r.rtxt}"`);
+      const ratingLabel = rating && rating !== '—' ? rating : '4.5+';
+      const reviewsLabel = reviews || 'many';
+
+      const summary = `Travelers rate ${name} ${ratingLabel}★ across ${reviewsLabel} reviews, consistently calling it one of the highlights of the area — well worth building real time into your plans rather than rushing through.`;
+      const section = (title, lines) =>
+        `<strong style="font-style:normal;display:block;margin:10px 0 4px;color:var(--black);">${title}</strong>` +
+        lines.map(l => `• ${l}`).join('<br>');
+
+      return [
+        summary,
+        section('What to do', todo),
+        section('What to avoid', avoid),
+        section('What other travelers say', tips),
+      ].join('<br><br>');
+    }
+
     function openRankingPanel(title, sub, iconHtml, list) {
       currentRankingList = list;
       document.getElementById('rp-title').textContent = title;
@@ -4754,20 +5351,19 @@
       if (!item) return;
       const emoji = CAT_EMOJI[item.t] || CAT_EMOJI.default;
       const bg = CAT_BG[item.t] || CAT_BG.default;
-      const rev = MOCK_REVIEWS[index % MOCK_REVIEWS.length];
       const fakeReviews = (1200 + index * 317).toLocaleString();
       document.getElementById('pp-badge').textContent = `Ranked #${index + 1}`;
       document.getElementById('pp-name').textContent = item.n;
       document.getElementById('pp-rn').textContent = item.r;
       document.getElementById('pp-loc').textContent = item.t + ' destination';
       document.getElementById('pp-desc').textContent = item.d;
-      document.getElementById('pp-temp').textContent = '—';
+      resetTempCardFallback('—');
       document.getElementById('pp-tnote').textContent = 'Varies by season';
       document.getElementById('pp-season').textContent = 'Year-round';
       document.getElementById('pp-snote').textContent = 'Check local calendar';
       document.getElementById('pp-alt').textContent = '—';
       document.getElementById('pp-anote').textContent = item.t;
-      document.getElementById('pp-rtxt').textContent = rev.rtxt;
+      document.getElementById('pp-rtxt').innerHTML = buildTravelerSummary({ name: item.n, rating: item.r, reviews: fakeReviews, cat: item.t });
       document.getElementById('pp-rname').textContent = 'AI Summary';
       document.getElementById('pp-rmeta').textContent = `Based on ${fakeReviews} traveler reviews`;
       document.getElementById('pp-av').textContent = '✨';
@@ -4776,6 +5372,8 @@
       ppPhotos = [{ bg, emoji }];
       ppPhotoIndex = 0;
       ppRenderCarousel();
+      loadRealPhotosIntoPopup(item.n, item.coord);
+      loadClimateIntoPopup(item.coord);
       const sources = ['google', 'tripadvisor', 'booking'];
       const comments = [0, 1, 2].map(i => {
         const r = MOCK_REVIEWS[(index + i) % MOCK_REVIEWS.length];
@@ -4788,27 +5386,28 @@
     function openPlacePopupFromNearby(p) {
       const idx = NEARBY_PLACES.indexOf(p);
       const bg = CAT_BG[p.tag] || CAT_BG.default;
-      const rev = MOCK_REVIEWS[idx % MOCK_REVIEWS.length];
       document.getElementById('pp-badge').textContent = p.tag;
       document.getElementById('pp-name').textContent = p.name;
       document.getElementById('pp-rn').textContent = p.rating;
-      document.getElementById('pp-loc').textContent = `${p.dist} from Santiago`;
+      document.getElementById('pp-loc').textContent = `${p.dist} from ${currentFrom}`;
       document.getElementById('pp-desc').textContent = p.desc;
-      document.getElementById('pp-temp').textContent = '—';
+      resetTempCardFallback('—');
       document.getElementById('pp-tnote').textContent = 'Varies by season';
       document.getElementById('pp-season').textContent = 'Year-round';
       document.getElementById('pp-snote').textContent = 'Check local calendar';
       document.getElementById('pp-alt').textContent = '—';
       document.getElementById('pp-anote').textContent = p.tag;
-      document.getElementById('pp-rtxt').textContent = rev.rtxt;
+      document.getElementById('pp-rtxt').innerHTML = buildTravelerSummary({ name: p.name, rating: p.rating, reviews: p.reviews, cat: p.cat });
       document.getElementById('pp-rname').textContent = 'AI Summary';
       document.getElementById('pp-rmeta').textContent = `Based on ${p.reviews} traveler reviews`;
       document.getElementById('pp-av').textContent = '✨';
       document.getElementById('pp-av').style.background = 'linear-gradient(135deg,#7c3aed,#2563eb)';
-      document.getElementById('pp-fn').textContent = `${p.time} from Santiago`;
+      document.getElementById('pp-fn').textContent = `${p.time} from ${currentFrom}`;
       ppPhotos = [{ bg, emoji: p.emoji }];
       ppPhotoIndex = 0;
       ppRenderCarousel();
+      loadRealPhotosIntoPopup(p.name, p.coord);
+      loadClimateIntoPopup(p.coord);
       const sources = ['google', 'tripadvisor', 'booking'];
       const comments = [0, 1, 2].map(i => {
         const r = MOCK_REVIEWS[(idx + i) % MOCK_REVIEWS.length];
@@ -4885,9 +5484,10 @@
       list.forEach((p, i) => {
         const el = document.createElement('div');
         el.className = 'ww-marker-wrap';
-        el.innerHTML = `<div class="ww-marker-dot nb-marker-dot">${p.emoji}</div><div class="ww-marker-lbl">${p.name}</div>`;
+        el.innerHTML = `<div class="ww-marker-dot nb-marker-dot">${i + 1}</div><div class="ww-marker-lbl">${p.name}</div>`;
         el.addEventListener('click', e => {
           e.stopPropagation();
+          selectNearbyMarker(i);
           openPlacePopupFromNearby(p);
         });
         const m = new AdvancedMarkerElement({ map, position: toLatLng(p.coord), content: el });
@@ -4995,6 +5595,96 @@
     function updateClear(side, val) { val ? document.getElementById(side + '-clear').classList.add('visible') : document.getElementById(side + '-clear').classList.remove('visible'); }
     function clearInput(side) { const inp = document.getElementById(side + '-input'); inp.value = ''; document.getElementById(side + '-clear').classList.remove('visible'); document.getElementById(side + '-ac').classList.remove('open'); inp.focus(); }
 
+    /* ══ ADD PLACE (popup search w/ autocomplete, opened by the "+" icon) ══ */
+    function openAddPlace() {
+      if (!hasRoute) { showToast('Search a route first'); return; }
+      document.getElementById('ap-overlay').classList.add('open');
+      const input = document.getElementById('ap-input');
+      input.value = '';
+      document.getElementById('ap-clear-btn').classList.remove('visible');
+      document.getElementById('ap-results').innerHTML = '';
+      setTimeout(() => input.focus(), 60);
+    }
+    function closeAddPlace() {
+      document.getElementById('ap-overlay').classList.remove('open');
+    }
+    function clearAddPlaceInput() {
+      const input = document.getElementById('ap-input');
+      input.value = '';
+      document.getElementById('ap-clear-btn').classList.remove('visible');
+      document.getElementById('ap-results').innerHTML = '';
+      input.focus();
+    }
+
+    let apDebounce, apRequestSeq = 0;
+    function handleAddPlaceAC(q) {
+      const btn = document.getElementById('ap-clear-btn');
+      q ? btn.classList.add('visible') : btn.classList.remove('visible');
+      const query = q.trim();
+      const results = document.getElementById('ap-results');
+      if (!query) { results.innerHTML = ''; return; }
+
+      clearTimeout(apDebounce);
+      apDebounce = setTimeout(async () => {
+        const seq = ++apRequestSeq;
+        let places = [];
+        try {
+          const res = await fetch(`/api/autocomplete?q=${encodeURIComponent(query)}`);
+          const data = await res.json();
+          places = data.results || [];
+        } catch (err) {
+          return; // network hiccup — leave the list as-is
+        }
+        if (seq !== apRequestSeq) return; // a newer keystroke superseded this request
+
+        if (!places.length) { results.innerHTML = `<div class="cs-empty">No places found for "<strong>${query}</strong>"</div>`; return; }
+        const esc = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        results.innerHTML = `<div class="cs-results-hdr">Suggestions</div>` +
+          places.map(p => {
+            const hl = p.name.replace(new RegExp(`(${esc})`, 'gi'), '<span class="cs-match">$1</span>');
+            return `<div class="cs-item" onclick="selectAddPlace('${p.name.replace(/'/g, "\\'")}')">
+          <div class="cs-info"><div class="cs-name">${hl}</div><div class="cs-sub">${p.subtitle}</div></div>
+        </div>`;
+          }).join('');
+      }, 200);
+    }
+
+    // Geocodes the picked suggestion and drops it into the stop list. Its
+    // labels (distance/time/distFrom) get recomputed for wherever it lands;
+    // requestRoute() then asks Directions for the most efficient order and
+    // resyncs STOPS again if that moves it somewhere other than the end.
+    async function selectAddPlace(name) {
+      closeAddPlace();
+      let geo;
+      try {
+        geo = await geocodePlace(name);
+      } catch {
+        showToast(`Couldn't find "${name}" — try a different search`);
+        return;
+      }
+
+      const newStop = {
+        emoji: '📍', name, cat: 'attraction',
+        desc: '', rating: '—', reviews: '0', loc: geo.formatted,
+        alt: '—', altNote: 'Added manually', temp: '—',
+        bg: STOP_BGS[STOPS.length % STOP_BGS.length],
+        coord: geo.coord, tags: [],
+      };
+      STOPS = recomputeStopSequence([...STOPS, newStop]);
+      selectedId = STOPS[STOPS.length - 1].id;
+      rebuildStopMarkers(STOPS);
+      renderStops(STOPS);
+      showToast(`Added ${name} to your route`);
+
+      requestRoute(currentTransportMode, {
+        useStops: true,
+        onResult: route => {
+          applyRouteStats(route);
+          map.fitBounds(boundsOf([FROM.coord, TO.coord, ...STOPS.map(s => s.coord)]), 80);
+        },
+      });
+    }
+
     /* ══ FILTER ══ */
     function syncStopMarkers(list) {
       if (!Object.keys(markers).length) return;
@@ -5026,13 +5716,31 @@
       const msgs = { Car: 'Showing car route (😃)', Walk: 'Walking route (🏃)', Plane: 'Showing flight route (✈️)', Train: 'Showing train route (🚂)' };
       showToast(msgs[mode] || 'Route updated');
       currentTransportMode = mode;
+
+      const flightsBox = document.getElementById('flights-cta');
+      if (flightsBox) flightsBox.style.display = mode === 'Plane' ? 'flex' : 'none';
+
+      // Flying skips intermediate driving stops entirely — clear their map
+      // markers; switching back to a road/rail mode restores them from STOPS.
+      rebuildStopMarkers(mode === 'Plane' ? [] : STOPS);
+
       requestRoute(mode, {
         useStops: true,
         onResult: route => {
           applyRouteStats(route);
-          if (route) map.fitBounds(boundsOf([FROM.coord, TO.coord, ...STOPS.map(s => s.coord)]), 80);
+          if (!route && mode !== 'Plane') return;
+          const bounds = mode === 'Plane' ? [FROM.coord, TO.coord] : [FROM.coord, TO.coord, ...STOPS.map(s => s.coord)];
+          map.fitBounds(boundsOf(bounds), 80);
         },
       });
+    }
+
+    // "Compare flight prices" CTA, shown only in Plane mode — opens Google
+    // Flights pre-filled with the current route's origin/destination.
+    function openGoogleFlights() {
+      if (!hasRoute) { showToast('Search a route first'); return; }
+      const q = `Flights from ${currentFrom} to ${currentTo}`;
+      window.open(`https://www.google.com/travel/flights?q=${encodeURIComponent(q)}`, '_blank');
     }
 
     /* ══ PANEL TOGGLE ══ */
@@ -5137,7 +5845,7 @@
         hasRoute = true;
         document.getElementById('save-plan-btn').style.display = 'flex';
         document.getElementById('transport-box').style.display = 'block';
-        document.getElementById('places-range-box').style.display = 'flex';
+        document.getElementById('places-controls').style.display = 'flex';
 
         renderRouteMode(fromVal, toVal);
         requestRoute(currentTransportMode, {
@@ -5179,13 +5887,14 @@
         hasRoute = false;
         document.getElementById('save-plan-btn').style.display = 'none';
         document.getElementById('transport-box').style.display = 'none';
-        document.getElementById('places-range-box').style.display = 'none';
+        document.getElementById('places-controls').style.display = 'none';
         toMarker.map = null;
         clearRoutePolylines();
         STOPS = [];
         lastRoutePath = null;
         rebuildStopMarkers([]);
         renderExploreMode(fromVal);
+        loadSuggestedPlaces(FROM.coord, fromVal);
         map.panTo(toLatLng(FROM.coord));
         map.setZoom(11);
       }
@@ -5214,24 +5923,46 @@
           <div class="ftab" onclick="filterNearby(this,'town')"><svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>Towns</div>
           <div class="ftab" onclick="filterNearby(this,'trail')"><svg viewBox="0 0 24 24"><path d="M3 12h18M3 6h18M3 18h18"/></svg>Trails</div>
         </div>
-        <div id="nearby-list"></div>`;
+        <div id="nearby-list"><p style="font-size:13px;color:var(--g600);padding:20px 0;text-align:center;">Finding tourist places nearby…</p></div>`;
 
-      renderNearbyList(NEARBY_PLACES);
+      plotNearbyOnMap([]);
     }
 
+    // Popularity proxy used to rank nearby places: rating rewards quality,
+    // log(reviews) rewards how widely-known a place actually is, so a
+    // landmark with thousands of reviews outranks a 5.0 spot with a handful.
+    function nearbyFameScore(p) {
+      const rating = parseFloat(p.rating);
+      const reviews = parseInt(p.reviews, 10) || 0;
+      return rating ? rating * Math.log10(reviews + 10) : 0;
+    }
+
+    // Holds whatever list is currently rendered (post-ranking) so the click
+    // handlers below can look places up by their on-screen index.
+    let currentNearbyRanked = [];
+    let selectedNearbyIndex = null;
+
     function renderNearbyList(list) {
-      plotNearbyOnMap(list);
+      const ranked = [...list].sort((a, b) => nearbyFameScore(b) - nearbyFameScore(a));
+      currentNearbyRanked = ranked;
+      selectedNearbyIndex = null;
+      plotNearbyOnMap(ranked);
       const container = document.getElementById('nearby-list');
       if (!container) return;
-      if (!list.length) {
+      if (!ranked.length) {
         container.innerHTML = `<p style="font-size:13px;color:var(--g600);padding:20px 0;text-align:center;">No places in this category.</p>`;
         return;
       }
-      container.innerHTML = list.map(p => `
-        <div style="display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);">
-          <div class="tl-emoji" style="flex-shrink:0;">${p.emoji}</div>
-          <div style="flex:1;min-width:0;">
-            <div class="tl-name">${p.name}</div>
+      const rowTint = ['rp-gold', 'rp-silver', 'rp-bronze'];
+      container.innerHTML = ranked.map((p, i) => {
+        const rank = i + 1;
+        const rClass = rank <= 3 ? `r${rank}` : 'rn';
+        const rowClass = rank <= 3 ? rowTint[i] : '';
+        return `
+        <div class="rp-item ${rowClass}" onclick="flyToNearby(${i})">
+          <div class="rp-rank ${rClass}">${rank}</div>
+          <div class="rp-body">
+            <div class="tl-name"><span class="rp-name-link" onclick="event.stopPropagation();openPlacePopupFromNearbyIdx(${i})">${p.name}</span></div>
             <div class="tl-meta" style="margin-bottom:4px;">
               <div class="tl-rating">${SVG_STAR} ${p.rating}</div>
               <span class="tl-pipe">|</span>
@@ -5242,13 +5973,65 @@
             <p style="font-size:11px;color:var(--g600);line-height:1.5;margin:0;">${p.desc}</p>
           </div>
           <span class="rp-tag" style="flex-shrink:0;margin-top:2px;">${p.tag}</span>
-        </div>`).join('');
+        </div>`;
+      }).join('');
+    }
+
+    // Marks place #i as the selected one: highlights its map marker, clears
+    // the previous marker's highlight, and toggles the matching list row.
+    function selectNearbyMarker(i) {
+      if (selectedNearbyIndex !== null) {
+        nearbyMarkers[selectedNearbyIndex]?.content?.querySelector('.ww-marker-dot')?.classList.remove('ww-marker-selected');
+      }
+      selectedNearbyIndex = i;
+      nearbyMarkers[i]?.content?.querySelector('.ww-marker-dot')?.classList.add('ww-marker-selected');
+      document.querySelectorAll('#nearby-list .rp-item').forEach((el, idx) => el.classList.toggle('active', idx === i));
+    }
+
+    // List row click → highlight its marker and pan/zoom to it; the name
+    // link inside opens the full place popup (same split the Top10 ranking
+    // panel uses).
+    function flyToNearby(i) {
+      const p = currentNearbyRanked[i];
+      if (!p) return;
+      selectNearbyMarker(i);
+      map.panTo(toLatLng(p.coord));
+      map.setZoom(15);
+    }
+
+    function openPlacePopupFromNearbyIdx(i) {
+      const p = currentNearbyRanked[i];
+      if (p) openPlacePopupFromNearby(p);
     }
 
     function filterNearby(el, cat) {
       document.querySelectorAll('#left-inner .filter-row .ftab').forEach(t => t.classList.remove('on'));
       el.classList.add('on');
       renderNearbyList(cat === 'all' ? NEARBY_PLACES : NEARBY_PLACES.filter(p => p.cat === cat));
+    }
+
+    // Explore mode (FROM searched with no destination): asks the server for
+    // real tourist attractions around FROM (Google Places, server-side) and
+    // drops them onto the map + nearby list once they arrive.
+    let suggestionRequestSeq = 0;
+    async function loadSuggestedPlaces(fromCoord, fromName) {
+      const seq = ++suggestionRequestSeq;
+      const [lng, lat] = fromCoord;
+      let data;
+      try {
+        const res = await fetch(`/api/suggestion?lat=${lat}&lng=${lng}&name=${encodeURIComponent(fromName)}`);
+        data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Could not load nearby places');
+      } catch (err) {
+        if (seq !== suggestionRequestSeq) return; // a newer search superseded this one
+        NEARBY_PLACES = [];
+        renderNearbyList(NEARBY_PLACES);
+        showToast(err.message || 'Could not load nearby places');
+        return;
+      }
+      if (seq !== suggestionRequestSeq) return;
+      NEARBY_PLACES = data.results || [];
+      renderNearbyList(NEARBY_PLACES);
     }
 
     function renderRouteMode(fromVal, toVal) {
@@ -5287,6 +6070,14 @@
         <div class="stats-row">
           <div class="stat-box"><div class="stat-lbl">Distance</div><div class="stat-val" id="route-distance">—</div><div class="stat-note">total route</div></div>
           <div class="stat-box"><div class="stat-lbl" id="route-duration-label">${TRANSPORT_TIME_LABEL[currentTransportMode] || 'Driving time'}</div><div class="stat-val" id="route-duration">—</div><div class="stat-note">non-stop est.</div></div>
+        </div>
+        <div class="flights-cta" id="flights-cta" style="display:none" onclick="openGoogleFlights()">
+          <div class="fc-icon">✈️<span class="fc-icon-badge">$</span></div>
+          <div class="fc-body">
+            <div class="fc-title">Compare flight prices</div>
+            <div class="fc-sub">Google Flights · ${fromVal} → ${toVal}</div>
+          </div>
+          <div class="fc-arrow"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
         </div>
         <div class="hr"></div>
         <div class="timeline" id="stops-list"></div>`;
