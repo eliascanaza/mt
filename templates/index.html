@@ -224,11 +224,25 @@
     }
 
     @keyframes heroFade {
-      0% { opacity: 0; }
-      5% { opacity: 1; }
-      45% { opacity: 1; }
-      50% { opacity: 0; }
-      100% { opacity: 0; }
+      0% {
+        opacity: 0;
+      }
+
+      5% {
+        opacity: 1;
+      }
+
+      45% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0;
+      }
+
+      100% {
+        opacity: 0;
+      }
     }
 
     .hero-overlay {
@@ -838,17 +852,6 @@
       color: rgba(255, 255, 255, .70)
     }
 
-    .feat-emoji {
-      font-size: 64px;
-      position: relative;
-      z-index: 1;
-      filter: drop-shadow(0 6px 16px rgba(0, 0, 0, .40));
-    }
-
-    .feat-card:not(.tall) .feat-emoji {
-      font-size: 44px
-    }
-
     /* ── FEATURES ── */
     .features-grid {
       display: grid;
@@ -1271,7 +1274,7 @@
 
     <!-- floating place pills -->
     <div class="hero-float f1">
-      <div class="dot"></div>Torres del Paine
+      <div class="dot"></div>T'aqrachullo, Peru
     </div>
     <div class="hero-float f2">
       <div class="dot"></div>Kyoto, Japan
@@ -1299,8 +1302,7 @@
         <em>around you</em>
       </h1>
       <p class="hero-sub">
-        Plan road trips or walking excursions, discover hidden gems nearby, and enjoy your journey by exploring more
-        incredible places close to you.
+        Don't know what to visit nearby? Find and discover hidden gems in the surrounding area—quick and easy.
       </p>
       <div class="hero-actions">
         <a class="hero-btn-primary" href="/home">
@@ -1347,61 +1349,122 @@
       <div class="featured-grid">
 
         <a class="feat-card tall" href="/">
-          <div class="feat-img" style="background:linear-gradient(160deg,#1a2f4a,#0d1b2a,#1a5c4a)">
+          <div class="feat-img" style="background:url('/assets/places/maldives.jpg') center/cover no-repeat">
             <div class="feat-ov"></div>
-            <span class="feat-emoji">🏔️</span>
             <div class="feat-content">
               <span class="feat-tag">#1 worldwide</span>
-              <div class="feat-name">Patagonia, Chile</div>
-              <div class="feat-sub">End-of-the-world wilderness: glaciers, granite towers, unmatched silence</div>
+              <div class="feat-name">Maldives</div>
+              <div class="feat-sub">Overwater villas above turquoise lagoons — the ultimate escape</div>
             </div>
           </div>
         </a>
 
         <a class="feat-card" href="/">
-          <div class="feat-img" style="background:linear-gradient(145deg,#7c3aed,#3b0764)">
+          <div class="feat-img" style="background:url('/assets/places/paris.jpg') center/cover no-repeat">
             <div class="feat-ov"></div>
-            <span class="feat-emoji">🧘</span>
-            <div class="feat-content">
-              <span class="feat-tag">Wellness</span>
-              <div class="feat-name">Ubud, Bali</div>
-              <div class="feat-sub">Rice terraces and spiritual calm</div>
-            </div>
-          </div>
-        </a>
-
-        <a class="feat-card" href="/">
-          <div class="feat-img" style="background:linear-gradient(145deg,#1e3a5f,#0a1929)">
-            <div class="feat-ov"></div>
-            <span class="feat-emoji">🧗</span>
-            <div class="feat-content">
-              <span class="feat-tag">Adventure</span>
-              <div class="feat-name">Queenstown, NZ</div>
-              <div class="feat-sub">Adventure capital of the world</div>
-            </div>
-          </div>
-        </a>
-
-        <a class="feat-card" href="/">
-          <div class="feat-img" style="background:linear-gradient(145deg,#9f1239,#4c0519)">
-            <div class="feat-ov"></div>
-            <span class="feat-emoji">🕌</span>
             <div class="feat-content">
               <span class="feat-tag">Culture</span>
-              <div class="feat-name">Marrakech, Morocco</div>
-              <div class="feat-sub">Labyrinthine medinas and vibrant souks</div>
+              <div class="feat-name">Paris, France</div>
+              <div class="feat-sub">The city of love, art and timeless boulevards</div>
             </div>
           </div>
         </a>
 
         <a class="feat-card" href="/">
-          <div class="feat-img" style="background:linear-gradient(145deg,#1e3a5f,#14532d)">
+          <div class="feat-img" style="background:url('/assets/places/bora-bora.jpg') center/cover no-repeat">
             <div class="feat-ov"></div>
-            <span class="feat-emoji">🌊</span>
+            <div class="feat-content">
+              <span class="feat-tag">Beach</span>
+              <div class="feat-name">Bora Bora</div>
+              <div class="feat-sub">Coral reefs and impossibly blue water</div>
+            </div>
+          </div>
+        </a>
+
+        <a class="feat-card" href="/">
+          <div class="feat-img" style="background:url('/assets/places/banff.jpg') center/cover no-repeat">
+            <div class="feat-ov"></div>
+            <div class="feat-content">
+              <span class="feat-tag">Nature</span>
+              <div class="feat-name">Banff, Canada</div>
+              <div class="feat-sub">Turquoise lakes ringed by the Rockies</div>
+            </div>
+          </div>
+        </a>
+
+        <a class="feat-card" href="/">
+          <div class="feat-img" style="background:url('/assets/places/dubai.jpg') center/cover no-repeat">
+            <div class="feat-ov"></div>
+            <div class="feat-content">
+              <span class="feat-tag">Luxury</span>
+              <div class="feat-name">Dubai, UAE</div>
+              <div class="feat-sub">Towering skylines meet golden desert dunes</div>
+            </div>
+          </div>
+        </a>
+
+        <a class="feat-card" href="/">
+          <div class="feat-img" style="background:url('/assets/places/cape-town.jpg') center/cover no-repeat">
+            <div class="feat-ov"></div>
             <div class="feat-content">
               <span class="feat-tag">Scenic</span>
-              <div class="feat-name">Norwegian Fjords</div>
-              <div class="feat-sub">Sheer cliffs, mirror-calm water</div>
+              <div class="feat-name">Cape Town, South Africa</div>
+              <div class="feat-sub">Table Mountain meets two oceans</div>
+            </div>
+          </div>
+        </a>
+
+        <a class="feat-card" href="/">
+          <div class="feat-img" style="background:url('/assets/places/reykjavik.jpg') center/cover no-repeat">
+            <div class="feat-ov"></div>
+            <div class="feat-content">
+              <span class="feat-tag">Nature</span>
+              <div class="feat-name">Reykjavik, Iceland</div>
+              <div class="feat-sub">Glaciers, hot springs and the northern lights</div>
+            </div>
+          </div>
+        </a>
+
+        <a class="feat-card" href="/">
+          <div class="feat-img" style="background:url('/assets/places/venice.jpg') center/cover no-repeat">
+            <div class="feat-ov"></div>
+            <div class="feat-content">
+              <span class="feat-tag">Culture</span>
+              <div class="feat-name">Venice, Italy</div>
+              <div class="feat-sub">Canals, gondolas and Renaissance grandeur</div>
+            </div>
+          </div>
+        </a>
+
+        <a class="feat-card" href="/">
+          <div class="feat-img" style="background:url('/assets/places/new-york.jpg') center/cover no-repeat">
+            <div class="feat-ov"></div>
+            <div class="feat-content">
+              <span class="feat-tag">Urban</span>
+              <div class="feat-name">New York City</div>
+              <div class="feat-sub">The city that never sleeps</div>
+            </div>
+          </div>
+        </a>
+
+        <a class="feat-card" href="/">
+          <div class="feat-img" style="background:url('/assets/places/phuket.jpg') center/cover no-repeat">
+            <div class="feat-ov"></div>
+            <div class="feat-content">
+              <span class="feat-tag">Beach</span>
+              <div class="feat-name">Phuket, Thailand</div>
+              <div class="feat-sub">Limestone cliffs and palm-lined shores</div>
+            </div>
+          </div>
+        </a>
+
+        <a class="feat-card" href="/">
+          <div class="feat-img" style="background:url('/assets/places/machu-picchu.jpg') center/cover no-repeat">
+            <div class="feat-ov"></div>
+            <div class="feat-content">
+              <span class="feat-tag">History</span>
+              <div class="feat-name">Machu Picchu, Peru</div>
+              <div class="feat-sub">Ancient Incan citadel high in the Andes</div>
             </div>
           </div>
         </a>

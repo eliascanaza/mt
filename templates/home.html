@@ -4126,19 +4126,6 @@
       },
     };
 
-    const AC_PLACES = [
-      { n: 'Santiago, Chile', s: 'Capital · South America', e: '🏙️' }, { n: 'Buenos Aires, Argentina', s: 'Capital · South America', e: '🎭' },
-      { n: 'Lima, Peru', s: 'Capital · South America', e: '🏛️' }, { n: 'Bogotá, Colombia', s: 'Capital · South America', e: '☁️' },
-      { n: 'Rio de Janeiro, Brazil', s: 'Coastal city · South America', e: '🌊' }, { n: 'Cusco, Peru', s: 'Inca capital · South America', e: '🏔️' },
-      { n: 'Patagonia, Chile', s: 'Region · Southern Chile', e: '🧊' }, { n: 'Puerto Natales, Chile', s: 'Patagonia gateway · Chile', e: '🏔️' },
-      { n: 'Torres del Paine, Chile', s: 'National park · Patagonia', e: '⛰️' }, { n: 'Puerto Montt, Chile', s: 'Lake district · Chile', e: '⛵' },
-      { n: 'Futaleufú, Chile', s: 'Whitewater · Patagonia', e: '🏄' }, { n: 'Ushuaia, Argentina', s: 'End of the world · Argentina', e: '🌨️' },
-      { n: 'Mendoza, Argentina', s: 'Wine country · Argentina', e: '🍷' }, { n: 'Cartagena, Colombia', s: 'Walled city · Caribbean', e: '🏰' },
-      { n: 'Medellín, Colombia', s: 'City of eternal spring', e: '🌸' }, { n: 'Machu Picchu, Peru', s: 'Inca ruins · UNESCO site', e: '🗿' },
-      { n: 'Galapagos Islands', s: 'Ecuador · Pacific Ocean', e: '🐢' }, { n: 'Atacama Desert, Chile', s: 'World\'s driest desert', e: '🌵' },
-      { n: 'Bariloche, Argentina', s: 'Lakes district · Patagonia', e: '🏔️' }, { n: 'Montevideo, Uruguay', s: 'Capital · South America', e: '🎶' },
-    ];
-
     const NEARBY_PLACES = [
       { emoji: '🏔️', name: 'Cajón del Maipo', desc: 'A dramatic Andean canyon with glaciers, hot springs, and dark skies perfect for stargazing.', rating: '4.7', reviews: '892', tag: 'Nature', dist: '65 km', time: '1 h 15 min', cat: 'trek', coord: [-70.47, -33.60] },
       { emoji: '🎭', name: 'Valparaíso', desc: 'Bohemian port city on Pacific hills, famous for street art, colorful houses, and funiculars.', rating: '4.8', reviews: '3,210', tag: 'Culture', dist: '120 km', time: '1 h 30 min', cat: 'town', coord: [-71.63, -33.05] },
@@ -4162,6 +4149,23 @@
     let currentStopsFilter = 'all', currentTransportMode = 'Car';
     let hasRoute = false;
     const markers = {};
+
+    /* ══ MT_PLACES (left-panel place details, fetched on search) ══ */
+    let MT_INFO = { from: null, to: null };
+    const mtPlaceCache = {};
+
+    async function fetchMtPlace(name) {
+      if (mtPlaceCache.hasOwnProperty(name)) return mtPlaceCache[name];
+      try {
+        const res = await fetch(`/api/placeinformation?name=${encodeURIComponent(name)}`);
+        if (!res.ok) { mtPlaceCache[name] = null; return null; }
+        const data = await res.json();
+        mtPlaceCache[name] = data.place || null;
+      } catch (err) {
+        mtPlaceCache[name] = null;
+      }
+      return mtPlaceCache[name];
+    }
 
     /* ══ MAP ══ */
     // coord arrays in this file are [lng, lat]; Google Maps wants {lat, lng}
@@ -5033,21 +5037,39 @@
       document.getElementById('t10-btn').classList.remove('open');
     }
 
-    /* ══ AUTOCOMPLETE ══ */
+    /* ══ AUTOCOMPLETE (server-backed via /api/autocomplete) ══ */
+    const acDebounceTimers = {};
+    const acRequestSeq = { from: 0, to: 0 };
+
     function handleAC(side, query) {
       const listEl = document.getElementById(side + '-ac');
-      const q = query.trim().toLowerCase();
+      const q = query.trim();
       if (!q) { listEl.classList.remove('open'); return; }
-      const matches = AC_PLACES.filter(p => p.n.toLowerCase().includes(q) || p.s.toLowerCase().includes(q)).slice(0, 6);
-      if (!matches.length) { listEl.classList.remove('open'); return; }
-      listEl.innerHTML = `<div class="ac-header">Suggestions</div>` +
-        matches.map(p => {
-          const hl = p.n.replace(new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi'), '<span class="ac-match">$1</span>');
-          return `<div class="ac-item" onclick="selectAC('${side}','${p.n.replace(/'/g, "\\'")}')">
-        <div class="ac-info"><div class="ac-name">${hl}</div><div class="ac-sub">${p.s}</div></div>
-      </div>`;
-        }).join('');
-      listEl.classList.add('open');
+
+      clearTimeout(acDebounceTimers[side]);
+      acDebounceTimers[side] = setTimeout(async () => {
+        const seq = ++acRequestSeq[side];
+        let places = [];
+        try {
+          const res = await fetch(`/api/autocomplete?q=${encodeURIComponent(q)}`);
+          const data = await res.json();
+          places = data.results || [];
+        } catch (err) {
+          return; // network hiccup — leave the list as-is
+        }
+        if (seq !== acRequestSeq[side]) return; // a newer keystroke superseded this request
+
+        if (!places.length) { listEl.classList.remove('open'); return; }
+        const esc = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        listEl.innerHTML = `<div class="ac-header">Suggestions</div>` +
+          places.map(p => {
+            const hl = p.name.replace(new RegExp(`(${esc})`, 'gi'), '<span class="ac-match">$1</span>');
+            return `<div class="ac-item" onclick="selectAC('${side}','${p.name.replace(/'/g, "\\'")}')">
+          <div class="ac-info"><div class="ac-name">${hl}</div><div class="ac-sub">${p.subtitle}</div></div>
+        </div>`;
+          }).join('');
+        listEl.classList.add('open');
+      }, 200);
     }
     function selectAC(side, name) { document.getElementById(side + '-input').value = name; closeAllAC(); hideClear(side); }
     function closeAllAC() { document.getElementById('from-ac').classList.remove('open'); document.getElementById('to-ac').classList.remove('open'); }
@@ -5187,6 +5209,10 @@
       fe.querySelector('.m-lbl').textContent = fromVal;
       currentFrom = fromVal;
 
+      // fetch place details (rating, weather, AI tip) to populate the left panel
+      MT_INFO.from = await fetchMtPlace(fromVal);
+      MT_INFO.to = toVal ? await fetchMtPlace(toVal) : null;
+
       openLeftPanel();
 
       if (toGeo) {
@@ -5226,6 +5252,7 @@
     function renderExploreMode(fromVal) {
       cleanMap();
       const d = PLACE_DATA.from;
+      const mt = MT_INFO.from;
 
       document.getElementById('left-inner').innerHTML = `
         <div class="place-dot-row">
@@ -5233,10 +5260,10 @@
           <div class="place-name" onclick="openPlacePopup('from')">${fromVal}</div>
         </div>
         <div class="star-row">
-          <div class="stars">${SVG_STAR_FULL}${SVG_STAR_FULL}${SVG_STAR_FULL}${SVG_STAR_FULL}${SVG_STAR_HALF}</div>
-          <span class="star-val">4.5</span><span class="sep"></span><span class="rev-count">2,140 reviews</span>
+          ${mt ? ppStarsHtml(mt.rating) : `<div class="stars">${SVG_STAR_FULL}${SVG_STAR_FULL}${SVG_STAR_FULL}${SVG_STAR_FULL}${SVG_STAR_HALF}</div>`}
+          <span class="star-val">${mt ? mt.rating.toFixed(1) : '4.5'}</span><span class="sep"></span><span class="rev-count">${mt ? mt.total_reviews.toLocaleString() : '2,140'} reviews</span>
         </div>
-        <p class="place-desc">${d.desc}</p>
+        <p class="place-desc">${mt ? mt.short_description : d.desc}</p>
         <div class="hr"></div>
         <div class="filter-row">
           <div class="ftab on" onclick="filterNearby(this,'all')">All</div>
@@ -5285,6 +5312,8 @@
     function renderRouteMode(fromVal, toVal) {
       const fd = PLACE_DATA.from;
       const td = PLACE_DATA.to;
+      const fmt = MT_INFO.from;
+      const tmt = MT_INFO.to;
 
       document.getElementById('left-inner').innerHTML = `
         <div class="place-dot-row">
@@ -5292,10 +5321,10 @@
           <div class="place-name" onclick="openPlacePopup('from')">${fromVal}</div>
         </div>
         <div class="star-row">
-          <div class="stars">${SVG_STAR_FULL}${SVG_STAR_FULL}${SVG_STAR_FULL}${SVG_STAR_FULL}${SVG_STAR_HALF}</div>
-          <span class="star-val">4.5</span><span class="sep"></span><span class="rev-count">2,140 reviews</span>
+          ${fmt ? ppStarsHtml(fmt.rating) : `<div class="stars">${SVG_STAR_FULL}${SVG_STAR_FULL}${SVG_STAR_FULL}${SVG_STAR_FULL}${SVG_STAR_HALF}</div>`}
+          <span class="star-val">${fmt ? fmt.rating.toFixed(1) : '4.5'}</span><span class="sep"></span><span class="rev-count">${fmt ? fmt.total_reviews.toLocaleString() : '2,140'} reviews</span>
         </div>
-        <p class="place-desc">${fd.desc}</p>
+        <p class="place-desc">${fmt ? fmt.short_description : fd.desc}</p>
         <div class="to-divider">
           <div class="to-label">
             <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
@@ -5307,10 +5336,10 @@
           <div class="place-name" onclick="openPlacePopup('to')">${toVal}</div>
         </div>
         <div class="star-row">
-          <div class="stars">${SVG_STAR_FULL}${SVG_STAR_FULL}${SVG_STAR_FULL}${SVG_STAR_FULL}${SVG_STAR_FULL}</div>
-          <span class="star-val">4.9</span><span class="sep"></span><span class="rev-count">987 reviews</span>
+          ${tmt ? ppStarsHtml(tmt.rating) : `<div class="stars">${SVG_STAR_FULL}${SVG_STAR_FULL}${SVG_STAR_FULL}${SVG_STAR_FULL}${SVG_STAR_FULL}</div>`}
+          <span class="star-val">${tmt ? tmt.rating.toFixed(1) : '4.9'}</span><span class="sep"></span><span class="rev-count">${tmt ? tmt.total_reviews.toLocaleString() : '987'} reviews</span>
         </div>
-        <p class="place-desc">${td.desc}</p>
+        <p class="place-desc">${tmt ? tmt.short_description : td.desc}</p>
         <div class="hr"></div>
         <div class="sec-lbl">Route overview</div>
         <div class="stats-row">
