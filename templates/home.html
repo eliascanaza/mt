@@ -265,38 +265,58 @@
       cursor: pointer
     }
 
-    .nb-marker-dot {
-      background: #FF385C;
-      box-shadow: 0 3px 10px rgba(255, 56, 92, .40)
+    /* the icon image used for every numbered map marker (nearby places,
+       route stops, Top10 rankings) — the number/− moves to a small badge
+       since the icon itself is a fixed illustration, not an empty circle */
+    .ww-marker-icon {
+      position: relative;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      filter: drop-shadow(0 3px 8px rgba(0, 0, 0, .35));
+    }
+
+    .ww-marker-icon img {
+      width: 125%;
+      height: 125%;
+      object-fit: contain;
     }
 
     /* highlights whatever marker's list row (nearby places or route stops)
        was clicked — shared by both lists rather than duplicated per list */
-    .ww-marker-dot.ww-marker-selected {
-      transform: scale(1.3);
-      box-shadow: 0 0 0 3px #fff, 0 0 0 6px #FF385C, 0 4px 14px rgba(0, 0, 0, .35);
+    .ww-marker-icon.ww-marker-selected {
+      transform: scale(1.25);
       z-index: 5
     }
 
-    .ww-marker-dot {
-      width: 34px;
-      height: 34px;
+    .ww-marker-badge {
+      position: absolute;
+      bottom: -3px;
+      right: -3px;
+      min-width: 18px;
+      height: 18px;
+      padding: 0 3px;
       border-radius: 50%;
       background: #1d6ff3;
-      border: 3px solid #fff;
+      border: 2px solid #fff;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 12px;
+      font-size: 9.5px;
       font-weight: 700;
       color: #fff;
       font-family: var(--font);
-      box-shadow: 0 3px 10px rgba(29, 111, 243, .40)
+      box-shadow: 0 2px 6px rgba(0, 0, 0, .3)
     }
 
-    .ww-marker-remove .ww-marker-dot {
-      background: #FF385C;
-      box-shadow: 0 3px 10px rgba(255, 56, 92, .40)
+    .nb-marker-badge {
+      background: #FF385C
+    }
+
+    .ww-marker-remove .ww-marker-badge {
+      background: #FF385C
     }
 
     .ww-marker-lbl {
@@ -811,6 +831,84 @@
       max-width: 220px
     }
 
+    /* ── suggested routes (empty-state shortcuts) ── */
+    .sugg-routes {
+      padding: 4px 20px 28px;
+    }
+
+    .sugg-routes-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      color: var(--g600);
+      margin-bottom: 10px;
+    }
+
+    .sugg-routes-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .sugg-route-card {
+      border: 1px solid var(--border);
+      border-radius: var(--r-md);
+      padding: 12px 14px;
+      cursor: pointer;
+      transition: border-color .15s, box-shadow .15s, background .15s;
+      background: var(--white);
+    }
+
+    .sugg-route-card:hover {
+      border-color: var(--green);
+      box-shadow: var(--sh-sm);
+      background: var(--green-bg);
+    }
+
+    .sugg-route-path {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--black);
+    }
+
+    .sugg-route-path span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .sugg-route-path svg {
+      flex-shrink: 0;
+      width: 13px;
+      height: 13px;
+      stroke: var(--g400);
+      fill: none;
+      stroke-width: 2.3;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .sugg-route-meta {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 6px;
+      font-size: 11.5px;
+      color: var(--g600);
+    }
+
+    .sugg-route-meta .sugg-pipe {
+      width: 3px;
+      height: 3px;
+      border-radius: 50%;
+      background: var(--g400);
+      flex-shrink: 0;
+    }
+
     /* ── ranking panel ── */
     .ranking-panel {
       position: absolute;
@@ -1071,7 +1169,11 @@
       font-size: 11px;
       color: var(--g600);
       line-height: 1.55;
-      margin-bottom: 6px
+      margin-bottom: 6px;
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+      overflow: hidden;
     }
 
     .rp-meta {
@@ -1387,6 +1489,48 @@
       stroke-linecap: round;
       stroke-linejoin: round;
       flex-shrink: 0
+    }
+
+    /* "Make a route" — floating pill over the bottom of the left panel in explore mode */
+    .make-route-btn {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      position: absolute;
+      left: 50%;
+      bottom: 20px;
+      transform: translateX(-50%);
+      z-index: 50;
+      width: auto;
+      white-space: nowrap;
+      background: var(--red);
+      color: #fff;
+      border: none;
+      border-radius: 99px;
+      padding: 12px 24px;
+      font-size: 13px;
+      font-weight: 700;
+      font-family: var(--font);
+      cursor: pointer;
+      box-shadow: var(--sh-lg);
+      transition: transform .15s, box-shadow .15s, opacity .15s, background .15s
+    }
+
+    .make-route-btn.show {
+      display: flex
+    }
+
+    .make-route-btn:hover {
+      background: var(--red-d);
+      transform: translateX(-50%) translateY(-1px)
+    }
+
+    .make-route-btn:disabled {
+      opacity: .6;
+      cursor: default;
+      transform: translateX(-50%);
+      box-shadow: var(--sh-lg)
     }
 
     /* filter tabs */
@@ -2062,24 +2206,18 @@
 
     /* markers */
     .m-start {
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      background: var(--green);
-      border: 3px solid var(--white);
+      width: 36px;
+      height: 36px;
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 2px 8px rgba(0, 179, 126, .4)
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, .35));
     }
 
-    .m-start svg {
-      width: 13px;
-      height: 13px;
-      stroke: #fff;
-      fill: none;
-      stroke-width: 2.2;
-      stroke-linecap: round
+    .m-start img {
+      width: 36px;
+      height: 36px;
+      object-fit: contain;
     }
 
     .m-end {
@@ -3970,6 +4108,8 @@
         </div>
       </div>
 
+      <button class="make-route-btn" id="make-route-btn" onclick="makeNearbyRoute()">✨ Make a route</button>
+
       <div class="left-scroll">
         <div class="left-inner" id="left-inner">
 
@@ -3978,9 +4118,15 @@
             <div class="search-empty-icon">
               <img src="/assets/img/explorer.png" alt="Explorer" />
             </div>
-            <div class="search-empty-title">Plan your next trip</div>
-            <p class="search-empty-sub">Search a starting point above — and optionally a destination — to see it on the
-              map.</p>
+            <div class="search-empty-title">You don't know what to do?</div>
+            <p class="search-empty-sub">Let's start searching a places and we will recommend to you some places to visit
+            </p>
+          </div>
+
+          <!-- one-click trip ideas — same empty state, gone the moment a real search runs -->
+          <div class="sugg-routes" id="sugg-routes">
+            <div class="sugg-routes-title">Or try one of these</div>
+            <div class="sugg-routes-list" id="sugg-routes-list"></div>
           </div>
 
         </div>
@@ -4039,7 +4185,7 @@
         <button class="zoom-btn" onclick="map.setZoom(map.getZoom()-1)">−</button>
       </div>
       <div class="places-controls" id="places-controls" style="display:none">
-        <div class="places-actions-box">
+        <div class="places-actions-box" id="places-actions-box">
           <button class="places-action-btn" id="remove-place-btn" title="Remove a place from the route"
             onclick="toggleRemoveMode()">
             <svg viewBox="0 0 24 24">
@@ -4049,7 +4195,8 @@
               <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
             </svg>
           </button>
-          <button class="places-action-btn" title="Add a place to the route" onclick="openAddPlace()">
+          <button class="places-action-btn" id="add-place-btn" title="Add a place to the route"
+            onclick="openAddPlace()">
             <svg viewBox="0 0 24 24">
               <line x1="12" y1="5" x2="12" y2="19" />
               <line x1="5" y1="12" x2="19" y2="12" />
@@ -4079,8 +4226,8 @@
           </svg>
         </div>
         <div class="cs-hdr-text">
-          <div class="cs-hdr-title">Add a stop</div>
-          <div class="cs-hdr-sub">Search a place to add to your route</div>
+          <div class="cs-hdr-title" id="ap-hdr-title">Add a stop</div>
+          <div class="cs-hdr-sub" id="ap-hdr-sub">Search a place to add to your route</div>
         </div>
         <button class="cs-x" onclick="closeAddPlace()">✕</button>
       </div>
@@ -4457,9 +4604,11 @@
     }
 
     const map = new google.maps.Map(document.getElementById('map'), {
-      mapId: 'DEMO_MAP_ID',
-      center: { lat: 20, lng: 0 }, zoom: 2,
-      disableDefaultUI: true, gestureHandling: 'greedy',
+      mapId: '2cd47264004a9b29612b2d59',
+      center: { lat: 20, lng: 0 },
+      zoom: 3,
+      disableDefaultUI: true,
+      gestureHandling: 'greedy',
     });
 
     const { AdvancedMarkerElement } = google.maps.marker;
@@ -4529,17 +4678,28 @@
     // shared by the initial search and any re-route through found stops.
     const TRANSPORT_TIME_LABEL = { Car: 'Driving time', Walk: 'Walking time', Plane: 'Flying time', Train: 'Train time' };
 
+    // Sums a Directions route's legs into a human-readable distance/duration —
+    // shared by the route-overview stats panel and any one-off route summary
+    // (e.g. the nearby-places "Make a route" toast).
+    function routeTotals(route) {
+      const meters = route.legs.reduce((a, l) => a + l.distance.value, 0);
+      const seconds = route.legs.reduce((a, l) => a + l.duration.value, 0);
+      const h = Math.floor(seconds / 3600), m = Math.round((seconds % 3600) / 60);
+      return {
+        distanceText: `${Math.round(meters / 1000).toLocaleString()} km`,
+        durationText: m ? `${h} h ${m} min` : `${h} h`,
+      };
+    }
+
     function applyRouteStats(route) {
       const distEl = document.getElementById('route-distance');
       const durEl = document.getElementById('route-duration');
       const durLabelEl = document.getElementById('route-duration-label');
       if (durLabelEl) durLabelEl.textContent = TRANSPORT_TIME_LABEL[currentTransportMode] || 'Driving time';
       if (!route || !distEl || !durEl) return;
-      const meters = route.legs.reduce((a, l) => a + l.distance.value, 0);
-      const seconds = route.legs.reduce((a, l) => a + l.duration.value, 0);
-      const h = Math.floor(seconds / 3600), m = Math.round((seconds % 3600) / 60);
-      distEl.textContent = `${Math.round(meters / 1000).toLocaleString()} km`;
-      durEl.textContent = m ? `${h} h ${m} min` : `${h} h`;
+      const { distanceText, durationText } = routeTotals(route);
+      distEl.textContent = distanceText;
+      durEl.textContent = durationText;
     }
 
     const STOP_BGS = [
@@ -4603,7 +4763,7 @@
       list.forEach((s, i) => {
         const el = document.createElement('div');
         el.className = removeMode ? 'ww-marker-wrap ww-marker-remove' : 'ww-marker-wrap';
-        el.innerHTML = `<div class="ww-marker-dot">${removeMode ? '−' : i + 1}</div><div class="ww-marker-lbl">${s.name}</div>`;
+        el.innerHTML = `<div class="ww-marker-icon"><img src="${resolvePlaceIconSrc(s)}" alt=""><span class="ww-marker-badge">${removeMode ? '−' : i + 1}</span></div><div class="ww-marker-lbl">${s.name}</div>`;
         el.addEventListener('click', e => {
           e.stopPropagation();
           if (removeMode) { removeStop(s.id); return; }
@@ -4620,17 +4780,22 @@
     // after every rebuild since markers are recreated from scratch.
     function refreshStopMarkerSelection() {
       Object.entries(markers).forEach(([id, { marker }]) => {
-        marker.content?.querySelector('.ww-marker-dot')?.classList.toggle('ww-marker-selected', Number(id) === selectedId);
+        marker.content?.querySelector('.ww-marker-icon')?.classList.toggle('ww-marker-selected', Number(id) === selectedId);
       });
     }
 
-    // Toggled by the trash icon above the places slider — turns every stop
-    // marker into a "−" that removes the stop (and re-routes) on click.
+    // Toggled by the trash icon above the places slider — turns every marker
+    // currently on the map (route stops, or nearby places in explore mode)
+    // into a "−" that removes it on click.
     function toggleRemoveMode() {
       removeMode = !removeMode;
       document.getElementById('remove-place-btn').classList.toggle('active', removeMode);
-      rebuildStopMarkers(STOPS);
-      if (removeMode) showToast('Tap a marker on the map to remove it from the route');
+      if (hasRoute) {
+        rebuildStopMarkers(STOPS);
+      } else {
+        plotNearbyOnMap(currentNearbyRanked);
+      }
+      if (removeMode) showToast('Tap a marker on the map to remove it');
     }
 
     function removeStop(id) {
@@ -4651,28 +4816,82 @@
       });
     }
 
-    // Vertical "places" slider over the map — re-searches Places for the
-    // chosen number of stops along the already-known route, debounced so a
-    // drag doesn't fire a Places call (and a Directions re-route) per pixel.
+    // Vertical "places" slider over the map — in route mode it re-searches
+    // Places for the chosen number of stops along the already-known route;
+    // in explore mode (just one place searched) it trims the nearby-places
+    // list/markers down to the top N by fame. Debounced so a drag doesn't
+    // fire a Places call (or a full re-render) per pixel.
     let placesRangeDebounce;
     async function onPlacesRangeChange(val) {
       placesCount = parseInt(val, 10);
       document.getElementById('places-range-value').textContent = placesCount;
       clearTimeout(placesRangeDebounce);
       placesRangeDebounce = setTimeout(async () => {
-        if (!lastRoutePath) return;
-        STOPS = await findTouristStopsAlongRoute(lastRoutePath, placesCount);
-        selectedId = STOPS[0]?.id ?? null;
-        rebuildStopMarkers(STOPS);
-        renderStops(STOPS);
-        requestRoute(currentTransportMode, {
-          useStops: true,
-          onResult: routedThroughStops => {
-            applyRouteStats(routedThroughStops);
-            map.fitBounds(boundsOf([FROM.coord, TO.coord, ...STOPS.map(s => s.coord)]), 80);
-          },
-        });
+        if (hasRoute) {
+          if (!lastRoutePath) return;
+          STOPS = await findTouristStopsAlongRoute(lastRoutePath, placesCount);
+          selectedId = STOPS[0]?.id ?? null;
+          rebuildStopMarkers(STOPS);
+          renderStops(STOPS);
+          requestRoute(currentTransportMode, {
+            useStops: true,
+            onResult: routedThroughStops => {
+              applyRouteStats(routedThroughStops);
+              map.fitBounds(boundsOf([FROM.coord, TO.coord, ...STOPS.map(s => s.coord)]), 80);
+            },
+          });
+        } else {
+          const ranked = [...NEARBY_PLACES].sort((a, b) => nearbyFameScore(b) - nearbyFameScore(a));
+          renderNearbyList(ranked.slice(0, placesCount));
+        }
       }, 400);
+    }
+
+    // Shows the actions box (remove/add stop) alongside the range slider.
+    // Resets the slider back to its route defaults (1-10, capped by
+    // Directions' waypoint limit).
+    function resetPlacesControlsForRoute() {
+      document.getElementById('places-controls').style.display = 'flex';
+      document.getElementById('places-actions-box').style.display = 'block';
+      const addBtn = document.getElementById('add-place-btn');
+      addBtn.style.display = 'flex';
+      addBtn.title = 'Add a place to the route';
+      document.getElementById('remove-place-btn').title = 'Remove a place from the route';
+      const box = document.getElementById('places-range-box');
+      box.style.display = 'flex';
+      box.title = 'Places along the route';
+      const input = document.getElementById('places-range');
+      input.min = 1; input.max = 10;
+      placesCount = 5;
+      input.value = placesCount;
+      document.getElementById('places-range-value').textContent = placesCount;
+    }
+
+    // Explore mode has no route, but markers can still be added (dropped
+    // into the nearby-places set) or deleted, so both actions stay
+    // available. The range slider is scaled to however many nearby places
+    // were actually found (1 .. total).
+    function showExplorePlacesRange(total) {
+      const addBtn = document.getElementById('add-place-btn');
+      addBtn.title = 'Add a place to the map';
+      document.getElementById('remove-place-btn').title = 'Remove a place from the map';
+      const box = document.getElementById('places-range-box');
+      if (!total) { box.style.display = 'none'; document.getElementById('places-actions-box').style.display = 'none'; return; }
+      document.getElementById('places-controls').style.display = 'block';
+      document.getElementById('places-actions-box').style.display = 'block';
+      addBtn.style.display = 'flex';
+      box.style.display = 'flex';
+      box.title = 'Places shown around this city';
+      const input = document.getElementById('places-range');
+      input.min = 1; input.max = total;
+      placesCount = total;
+      input.value = placesCount;
+      document.getElementById('places-range-value').textContent = placesCount;
+    }
+
+    function hidePlacesRangeBox() {
+      document.getElementById('places-controls').style.display = 'none';
+      document.getElementById('places-range-box').style.display = 'none';
     }
 
     function geocodePlace(query) {
@@ -4688,9 +4907,73 @@
       });
     }
 
+    // Fallback icon for any numbered map marker that matches nothing more
+    // specific — a generic "nature scene" cropped from general.png.
+    const MARKER_ICON_SRC = '/assets/img/icons/markers/general/forest.png';
+
+    // The World Wide Top10 list is 10 specific landmarks, each with its own
+    // hand-drawn icon (cropped from one sprite sheet) instead of the generic
+    // marker — keyed by the short name plotRankingMarkers already derives.
+    const WORLDWIDE_MARKER_ICON = {
+      'Eiffel Tower': 'eiffel-tower',
+      'Colosseum': 'colosseum',
+      'Taj Mahal': 'taj-mahal',
+      'Statue of Liberty': 'statue-of-liberty',
+      'Machu Picchu': 'machu-picchu',
+      'Great Wall of China': 'great-wall-of-china',
+      'Pyramids of Giza': 'pyramids-of-giza',
+      'Times Square': 'times-square',
+      "Kyoto's Temples and Shrines": 'kyoto-temples',
+      'Grand Bazaar': 'grand-bazaar',
+    };
+
+    // Nearby-places/route-stop markers: a few extra famous landmarks (cropped
+    // from top20.png) get their own icon when a place's name matches one;
+    // everything else falls back to a category icon cropped from general.png
+    // (lake/nature/mountain/beach), and "town"/unmatched places fall back to
+    // the generic forest icon (MARKER_ICON_SRC) per general.png.
+    const TOP20_MARKER_ICON = {
+      'louvre': 'louvre-pyramid',
+      "st. peter's": 'st-peters-basilica',
+      'saint peter': 'st-peters-basilica',
+      'niagara': 'niagara-falls',
+      'temple of heaven': 'temple-of-heaven',
+      'las vegas': 'las-vegas',
+      'christ the redeemer': 'christ-the-redeemer',
+      'corcovado': 'christ-the-redeemer',
+      'acropolis': 'acropolis',
+      'parthenon': 'acropolis',
+      'versailles': 'versailles',
+      'chichen itza': 'chichen-itza',
+      'chichén itzá': 'chichen-itza',
+    };
+    const GENERAL_MARKER_ICON = {
+      lake: 'lake', trek: 'forest', trail: 'mountain', beach: 'beach',
+    };
+
+    // Picks the best marker icon for a nearby-place/route-stop item: a
+    // specific top20 landmark match by name, else a general.png category
+    // icon by place.cat, else the generic forest fallback.
+    function resolvePlaceIconSrc(place) {
+      const name = (place.name || '').toLowerCase();
+      const top20Key = Object.keys(TOP20_MARKER_ICON).find(k => name.includes(k));
+      if (top20Key) return `/assets/img/icons/markers/top20/${TOP20_MARKER_ICON[top20Key]}.png`;
+      const generalFile = GENERAL_MARKER_ICON[place.cat];
+      if (generalFile) return `/assets/img/icons/markers/general/${generalFile}.png`;
+      return MARKER_ICON_SRC;
+    }
+
     // Google Directions has no flight mode; a great-circle line is the honest
     // representation of air travel and skips the road-trip stops entirely.
     const TRAVEL_MODE = { Car: 'DRIVING', Walk: 'WALKING', Train: 'TRANSIT' };
+
+    // FROM marker on the map always shows the selected "Travel by" mode,
+    // using the same icon assets as the .tbtn buttons' image equivalents.
+    const TRAVEL_MARKER_ICON_FILE = { Car: 'car', Walk: 'walking', Plane: 'plane', Train: 'train' };
+    function fromMarkerIconHtml(mode) {
+      const file = TRAVEL_MARKER_ICON_FILE[mode] || TRAVEL_MARKER_ICON_FILE.Car;
+      return `<img src="/assets/img/icons/${file}.png" alt="${mode}" />`;
+    }
 
     function requestRoute(mode, { useStops = true, onResult } = {}) {
       const routeStops = mode === 'Plane' || !useStops ? [] : visibleStopsForFilter();
@@ -4740,13 +5023,22 @@
       });
     }
 
-    // FROM/TO markers exist but stay unattached (map: null) until a search resolves a place
+    // FROM/TO markers exist but stay unattached (map: null) until a search resolves a place.
+    // Both open the same PLACE DETAIL POPUP the left-panel name links use.
     const fe = document.createElement('div');
-    fe.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;"><div class="m-start"><svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:#fff;fill:none;stroke-width:2.2;stroke-linecap:round"><circle cx="12" cy="12" r="4"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg></div><div class="m-lbl"></div></div>`;
+    fe.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;"><div class="m-start">${fromMarkerIconHtml('Car')}</div><div class="m-lbl"></div></div>`;
+    fe.addEventListener('click', e => { e.stopPropagation(); openPlacePopup('from'); });
     const fromMarker = new AdvancedMarkerElement({ position: toLatLng(FROM.coord), content: fe });
 
+    // Keeps the FROM marker's icon in sync with the "Travel by" selection.
+    function updateFromMarkerIcon(mode) {
+      const wrap = fe.querySelector('.m-start');
+      if (wrap) wrap.innerHTML = fromMarkerIconHtml(mode);
+    }
+
     const te = document.createElement('div');
-    te.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;"><div class="m-end"><svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:#fff;stroke:none"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z"/></svg></div><div class="m-lbl"></div></div>`;
+    te.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;"><div class="m-end"><svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:#fff;stroke:none"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z"/></svg></div><div class="m-lbl"></div></div>`;
+    te.addEventListener('click', e => { e.stopPropagation(); openPlacePopup('to'); });
     const toMarker = new AdvancedMarkerElement({ position: toLatLng(TO.coord), content: te });
 
     /* ══ RENDER STOPS TIMELINE ══ */
@@ -5100,18 +5392,7 @@
       const list = rows.map(adaptTop10Item);
       const coords = list.map(item => item.coord);
 
-      list.forEach((item, i) => {
-        const el = document.createElement('div');
-        el.className = 'ww-marker-wrap';
-        const shortName = item.n.split(',')[0].split('·')[0].trim();
-        el.innerHTML = `<div class="ww-marker-dot">${i + 1}</div><div class="ww-marker-lbl">${shortName}</div>`;
-        el.addEventListener('click', e => {
-          e.stopPropagation();
-          openPlacePopupFromRanking(i);
-        });
-        const m = new AdvancedMarkerElement({ map, position: toLatLng(item.coord), content: el });
-        worldwideMarkers.push(m);
-      });
+      plotRankingMarkers(list);
 
       if (coords.length) map.fitBounds(boundsOf(coords), 60);
 
@@ -5184,9 +5465,13 @@
     async function renderCountryResults(q) {
       const container = document.getElementById('cs-results');
       const directory = await loadCountryDirectory();
+      // No query yet: show only the most-visited countries instead of all
+      // 197 at once. Typing searches the full directory regardless of rank.
       const matches = q.trim()
         ? directory.filter(d => d.country.toLowerCase().includes(q.trim().toLowerCase()))
-        : directory;
+        : directory
+            .filter(d => d.most_visited_rank != null)
+            .sort((a, b) => a.most_visited_rank - b.most_visited_rank);
 
       if (!matches.length) {
         container.innerHTML = `<div class="cs-empty">No countries found for "<strong>${q}</strong>"</div>`;
@@ -5198,7 +5483,7 @@
         ? name.replace(new RegExp(`(${q.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi'), '<span class="cs-match">$1</span>')
         : name;
 
-      container.innerHTML = `<div class="cs-results-hdr">${q.trim() ? 'Results' : 'All countries'}</div>` +
+      container.innerHTML = `<div class="cs-results-hdr">${q.trim() ? 'Results' : 'Most visited'}</div>` +
         matches.map(d => `<div class="cs-item" onclick="selectCountry('${d.country.replace(/'/g, "\\'")}')">
             <div class="cs-flag">${d.flag}</div>
             <div class="cs-info">
@@ -5308,6 +5593,7 @@
 
     function openRankingPanel(title, sub, iconHtml, list) {
       currentRankingList = list;
+      selectedRankingIndex = null;
       document.getElementById('rp-title').textContent = title;
       document.getElementById('rp-sub').textContent = sub;
       document.getElementById('rp-icon').innerHTML = iconHtml;
@@ -5422,9 +5708,22 @@
       cleanMap();
     }
 
+    // Marks ranking row/marker #i as selected — same highlight pattern
+    // selectNearbyMarker uses for the nearby-places list.
+    let selectedRankingIndex = null;
+    function selectRankingMarker(i) {
+      if (selectedRankingIndex !== null) {
+        worldwideMarkers[selectedRankingIndex]?.content?.querySelector('.ww-marker-icon')?.classList.remove('ww-marker-selected');
+      }
+      selectedRankingIndex = i;
+      worldwideMarkers[i]?.content?.querySelector('.ww-marker-icon')?.classList.add('ww-marker-selected');
+      document.querySelectorAll('#rp-list .rp-item').forEach((el, idx) => el.classList.toggle('active', idx === i));
+    }
+
     function flyToMarker(index) {
       const item = currentRankingList[index];
       if (item && item.coord) {
+        selectRankingMarker(index);
         map.panTo(toLatLng(item.coord));
         map.setZoom(6);
       }
@@ -5434,7 +5733,12 @@
       closeCountrySearch();
 
       const rows = await fetchTop10({ type: 'country', country });
-      if (!rows.length) return;
+      if (!rows.length) {
+        // Most of the 197 countries in the directory don't have a curated
+        // top10 list yet — only the handful seeded in TOP10_PLACES_SEED do.
+        showToast(`No curated picks for ${country} yet — try World Wide or another country`);
+        return;
+      }
       const list = rows.map(adaptTop10Item);
       const directory = await loadCountryDirectory();
       const flag = directory.find(d => d.country === country)?.flag || '🌍';
@@ -5442,18 +5746,7 @@
 
       cleanMap();
 
-      list.forEach((item, i) => {
-        const el = document.createElement('div');
-        el.className = 'ww-marker-wrap';
-        const shortName = item.n.split(',')[0].split('·')[0].trim();
-        el.innerHTML = `<div class="ww-marker-dot">${i + 1}</div><div class="ww-marker-lbl">${shortName}</div>`;
-        el.addEventListener('click', e => {
-          e.stopPropagation();
-          openPlacePopupFromRanking(i);
-        });
-        const m = new AdvancedMarkerElement({ map, position: toLatLng(item.coord), content: el });
-        worldwideMarkers.push(m);
-      });
+      plotRankingMarkers(list);
 
       map.fitBounds(boundsOf(list.map(item => item.coord)), 70);
 
@@ -5468,6 +5761,27 @@
     let worldwideMarkers = [];
     let nearbyMarkers = [];
 
+    // Shared by showWorldwideOnMap/selectCountry/showCategoryTop10 — they all
+    // plot the same numbered-pin markers for a ranking list, just with
+    // different data sources and panel copy.
+    function plotRankingMarkers(list) {
+      list.forEach((item, i) => {
+        const el = document.createElement('div');
+        el.className = 'ww-marker-wrap';
+        const shortName = item.n.split(',')[0].split('·')[0].trim();
+        const iconFile = WORLDWIDE_MARKER_ICON[shortName];
+        const iconSrc = iconFile ? `/assets/img/icons/markers/top10/${iconFile}.png` : MARKER_ICON_SRC;
+        el.innerHTML = `<div class="ww-marker-icon"><img src="${iconSrc}" alt=""><span class="ww-marker-badge">${i + 1}</span></div><div class="ww-marker-lbl">${shortName}</div>`;
+        el.addEventListener('click', e => {
+          e.stopPropagation();
+          selectRankingMarker(i);
+          openPlacePopupFromRanking(i);
+        });
+        const m = new AdvancedMarkerElement({ map, position: toLatLng(item.coord), content: el });
+        worldwideMarkers.push(m);
+      });
+    }
+
     function cleanMap() {
       Object.values(markers).forEach(({ marker }) => { marker.map = null; });
       Object.keys(markers).forEach(k => delete markers[k]);
@@ -5477,16 +5791,20 @@
       nearbyMarkers = [];
     }
 
+    // While removeMode is on, nearby markers show a "−" and a click deletes
+    // that place from the map instead of opening its popup — mirrors
+    // rebuildStopMarkers' remove behavior for route stops.
     function plotNearbyOnMap(list) {
       nearbyMarkers.forEach(m => m.remove());
       nearbyMarkers = [];
       if (!list.length) return;
       list.forEach((p, i) => {
         const el = document.createElement('div');
-        el.className = 'ww-marker-wrap';
-        el.innerHTML = `<div class="ww-marker-dot nb-marker-dot">${i + 1}</div><div class="ww-marker-lbl">${p.name}</div>`;
+        el.className = removeMode ? 'ww-marker-wrap ww-marker-remove' : 'ww-marker-wrap';
+        el.innerHTML = `<div class="ww-marker-icon"><img src="${resolvePlaceIconSrc(p)}" alt=""><span class="ww-marker-badge nb-marker-badge">${removeMode ? '−' : i + 1}</span></div><div class="ww-marker-lbl">${p.name}</div>`;
         el.addEventListener('click', e => {
           e.stopPropagation();
+          if (removeMode) { removeNearbyPlace(p); return; }
           selectNearbyMarker(i);
           openPlacePopupFromNearby(p);
         });
@@ -5495,6 +5813,36 @@
       });
       const allCoords = [FROM.coord, ...list.map(p => p.coord)];
       map.fitBounds(boundsOf(allCoords), 60);
+    }
+
+    // Deletes a place from the nearby-places set entirely (not just the
+    // visible slice), then re-renders the list/markers and shrinks the
+    // range slider's max to match the new total.
+    function removeNearbyPlace(p) {
+      const idx = NEARBY_PLACES.indexOf(p);
+      if (idx === -1) return;
+      NEARBY_PLACES.splice(idx, 1);
+      removeMode = false;
+      document.getElementById('remove-place-btn').classList.remove('active');
+      showToast(`Removed ${p.name}`);
+
+      const total = NEARBY_PLACES.length;
+      if (!total) {
+        showExplorePlacesRange(0);
+        renderNearbyList(NEARBY_PLACES);
+        clearRoutePolylines();
+        return;
+      }
+
+      const input = document.getElementById('places-range');
+      input.max = total;
+      placesCount = Math.min(placesCount, total);
+      input.value = placesCount;
+      document.getElementById('places-range-value').textContent = placesCount;
+
+      const ranked = [...NEARBY_PLACES].sort((a, b) => nearbyFameScore(b) - nearbyFameScore(a));
+      renderNearbyList(ranked.slice(0, placesCount));
+      makeNearbyRoute();
     }
 
     /* adapts an /api/top10 row into the {n,d,r,t,coord} shape used by the ranking panel */
@@ -5519,18 +5867,7 @@
       const wwData = rows.map(adaptTop10Item);
       const coords = wwData.map(item => item.coord);
 
-      wwData.forEach((item, i) => {
-        const el = document.createElement('div');
-        el.className = 'ww-marker-wrap';
-        const shortName = item.n.split(',')[0].split('·')[0].trim();
-        el.innerHTML = `<div class="ww-marker-dot">${i + 1}</div><div class="ww-marker-lbl">${shortName}</div>`;
-        el.addEventListener('click', e => {
-          e.stopPropagation();
-          openPlacePopupFromRanking(i);
-        });
-        const m = new AdvancedMarkerElement({ map, position: toLatLng(item.coord), content: el });
-        worldwideMarkers.push(m);
-      });
+      plotRankingMarkers(wwData);
 
       if (coords.length) map.fitBounds(boundsOf(coords), 60);
 
@@ -5597,7 +5934,10 @@
 
     /* ══ ADD PLACE (popup search w/ autocomplete, opened by the "+" icon) ══ */
     function openAddPlace() {
-      if (!hasRoute) { showToast('Search a route first'); return; }
+      document.getElementById('ap-hdr-title').textContent = hasRoute ? 'Add a stop' : 'Add a place';
+      document.getElementById('ap-hdr-sub').textContent = hasRoute
+        ? 'Search a place to add to your route'
+        : 'Search a place to drop onto the map';
       document.getElementById('ap-overlay').classList.add('open');
       const input = document.getElementById('ap-input');
       input.value = '';
@@ -5649,10 +5989,12 @@
       }, 200);
     }
 
-    // Geocodes the picked suggestion and drops it into the stop list. Its
-    // labels (distance/time/distFrom) get recomputed for wherever it lands;
-    // requestRoute() then asks Directions for the most efficient order and
-    // resyncs STOPS again if that moves it somewhere other than the end.
+    // Geocodes the picked suggestion, then drops it into whichever marker
+    // set is currently active. In route mode that's the stop list (and
+    // requestRoute() re-asks Directions for the most efficient order). In
+    // explore mode it's the nearby-places list, and makeNearbyRoute() —
+    // the same method the "Make a route" button uses — redraws the route
+    // through the (now one more) nearby places.
     async function selectAddPlace(name) {
       closeAddPlace();
       let geo;
@@ -5663,26 +6005,41 @@
         return;
       }
 
-      const newStop = {
-        emoji: '📍', name, cat: 'attraction',
-        desc: '', rating: '—', reviews: '0', loc: geo.formatted,
-        alt: '—', altNote: 'Added manually', temp: '—',
-        bg: STOP_BGS[STOPS.length % STOP_BGS.length],
-        coord: geo.coord, tags: [],
-      };
-      STOPS = recomputeStopSequence([...STOPS, newStop]);
-      selectedId = STOPS[STOPS.length - 1].id;
-      rebuildStopMarkers(STOPS);
-      renderStops(STOPS);
-      showToast(`Added ${name} to your route`);
+      if (hasRoute) {
+        const newStop = {
+          emoji: '📍', name, cat: 'attraction',
+          desc: '', rating: '—', reviews: '0', loc: geo.formatted,
+          alt: '—', altNote: 'Added manually', temp: '—',
+          bg: STOP_BGS[STOPS.length % STOP_BGS.length],
+          coord: geo.coord, tags: [],
+        };
+        STOPS = recomputeStopSequence([...STOPS, newStop]);
+        selectedId = STOPS[STOPS.length - 1].id;
+        rebuildStopMarkers(STOPS);
+        renderStops(STOPS);
+        showToast(`Added ${name} to your route`);
 
-      requestRoute(currentTransportMode, {
-        useStops: true,
-        onResult: route => {
-          applyRouteStats(route);
-          map.fitBounds(boundsOf([FROM.coord, TO.coord, ...STOPS.map(s => s.coord)]), 80);
-        },
-      });
+        requestRoute(currentTransportMode, {
+          useStops: true,
+          onResult: route => {
+            applyRouteStats(route);
+            map.fitBounds(boundsOf([FROM.coord, TO.coord, ...STOPS.map(s => s.coord)]), 80);
+          },
+        });
+      } else {
+        const distKm = Math.round(haversineKm(FROM.coord, geo.coord));
+        const newPlace = {
+          emoji: '📍', name, cat: 'attraction', tag: 'Added',
+          desc: geo.formatted || 'Added manually', rating: '—', reviews: '0',
+          dist: `${distKm} km`, time: estimateDriveTime(distKm),
+          coord: geo.coord,
+        };
+        NEARBY_PLACES = [...NEARBY_PLACES, newPlace];
+        showExplorePlacesRange(NEARBY_PLACES.length);
+        renderNearbyList(NEARBY_PLACES);
+        showToast(`Added ${name} to your nearby places`);
+        makeNearbyRoute();
+      }
     }
 
     /* ══ FILTER ══ */
@@ -5716,6 +6073,7 @@
       const msgs = { Car: 'Showing car route (😃)', Walk: 'Walking route (🏃)', Plane: 'Showing flight route (✈️)', Train: 'Showing train route (🚂)' };
       showToast(msgs[mode] || 'Route updated');
       currentTransportMode = mode;
+      updateFromMarkerIcon(mode);
 
       const flightsBox = document.getElementById('flights-cta');
       if (flightsBox) flightsBox.style.display = mode === 'Plane' ? 'flex' : 'none';
@@ -5789,6 +6147,44 @@
       window.open(url, '_blank');
     }
 
+    /* ══ SUGGESTED ROUTES (empty-state shortcuts) ══ */
+    // Illustrative trip ideas shown before any search — picking one fills
+    // the search bar and runs the exact same doSearch() flow a manual
+    // search would, so the route/stops it draws are always live, real data.
+    const SUGGESTED_ROUTES = [
+      { from: 'Santiago, Chile', to: 'Puerto Natales, Chile', hours: 26, stops: 3 },
+      { from: 'Paris, France', to: 'Lyon, France', hours: 5, stops: 4 },
+      { from: 'Los Angeles, USA', to: 'Las Vegas, USA', hours: 4, stops: 3 },
+      { from: 'Tokyo, Japan', to: 'Kyoto, Japan', hours: 6, stops: 4 },
+      { from: 'Cape Town, South Africa', to: 'Knysna, South Africa', hours: 6, stops: 5 },
+    ];
+
+    function renderSuggestedRoutes() {
+      const list = document.getElementById('sugg-routes-list');
+      if (!list) return;
+      list.innerHTML = SUGGESTED_ROUTES.map(r => `
+        <div class="sugg-route-card" onclick="selectSuggestedRoute('${r.from.replace(/'/g, "\\'")}','${r.to.replace(/'/g, "\\'")}')">
+          <div class="sugg-route-path">
+            <span>${r.from}</span>
+            <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            <span>${r.to}</span>
+          </div>
+          <div class="sugg-route-meta">
+            <span>${r.hours}h drive</span>
+            <span class="sugg-pipe"></span>
+            <span>${r.stops} stops</span>
+          </div>
+        </div>
+      `).join('');
+    }
+    renderSuggestedRoutes();
+
+    function selectSuggestedRoute(from, to) {
+      document.getElementById('from-input').value = from;
+      document.getElementById('to-input').value = to;
+      doSearch();
+    }
+
     /* ══ SWAP ══ */
     function swapRoute() {
       const fi = document.getElementById('from-input'), ti = document.getElementById('to-input');
@@ -5845,7 +6241,7 @@
         hasRoute = true;
         document.getElementById('save-plan-btn').style.display = 'flex';
         document.getElementById('transport-box').style.display = 'block';
-        document.getElementById('places-controls').style.display = 'flex';
+        resetPlacesControlsForRoute();
 
         renderRouteMode(fromVal, toVal);
         requestRoute(currentTransportMode, {
@@ -5887,7 +6283,7 @@
         hasRoute = false;
         document.getElementById('save-plan-btn').style.display = 'none';
         document.getElementById('transport-box').style.display = 'none';
-        document.getElementById('places-controls').style.display = 'none';
+        hidePlacesRangeBox();
         toMarker.map = null;
         clearRoutePolylines();
         STOPS = [];
@@ -5923,8 +6319,9 @@
           <div class="ftab" onclick="filterNearby(this,'town')"><svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>Towns</div>
           <div class="ftab" onclick="filterNearby(this,'trail')"><svg viewBox="0 0 24 24"><path d="M3 12h18M3 6h18M3 18h18"/></svg>Trails</div>
         </div>
-        <div id="nearby-list"><p style="font-size:13px;color:var(--g600);padding:20px 0;text-align:center;">Finding tourist places nearby…</p></div>`;
+        <div id="nearby-list" style="padding-bottom:56px"><p style="font-size:13px;color:var(--g600);padding:20px 0;text-align:center;">Finding tourist places nearby…</p></div>`;
 
+      document.getElementById('make-route-btn').classList.add('show');
       plotNearbyOnMap([]);
     }
 
@@ -5981,10 +6378,10 @@
     // the previous marker's highlight, and toggles the matching list row.
     function selectNearbyMarker(i) {
       if (selectedNearbyIndex !== null) {
-        nearbyMarkers[selectedNearbyIndex]?.content?.querySelector('.ww-marker-dot')?.classList.remove('ww-marker-selected');
+        nearbyMarkers[selectedNearbyIndex]?.content?.querySelector('.ww-marker-icon')?.classList.remove('ww-marker-selected');
       }
       selectedNearbyIndex = i;
-      nearbyMarkers[i]?.content?.querySelector('.ww-marker-dot')?.classList.add('ww-marker-selected');
+      nearbyMarkers[i]?.content?.querySelector('.ww-marker-icon')?.classList.add('ww-marker-selected');
       document.querySelectorAll('#nearby-list .rp-item').forEach((el, idx) => el.classList.toggle('active', idx === i));
     }
 
@@ -6026,12 +6423,45 @@
         if (seq !== suggestionRequestSeq) return; // a newer search superseded this one
         NEARBY_PLACES = [];
         renderNearbyList(NEARBY_PLACES);
+        showExplorePlacesRange(0);
         showToast(err.message || 'Could not load nearby places');
         return;
       }
       if (seq !== suggestionRequestSeq) return;
       NEARBY_PLACES = data.results || [];
       renderNearbyList(NEARBY_PLACES);
+      showExplorePlacesRange(NEARBY_PLACES.length);
+    }
+
+    // "Make a route" — asks Directions for the most efficient round trip
+    // from FROM through the nearby places currently shown (capped to the
+    // top 10 by fame, Directions' waypoint limit), then draws it on the map.
+    function makeNearbyRoute() {
+      const places = currentNearbyRanked.slice(0, 10);
+      if (!places.length) { showToast('No nearby places to route through yet'); return; }
+
+      const btn = document.getElementById('make-route-btn');
+      if (btn) { btn.disabled = true; btn.innerHTML = '✨ Finding the best route…'; }
+      showToast('Finding the best route through these places…');
+
+      directionsService.route({
+        origin: toLatLng(FROM.coord),
+        destination: toLatLng(FROM.coord),
+        travelMode: google.maps.TravelMode.DRIVING,
+        waypoints: places.map(p => ({ location: toLatLng(p.coord), stopover: true })),
+        optimizeWaypoints: true,
+      }, (result, status) => {
+        if (btn) { btn.disabled = false; btn.innerHTML = '✨ Make a route'; }
+        if (status !== google.maps.DirectionsStatus.OK) {
+          showToast('No route available through these places');
+          return;
+        }
+        const route = result.routes[0];
+        drawRoutePath(route.overview_path);
+        const { distanceText, durationText } = routeTotals(route);
+        showToast(`Suggested route: ${distanceText} · ${durationText} round trip`);
+        map.fitBounds(boundsOf([FROM.coord, ...places.map(p => p.coord)]), 70);
+      });
     }
 
     function renderRouteMode(fromVal, toVal) {
@@ -6040,6 +6470,7 @@
       const fmt = MT_INFO.from;
       const tmt = MT_INFO.to;
 
+      document.getElementById('make-route-btn').classList.remove('show');
       document.getElementById('left-inner').innerHTML = `
         <div class="place-dot-row">
           <div class="p-dot green"></div>
@@ -6188,6 +6619,18 @@
     function closeLo() {
       document.getElementById('lo-modal').classList.remove('open');
       document.body.style.overflow = '';
+    }
+
+    // Deep links from index.html land here and trigger the matching view —
+    // "Trending now → View all on map" opens the World Wide Top 10, and
+    // clicking a floating place pill runs that place through the exact
+    // same explore-mode search a manual lookup would.
+    const deepLinkParams = new URLSearchParams(window.location.search);
+    if (deepLinkParams.get('view') === 'top10') {
+      showWorldwideOnMap();
+    } else if (deepLinkParams.get('place')) {
+      document.getElementById('from-input').value = deepLinkParams.get('place');
+      doSearch();
     }
   </script>
 </body>

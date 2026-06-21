@@ -1,10 +1,11 @@
 """
 makeTrip — SQLite database layer
-Handles all DB setup, seed data, and CRUD for:
-  - stops      : recommended places along a route
-  - routes     : saved user routes (from -> to)
-  - reviews    : user reviews per stop
-  - top10      : curated top-10 lists
+Handles all DB setup, seed data, and reads/writes for:
+  - places / mt_places       : search-bar autocomplete and place details
+  - top10_places             : curated top-10 rankings (worldwide/country/category)
+  - saved_plans              : plans saved from a live search
+  - stops / routes / reviews : legacy schema, kept for the get_all_stops()/
+                                get_reviews() demo in __main__ below
 """
 
 import sqlite3
@@ -500,23 +501,24 @@ TOP10_SEED = [
 ]
 
 # Top10_places: a richer ranking table (city/country/category/rating) used by /api/top10.
-# Worldwide entries reflect well-known global bucket-list destinations; country entries
-# are grounded in real, widely-cited top picks for each South American country this app covers.
+# Worldwide entries are the 10 most iconic individual landmarks on Earth (rather than whole
+# cities/regions); country entries are grounded in real, widely-cited top picks for each
+# South American country this app covers.
 TOP10_PLACES_SEED = [
-    # worldwide
+    # worldwide — iconic landmarks, not whole cities/regions
     *[{"list_type": "worldwide", "country": None, "rank": i + 1, "city": c, "category": cat, "rating": r,
        "place_information": info, "latitude": lat, "longitude": lng}
       for i, (c, cat, r, info, lat, lng) in enumerate([
-        ("London, UK", "Culture", 4.90, "TripAdvisor's top global destination for 2025, blending iconic landmarks with world-class museums and theatre.", 51.5074, -0.1278),
-        ("Paris, France", "Culture", 4.90, "The world's most visited romantic capital, home to the Eiffel Tower, the Louvre and timeless boulevards.", 48.8566, 2.3522),
-        ("Bali, Indonesia", "Beach", 4.88, "Rice terraces, sacred temples and surf breaks make Bali Asia's most-loved island escape.", -8.4095, 115.1889),
+        ("Eiffel Tower, Paris, France", "Culture", 4.90, "Gustave Eiffel's 330-metre iron landmark on the Seine, the most-visited paid monument on Earth and the symbol of Paris itself.", 48.8584, 2.2945),
+        ("Colosseum, Rome, Italy", "History", 4.88, "The largest amphitheatre ever built, where gladiators once fought before 50,000 spectators in the heart of ancient Rome.", 41.8902, 12.4922),
+        ("Taj Mahal, Agra, India", "History", 4.92, "A white-marble mausoleum built by Emperor Shah Jahan for his wife Mumtaz Mahal, and one of the most photographed buildings on Earth.", 27.1739, 78.0421),
+        ("Statue of Liberty, New York City, USA", "History", 4.80, "France's 1886 gift to the United States, standing watch over New York Harbor as a global symbol of freedom.", 40.6892, -74.0445),
         ("Machu Picchu, Peru", "History", 4.90, "The 15th-century Inca citadel perched above the Sacred Valley, one of the New Seven Wonders.", -13.1631, -72.5450),
-        ("Patagonia, Chile", "Nature", 4.95, "Glaciers, granite towers and end-of-the-world wilderness shared by Chile and Argentina.", -51.0, -73.0),
-        ("Rome, Italy", "History", 4.87, "Three thousand years of history packed into the Colosseum, the Vatican and the Roman Forum.", 41.9028, 12.4964),
-        ("Santorini, Greece", "Scenic", 4.86, "Whitewashed cliffside villages above a deep-blue volcanic caldera.", 36.3932, 25.4615),
-        ("Dubai, UAE", "Luxury", 4.85, "A futuristic skyline, desert safaris and luxury shopping in one of the world's fastest-growing destinations.", 25.2048, 55.2708),
-        ("Bangkok, Thailand", "Culture", 4.83, "One of the most-visited cities on Earth, famed for ornate temples, street food and floating markets.", 13.7563, 100.5018),
-        ("Marrakech, Morocco", "Culture", 4.80, "Labyrinthine souks, rooftop riads and the Koutoubia mosque in Morocco's red city.", 31.6295, -7.9811),
+        ("Great Wall of China, China", "History", 4.87, "Over 21,000 kilometres of ancient fortifications winding across northern China's mountains, best explored at the restored Badaling section.", 40.3542, 116.0069),
+        ("Pyramids of Giza, Cairo, Egypt", "History", 4.85, "The last surviving wonder of the ancient world — the Great Pyramid and its neighbors have stood on the Giza plateau for over 4,500 years.", 29.9792, 31.1342),
+        ("Times Square, New York City, USA", "Culture", 4.75, "The neon-lit 'Crossroads of the World,' packed with Broadway theatres, giant billboards and New Year's Eve crowds.", 40.7589, -73.9851),
+        ("Kyoto's Temples and Shrines, Kyoto, Japan", "Culture", 4.91, "Thousands of vermilion torii gates at Fushimi Inari and centuries-old wooden temples make Kyoto Japan's spiritual heart.", 34.9672, 135.7728),
+        ("Grand Bazaar, Istanbul, Turkey", "Culture", 4.78, "One of the world's oldest and largest covered markets, with thousands of shops trading carpets, spices and gold since the 15th century.", 41.0107, 28.9681),
     ])],
     # Chile
     *[{"list_type": "country", "country": "Chile", "rank": i + 1, "city": c, "category": cat, "rating": r,
@@ -548,11 +550,17 @@ TOP10_PLACES_SEED = [
     *[{"list_type": "country", "country": "Peru", "rank": i + 1, "city": c, "category": cat, "rating": r,
        "place_information": info, "latitude": lat, "longitude": lng}
       for i, (c, cat, r, info, lat, lng) in enumerate([
-        ("Machu Picchu", "History", 4.90, "The Inca citadel perched in the Andes at 2,430 m above sea level.", -13.1631, -72.5450),
-        ("Cusco", "History", 4.80, "The Inca Empire's historic capital and the gateway to Machu Picchu.", -13.5320, -71.9675),
-        ("Lima", "Culture", 4.40, "Peru's coastal capital and most-visited city, celebrated for its culinary scene.", -12.0464, -77.0428),
-        ("Arequipa", "History", 4.50, "Peru's second city, framed by three volcanoes and striking colonial architecture.", -16.4090, -71.5375),
-        ("Puno (Lake Titicaca)", "Culture", 4.60, "Gateway to Lake Titicaca and the floating Uros Islands.", -15.8402, -70.0219),
+        ("Machu Picchu, Cusco", "History", 4.90, "Machu Picchu is a magnificent 15th-century Inca citadel built high in the Andes mountains. It is widely recognized as one of the most spectacular archaeological sites on the entire planet. This legendary ruins complex served as a royal estate or sacred religious sanctuary for the Inca empire.\n\nIt is universally famous for its incredible dry-stone walls put together without any mortar. The site perfectly integrates massive agricultural terraces with breathtaking, jagged mountain peaks. It lay completely hidden from the Spanish conquistadors and the outside world for centuries.\n\nHiram Bingham famously brought global attention to this hidden cloud forest wonder back in 1911. Today it stands proudly as a designated UNESCO World Heritage site and a global travel icon. Visitors flock here to see the Intihuatana stone, Temple of the Sun, and Room of Three Windows. It remains the ultimate symbol of the power, advanced engineering, and artistry of the Inca Empire.", -13.1631, -72.5450),
+        ("Historic Center of Lima, Lima", "History", 4.60, "The Historic Center of Lima, anchored by the Plaza Mayor, is the true birthplace of the capital. It was founded by Spanish conquistador Francisco Pizarro in 1535 as the grand 'City of the Kings.' This area is famous for containing the highest concentration of historic colonial monuments in Lima.\n\nIt serves as the administrative heart of modern Peru, holding the majestic Government Palace. The square is surrounded by spectacular yellow-hued buildings and the grand Cathedral of Lima. It is universally renowned for its iconic, deeply intricate carved wooden balconies from the colonial era.\n\nThe complex contains the San Francisco Convent, famous for its historic library and catacombs. This historic quarter beautifully represents the blending of European baroque architecture and local craft. It showcases the immense wealth, political power, and deep religious history of Spain's viceroyalty. Today it is protected as a UNESCO World Heritage site and serves as a major cultural gateway.", -12.0458, -77.0306),
+        ("Santa Catalina Monastery, Arequipa", "History", 4.70, "The Santa Catalina Monastery is an immense, walled religious convent located in downtown Arequipa. Built in 1579, this complex functioned for centuries as a highly secretive, cloistered community. It is world-famous for its striking, intensely vibrant terracotta-orange and cobalt-blue walls.\n\nThe monastery is uniquely structured as a sprawling 'city within a city' covering a massive city block. It features its own narrow cobblestone streets, hidden courtyards, beautiful fountains, and chapels. Wealthy colonial families sent their daughters here, who lived with personal servants and luxuries.\n\nIt offers a fascinating, highly preserved look into the daily life and secrets of colonial nuns. The architecture beautifully blends Spanish mudéjar styles with native volcanic sillar stone carving. It was completely closed off from the outside world for nearly 400 years until opening in 1970. Today it stands as Arequipa's most photogenic architectural masterpiece and a must-visit destination.", -16.3950, -71.5367),
+        ("Uros Floating Islands, Puno", "Culture", 4.50, "The Uros Floating Islands are a collection of extraordinary, man-made communities on Lake Titicaca. They are constructed completely out of the buoyant roots and stalks of local native totora reeds. The indigenous Uros people originally built these mobile platforms to escape aggressive mainland tribes.\n\nEvery aspect of daily life on the islands relies heavily on this renewable, versatile reed material. Residents constantly add fresh layers of reeds to the surface to prevent the islands from rotting. The communities feature unique reed houses, distinct hand-woven boats, and even floating school buildings.\n\nIt is a globally unique cultural destination that showcases incredible human adaptation to water. Visitors can experience a way of life that has survived out on the lake for thousands of years. The vibrant traditional clothing and artistic textiles of the residents add immense color to the lake. They represent one of the most famous, highly creative indigenous engineering feats in South America.", -15.8188, -69.9716),
+        ("Huacachina Oasis, Ica", "Nature", 4.60, "The Huacachina Oasis is a tiny, incredibly photogenic resort village located in southwestern Peru. It is built directly around a small, calm natural desert lagoon fed by subterranean water currents. The village is completely encircled by some of the tallest, most dramatic sand dunes in the world.\n\nLocal legend states that the lagoon was formed from the tears of a grieving, beautiful princess. It is universally famous as South America's ultimate hub for high-adrenaline desert adventure sports. Thousands of travelers visit every week to experience wild, fast-paced dune buggy mountain rides.\n\nThe massive, smooth sandy slopes surrounding the water provide the perfect conditions for sandboarding. It features a charming, palm-lined boardwalk packed with lively restaurants, cafes, and boutique hotels. The oasis offers some of the most breathtaking, glowing golden sunset views found anywhere in Peru. It stands out as a surreal, dreamlike pocket of lush green and deep blue hidden in an arid desert.", -14.0875, -75.7626),
+        ("The Nazca Lines, Nazca", "History", 4.40, "The Nazca Lines are an ancient group of massive geoglyphs etched deeply into the desert floor. They were created by the Nazca culture between 500 BCE and 500 CE by removing dark surface stones. These lines cover an immense, arid plateau stretching across nearly 450 square kilometers of land.\n\nThey are globally famous for depicting enormous, stylized animal figures like monkeys and spiders. The collection also features huge birds, lizards, humanoids, and highly precise geometric lines. Because of the extreme scale, these intricate designs can only be fully appreciated from the air.\n\nTheir exact purpose remains an intriguing archaeological mystery involving calendars and water rituals. Scientists like Maria Reiche dedicated their entire lives to studying and protecting these desert lines. The hyper-arid, windless desert climate has perfectly preserved these fragile markings for millennia. They are designated as a UNESCO World Heritage site and attract curious travelers from around the globe.", -14.9997, -75.0125),
+        ("Laguna 69, Huaraz", "Nature", 4.80, "Laguna 69 is an astonishingly beautiful alpine lake tucked deep inside the Cordillera Blanca range. It sits at a dizzying, high-altitude elevation of 4,600 meters inside Huascarán National Park. The lake is universally famous for its incredibly intense, brilliant neon-turquoise colored water.\n\nIt is framed by a magnificent backdrop of towering, jagged granite peaks and massive glaciers. A spectacular, icy waterfall tumbles down directly into the lake from the towering Chacraraju mountain. Reaching this hidden gem requires a challenging, physically demanding 4-to-5 hour uphill day trek.\n\nThe trail winds past scenic rushing streams, unique local flora, and dramatic mountain vistas. It has quickly become one of the most popular, sought-after hiking destinations in South America. Huaraz serves as the essential base camp town where hikers acclimatize before making the journey.\n\nIt stands as a true bucket-list destination for outdoor adventurers, photographers, and mountaineers.", -9.0104, -77.6120),
+        ("Pacaya-Samiria National Reserve, Iquitos", "Nature", 4.70, "The Pacaya-Samiria National Reserve is a massive, incredibly pristine protected area in northern Peru. Spanning over 2 million hectares, it is one of the largest wildlife reserves in the entire country. It is widely known as the 'Jungle of Mirrors' due to its perfectly reflective, dark river waters.\n\nThe reserve encompasses a vast, complex ecosystem of flooded tropical rainforests and winding rivers. It is globally famous for its exceptional biodiversity, harboring thousands of unique animal species. Travelers venture here to spot rare pink river dolphins, giant river otters, and colorful macaws.\n\nIt is also a safe haven for jaguars, multiple monkey species, and prehistoric-looking caimans. Iquitos serves as the mandatory river port and gateway town for entering this remote wilderness. Visitors explore the reserve via multi-day luxury river cruises or rustic, eco-friendly jungle lodges. It offers an authentic, deep-jungle expedition experience far away from modern urban development.", -5.2400, -75.6000),
+        ("Tambopata National Reserve, Puerto Maldonado", "Nature", 4.70, "The Tambopata National Reserve protects a massive tract of hyper-diverse southern Amazon rainforest. It is situated right alongside the winding Tambopata and Madre de Dios river basins in Peru. The reserve is internationally famous for holding several of the world's largest parrot clay licks.\n\nEvery morning, hundreds of spectacular, colorful macaws gather to consume mineral-rich clay walls. This stunning natural phenomenon creates one of the most famous wildlife spectacles in South America. Tambopata is renowned for breaking world records in species diversity for birds, butterflies, and beetles.\n\nIt features pristine oxbow lakes like Lake Sandoval, home to families of giant endangered river otters. Puerto Maldonado is the bustling jungle city that serves as the primary travel hub for the region. Visitors can stay in world-class eco-lodges that feature canopy walkways high above the forest floor. It offers a highly accessible yet wild jungle experience, located just a short flight from Cusco.", -12.9300, -69.2700),
+        ("Chan Chan, Trujillo", "History", 4.50, "Chan Chan is a sprawling, ancient archaeological complex situated right on the northern coast of Peru. It was constructed around 900 CE as the grand capital city of the powerful Chimú Kingdom. This massive site holds the proud title of being the largest adobe clay city in the entire Americas.\n\nBefore its conquest by the Inca Empire, it housed an estimated population of over 60,000 people. It is famous for its nine massive, heavily walled royal citadels built for individual Chimú kings. The thick mud walls are beautifully decorated with elaborate, repetitive geometric and marine carvings.\n\nThese carvings depict stylized fish, pelicans, ocean waves, and celestial astrological symbols. It showcases an incredibly advanced coastal civilization that mastered irrigation and desert living. Today it is protected as a UNESCO World Heritage site and sits right outside the city of Trujillo. It stands as an essential destination for uncovering Peru's rich history long before the Incas.", -8.1100, -79.0700),
+        ("Kuelap Fortress, Chachapoyas", "History", 4.60, "Kuelap is a massive, awe-inspiring walled mountain fortress built high in the northern cloud forests. It was constructed by the mysterious pre-Inca Chachapoyas culture, known as the 'Cloud Warriors.' The site sits dramatically perched on a limestone ridge at an altitude of 3,000 meters above sea level.\n\nIt is famous for its colossal perimeter walls, which rise up to a staggering 20 meters in height. This ancient city predates the Incas by centuries, with construction starting around the 6th century CE. Inside the giant walls lie the ruins of over 400 unique, circular stone houses and ceremonial structures.\n\nMany of the stone walls feature beautiful geometric zig-zag patterns and carved humanistic faces. It was built in a highly strategic location to defend the kingdom from aggressive Amazonian tribes. Today a modern, scenic cable car system carries visitors across a deep canyon directly to the ruins. It stands as a grand alternative to Machu Picchu, offering ancient history without the heavy crowds.", -6.4167, -77.9167)
     ])],
     # Colombia
     *[{"list_type": "country", "country": "Colombia", "rank": i + 1, "city": c, "category": cat, "rating": r,
@@ -845,30 +853,11 @@ def get_all_stops():
         return result
 
 
-def get_stop(stop_id: int):
-    with get_conn() as conn:
-        row = conn.execute("SELECT * FROM stops WHERE id=?", (stop_id,)).fetchone()
-        if not row:
-            return None
-        d = dict(row)
-        d["tags"] = json.loads(d["tags"])
-        d["commutes"] = json.loads(d["commutes"])
-        return d
-
-
 def get_reviews(stop_id: int):
     with get_conn() as conn:
         rows = conn.execute("""
             SELECT * FROM reviews WHERE stop_id=? ORDER BY created_at DESC
         """, (stop_id,)).fetchall()
-        return [dict(r) for r in rows]
-
-
-def get_top10(list_type: str):
-    with get_conn() as conn:
-        rows = conn.execute("""
-            SELECT * FROM top10 WHERE list_type=? ORDER BY rank
-        """, (list_type,)).fetchall()
         return [dict(r) for r in rows]
 
 
@@ -902,32 +891,115 @@ def get_top10_countries():
         return [r["country"] for r in rows]
 
 
-# Flag emoji per country backing a top10_places by-country list — used by the
-# "Search by country" directory in the UI.
-COUNTRY_FLAGS = {
-    "Chile": "🇨🇱", "Argentina": "🇦🇷", "Peru": "🇵🇪", "Colombia": "🇨🇴",
-    "Brazil": "🇧🇷", "Ecuador": "🇪🇨", "Uruguay": "🇺🇾", "Japan": "🇯🇵",
-    "Greece": "🇬🇷", "Italy": "🇮🇹", "France": "🇫🇷", "USA": "🇺🇸",
-    "Australia": "🇦🇺", "Morocco": "🇲🇦", "Indonesia": "🇮🇩", "New Zealand": "🇳🇿",
-}
+def _flag_emoji(iso2: str) -> str:
+    """Flag emoji from an ISO 3166-1 alpha-2 code (pair of Unicode regional
+    indicator symbols) — avoids hand-typing 197 flag glyphs."""
+    return "".join(chr(0x1F1E6 + ord(c) - ord("A")) for c in iso2.upper())
+
+
+# All 197 countries (193 UN members + Vatican City + Palestine + Kosovo +
+# Taiwan) backing the "Search by country" directory: (name, ISO 3166-1
+# alpha-2 code, UNESCO World Heritage Site count, most-visited rank).
+# Site counts from UNESCO/World Heritage Centre statistics; the most-visited
+# ranking (1-20) is from UNWTO international tourist arrivals — both pulled
+# from public sources rather than guessed. Countries outside the top 20 get
+# most_visited_rank=None.
+WORLD_COUNTRIES = [
+    # ── Africa (54) ──
+    ("Algeria", "DZ", 7, None), ("Angola", "AO", 1, None), ("Benin", "BJ", 3, None),
+    ("Botswana", "BW", 2, None), ("Burkina Faso", "BF", 4, None), ("Burundi", "BI", 0, None),
+    ("Cabo Verde", "CV", 1, None), ("Cameroon", "CM", 3, None), ("Central African Republic", "CF", 2, None),
+    ("Chad", "TD", 2, None), ("Comoros", "KM", 0, None), ("Democratic Republic of the Congo", "CD", 5, None),
+    ("Republic of the Congo", "CG", 2, None), ("Djibouti", "DJ", 0, None), ("Egypt", "EG", 7, None),
+    ("Equatorial Guinea", "GQ", 0, None), ("Eritrea", "ER", 1, None), ("Eswatini", "SZ", 0, None),
+    ("Ethiopia", "ET", 12, None), ("Gabon", "GA", 2, None), ("Gambia", "GM", 2, None),
+    ("Ghana", "GH", 2, None), ("Guinea", "GN", 1, None), ("Guinea-Bissau", "GW", 1, None),
+    ("Ivory Coast", "CI", 5, None), ("Kenya", "KE", 8, None), ("Lesotho", "LS", 1, None),
+    ("Liberia", "LR", 0, None), ("Libya", "LY", 5, None), ("Madagascar", "MG", 3, None),
+    ("Malawi", "MW", 3, None), ("Mali", "ML", 4, None), ("Mauritania", "MR", 2, None),
+    ("Mauritius", "MU", 2, None), ("Morocco", "MA", 9, None), ("Mozambique", "MZ", 2, None),
+    ("Namibia", "NA", 2, None), ("Niger", "NE", 3, None), ("Nigeria", "NG", 2, None),
+    ("Rwanda", "RW", 2, None), ("São Tomé and Príncipe", "ST", 0, None), ("Senegal", "SN", 7, None),
+    ("Seychelles", "SC", 2, None), ("Sierra Leone", "SL", 1, None), ("Somalia", "SO", 0, None),
+    ("South Africa", "ZA", 12, None), ("South Sudan", "SS", 0, None), ("Sudan", "SD", 3, None),
+    ("Tanzania", "TZ", 7, None), ("Togo", "TG", 1, None), ("Tunisia", "TN", 9, None),
+    ("Uganda", "UG", 3, None), ("Zambia", "ZM", 1, None), ("Zimbabwe", "ZW", 5, None),
+
+    # ── Americas (35) ──
+    ("Antigua and Barbuda", "AG", 1, None), ("Argentina", "AR", 12, None), ("Bahamas", "BS", 0, None),
+    ("Barbados", "BB", 1, None), ("Belize", "BZ", 1, None), ("Bolivia", "BO", 7, None),
+    ("Brazil", "BR", 25, None), ("Canada", "CA", 22, 20), ("Chile", "CL", 7, None),
+    ("Colombia", "CO", 9, None), ("Costa Rica", "CR", 4, None), ("Cuba", "CU", 9, None),
+    ("Dominica", "DM", 1, None), ("Dominican Republic", "DO", 1, None), ("Ecuador", "EC", 5, None),
+    ("El Salvador", "SV", 1, None), ("Grenada", "GD", 0, None), ("Guatemala", "GT", 4, None),
+    ("Guyana", "GY", 0, None), ("Haiti", "HT", 1, None), ("Honduras", "HN", 2, None),
+    ("Jamaica", "JM", 2, None), ("Mexico", "MX", 36, 6), ("Nicaragua", "NI", 2, None),
+    ("Panama", "PA", 5, None), ("Paraguay", "PY", 1, None), ("Peru", "PE", 13, None),
+    ("Saint Kitts and Nevis", "KN", 1, None), ("Saint Lucia", "LC", 1, None),
+    ("Saint Vincent and the Grenadines", "VC", 0, None), ("Suriname", "SR", 3, None),
+    ("Trinidad and Tobago", "TT", 0, None), ("United States", "US", 26, 3), ("Uruguay", "UY", 3, None),
+    ("Venezuela", "VE", 3, None),
+
+    # ── Asia (49, incl. Palestine + Taiwan) ──
+    ("Afghanistan", "AF", 2, None), ("Armenia", "AM", 3, None), ("Azerbaijan", "AZ", 5, None),
+    ("Bahrain", "BH", 3, None), ("Bangladesh", "BD", 3, None), ("Bhutan", "BT", 0, None),
+    ("Brunei", "BN", 0, None), ("Cambodia", "KH", 5, None), ("China", "CN", 60, 19),
+    ("Cyprus", "CY", 3, None), ("Georgia", "GE", 4, None), ("India", "IN", 43, 18),
+    ("Indonesia", "ID", 10, None), ("Iran", "IR", 29, None), ("Iraq", "IQ", 6, None),
+    ("Israel", "IL", 9, None), ("Japan", "JP", 26, 10), ("Jordan", "JO", 7, None),
+    ("Kazakhstan", "KZ", 6, None), ("Kuwait", "KW", 0, None), ("Kyrgyzstan", "KG", 3, None),
+    ("Laos", "LA", 4, None), ("Lebanon", "LB", 6, None), ("Malaysia", "MY", 6, 16),
+    ("Maldives", "MV", 0, None), ("Mongolia", "MN", 6, None), ("Myanmar", "MM", 2, None),
+    ("Nepal", "NP", 4, None), ("North Korea", "KP", 3, None), ("Oman", "OM", 5, None),
+    ("Pakistan", "PK", 6, None), ("Palestine", "PS", 5, None), ("Philippines", "PH", 6, None),
+    ("Qatar", "QA", 1, None), ("Saudi Arabia", "SA", 8, 14), ("Singapore", "SG", 1, None),
+    ("South Korea", "KR", 17, None), ("Sri Lanka", "LK", 8, None), ("Syria", "SY", 6, None),
+    ("Taiwan", "TW", 0, None), ("Tajikistan", "TJ", 5, None), ("Thailand", "TH", 8, 11),
+    ("Timor-Leste", "TL", 0, None), ("Turkey", "TR", 22, 4), ("Turkmenistan", "TM", 5, None),
+    ("United Arab Emirates", "AE", 2, 13), ("Uzbekistan", "UZ", 7, None), ("Vietnam", "VN", 9, None),
+    ("Yemen", "YE", 5, None),
+
+    # ── Europe (45, incl. Kosovo + Vatican City) ──
+    ("Albania", "AL", 4, None), ("Andorra", "AD", 1, None), ("Austria", "AT", 12, 12),
+    ("Belarus", "BY", 4, None), ("Belgium", "BE", 16, None), ("Bosnia and Herzegovina", "BA", 5, None),
+    ("Bulgaria", "BG", 10, None), ("Croatia", "HR", 10, None), ("Czech Republic", "CZ", 17, None),
+    ("Denmark", "DK", 12, None), ("Estonia", "EE", 2, None), ("Finland", "FI", 7, None),
+    ("France", "FR", 54, 1), ("Germany", "DE", 54, 8), ("Greece", "GR", 20, 9),
+    ("Hungary", "HU", 8, None), ("Iceland", "IS", 3, None), ("Ireland", "IE", 2, None),
+    ("Italy", "IT", 61, 5), ("Kosovo", "XK", 0, None), ("Latvia", "LV", 3, None),
+    ("Liechtenstein", "LI", 0, None), ("Lithuania", "LT", 5, None), ("Luxembourg", "LU", 1, None),
+    ("Malta", "MT", 3, None), ("Moldova", "MD", 1, None), ("Monaco", "MC", 0, None),
+    ("Montenegro", "ME", 4, None), ("Netherlands", "NL", 13, 17), ("North Macedonia", "MK", 2, None),
+    ("Norway", "NO", 8, None), ("Poland", "PL", 17, None), ("Portugal", "PT", 17, 15),
+    ("Romania", "RO", 11, None), ("Russia", "RU", 33, None), ("San Marino", "SM", 1, None),
+    ("Serbia", "RS", 5, None), ("Slovakia", "SK", 8, None), ("Slovenia", "SI", 5, None),
+    ("Spain", "ES", 50, 2), ("Sweden", "SE", 15, None), ("Switzerland", "CH", 13, None),
+    ("Ukraine", "UA", 8, None), ("United Kingdom", "GB", 35, 7), ("Vatican City", "VA", 2, None),
+
+    # ── Oceania (14) ──
+    ("Australia", "AU", 21, None), ("Fiji", "FJ", 1, None), ("Kiribati", "KI", 1, None),
+    ("Marshall Islands", "MH", 1, None), ("Micronesia", "FM", 1, None), ("Nauru", "NR", 0, None),
+    ("New Zealand", "NZ", 3, None), ("Palau", "PW", 1, None), ("Papua New Guinea", "PG", 1, None),
+    ("Samoa", "WS", 0, None), ("Solomon Islands", "SB", 1, None), ("Tonga", "TO", 0, None),
+    ("Tuvalu", "TV", 0, None), ("Vanuatu", "VU", 1, None),
+]
 
 
 def get_top10_country_directory():
-    """Every country with a by-country top10 list, with its flag and
-    destination count — backs the "Search by country" directory in the UI."""
-    with get_conn() as conn:
-        rows = conn.execute("""
-            SELECT country, COUNT(*) AS count FROM top10_places
-            WHERE list_type='country' GROUP BY country ORDER BY country
-        """).fetchall()
-        return [
-            {
-                "country": r["country"],
-                "flag": COUNTRY_FLAGS.get(r["country"], "🌍"),
-                "sub": f"{r['count']} destinations",
-            }
-            for r in rows
-        ]
+    """All 197 countries with flag, UNESCO World Heritage Site count, and
+    most-visited rank — backs the "Search by country" directory in the UI.
+    The frontend shows only the most-visited subset by default and searches
+    across the full list as the user types."""
+    return [
+        {
+            "country": name,
+            "flag": _flag_emoji(iso2),
+            "sites": sites,
+            "sub": f"{sites} UNESCO World Heritage Site{'s' if sites != 1 else ''}",
+            "most_visited_rank": rank,
+        }
+        for name, iso2, sites, rank in WORLD_COUNTRIES
+    ]
 
 
 def search_places(query: str, limit: int = 6):
@@ -961,51 +1033,6 @@ def get_mt_place(name: str):
                 SELECT * FROM mt_places WHERE city = ? COLLATE NOCASE LIMIT 1
             """, (city_guess,)).fetchone()
         return dict(row) if row else None
-
-
-def get_routes():
-    with get_conn() as conn:
-        rows = conn.execute("SELECT * FROM routes ORDER BY created_at DESC").fetchall()
-        return [dict(r) for r in rows]
-
-
-def get_saved_plans():
-    with get_conn() as conn:
-        rows = conn.execute("""
-            SELECT sp.*, r.from_name, r.to_name, r.distance_km, r.drive_hours
-            FROM saved_plans sp JOIN routes r ON sp.route_id = r.id
-            ORDER BY sp.created_at DESC
-        """).fetchall()
-        return [dict(r) for r in rows]
-
-
-def add_review(stop_id: int, reviewer: str, location: str,
-               rating: int, comment: str, initials: str = "TR",
-               avatar_color: str = "#c94b0c", visited_at: str = None):
-    with get_conn() as conn:
-        conn.execute("""
-            INSERT INTO reviews (stop_id,reviewer,location,rating,comment,initials,avatar_color,visited_at)
-            VALUES (?,?,?,?,?,?,?,?)
-        """, (stop_id, reviewer, location, rating, comment, initials, avatar_color, visited_at))
-        # Recalculate rating average
-        avg = conn.execute(
-            "SELECT AVG(rating) FROM reviews WHERE stop_id=?", (stop_id,)
-        ).fetchone()[0]
-        cnt = conn.execute(
-            "SELECT COUNT(*) FROM reviews WHERE stop_id=?", (stop_id,)
-        ).fetchone()[0]
-        conn.execute("UPDATE stops SET rating=?, review_count=? WHERE id=?",
-                     (round(avg, 2), cnt, stop_id))
-    return True
-
-
-def save_plan(user_name: str, route_id: int, title: str, notes: str = ""):
-    with get_conn() as conn:
-        conn.execute("""
-            INSERT INTO saved_plans (user_name, route_id, title, notes)
-            VALUES (?,?,?,?)
-        """, (user_name, route_id, title, notes))
-    return True
 
 
 def save_full_plan(title: str, from_name: str, from_lat: float, from_lng: float,
