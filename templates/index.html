@@ -275,8 +275,16 @@
       font-size: 12px;
       font-weight: 600;
       color: #fff;
+      text-decoration: none;
+      cursor: pointer;
       animation: floatUp 6s ease-in-out infinite;
       white-space: nowrap;
+      transition: background .15s, border-color .15s;
+    }
+
+    .hero-float:hover {
+      background: rgba(255, 255, 255, .2);
+      border-color: rgba(255, 255, 255, .3);
     }
 
     .hero-float.f1 {
@@ -562,95 +570,6 @@
       stroke-linejoin: round
     }
 
-    /* ── NEAR YOU ── */
-    .near-bar {
-      background: linear-gradient(135deg, #f0fdf4, #dcfce7);
-      border: 1px solid #bbf7d0;
-      border-radius: var(--r-xl);
-      padding: 20px 24px;
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      margin-bottom: 28px;
-      flex-wrap: wrap;
-    }
-
-    .near-icon {
-      width: 44px;
-      height: 44px;
-      border-radius: 50%;
-      background: var(--green);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-      box-shadow: 0 4px 12px rgba(0, 179, 126, .30);
-    }
-
-    .near-icon svg {
-      width: 20px;
-      height: 20px;
-      stroke: #fff;
-      fill: none;
-      stroke-width: 2;
-      stroke-linecap: round;
-      stroke-linejoin: round
-    }
-
-    .near-text {
-      flex: 1;
-      min-width: 0
-    }
-
-    .near-title {
-      font-size: 14px;
-      font-weight: 700;
-      color: #065f46
-    }
-
-    .near-sub {
-      font-size: 12px;
-      color: #059669;
-      margin-top: 2px
-    }
-
-    .near-btn {
-      background: var(--green);
-      color: #fff;
-      border: none;
-      padding: 10px 20px;
-      border-radius: var(--r-md);
-      font-family: var(--font);
-      font-size: 13px;
-      font-weight: 700;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 7px;
-      transition: background .15s;
-    }
-
-    .near-btn:hover {
-      background: #009966
-    }
-
-    .near-btn svg {
-      width: 13px;
-      height: 13px;
-      stroke: #fff;
-      fill: none;
-      stroke-width: 2;
-      stroke-linecap: round;
-      stroke-linejoin: round
-    }
-
-    #near-result {
-      font-size: 12px;
-      color: #059669;
-      margin-top: 4px;
-      font-weight: 500;
-    }
-
     /* ── DESTINATION CARDS ── */
     .dest-grid {
       display: grid;
@@ -686,13 +605,6 @@
       position: absolute;
       inset: 0;
       background: linear-gradient(to bottom, rgba(0, 0, 0, .05) 0%, rgba(0, 0, 0, .55) 100%);
-    }
-
-    .dest-emoji {
-      font-size: 58px;
-      position: relative;
-      z-index: 1;
-      filter: drop-shadow(0 4px 12px rgba(0, 0, 0, .3))
     }
 
     .dest-tag {
@@ -1273,21 +1185,21 @@
     <div class="hero-bg-dots"></div>
 
     <!-- floating place pills -->
-    <div class="hero-float f1">
+    <a class="hero-float f1" href="/home?place=T%27aqrachullo%2C%20Peru">
       <div class="dot"></div>T'aqrachullo, Peru
-    </div>
-    <div class="hero-float f2">
+    </a>
+    <a class="hero-float f2" href="/home?place=Kyoto%2C%20Japan">
       <div class="dot"></div>Kyoto, Japan
-    </div>
-    <div class="hero-float f3">
+    </a>
+    <a class="hero-float f3" href="/home?place=Santorini%2C%20Greece">
       <div class="dot"></div>Santorini, Greece
-    </div>
-    <div class="hero-float f4">
+    </a>
+    <a class="hero-float f4" href="/home?place=Waqrapukara%2C%20Peru">
       <div class="dot"></div>Waqrapukara, Peru
-    </div>
-    <div class="hero-float f5">
+    </a>
+    <a class="hero-float f5" href="/home?place=Bali%2C%20Indonesia">
       <div class="dot"></div>Bali, Indonesia
-    </div>
+    </a>
 
     <div class="hero-content">
       <div class="hero-eyebrow">
@@ -1348,7 +1260,7 @@
 
       <div class="featured-grid">
 
-        <a class="feat-card tall" href="/">
+        <a class="feat-card tall" href="/home?place=Maldives">
           <div class="feat-img" style="background:url('/assets/places/maldives.jpg') center/cover no-repeat">
             <div class="feat-ov"></div>
             <div class="feat-content">
@@ -1359,7 +1271,7 @@
           </div>
         </a>
 
-        <a class="feat-card" href="/">
+        <a class="feat-card" href="/home?place=Paris%2C%20France">
           <div class="feat-img" style="background:url('/assets/places/paris.jpg') center/cover no-repeat">
             <div class="feat-ov"></div>
             <div class="feat-content">
@@ -1370,7 +1282,7 @@
           </div>
         </a>
 
-        <a class="feat-card" href="/">
+        <a class="feat-card" href="/home?place=Bora%20Bora">
           <div class="feat-img" style="background:url('/assets/places/bora-bora.jpg') center/cover no-repeat">
             <div class="feat-ov"></div>
             <div class="feat-content">
@@ -1381,7 +1293,7 @@
           </div>
         </a>
 
-        <a class="feat-card" href="/">
+        <a class="feat-card" href="/home?place=Banff%2C%20Canada">
           <div class="feat-img" style="background:url('/assets/places/banff.jpg') center/cover no-repeat">
             <div class="feat-ov"></div>
             <div class="feat-content">
@@ -1392,7 +1304,7 @@
           </div>
         </a>
 
-        <a class="feat-card" href="/">
+        <a class="feat-card" href="/home?place=Dubai%2C%20UAE">
           <div class="feat-img" style="background:url('/assets/places/dubai.jpg') center/cover no-repeat">
             <div class="feat-ov"></div>
             <div class="feat-content">
@@ -1403,7 +1315,7 @@
           </div>
         </a>
 
-        <a class="feat-card" href="/">
+        <a class="feat-card" href="/home?place=Cape%20Town%2C%20South%20Africa">
           <div class="feat-img" style="background:url('/assets/places/cape-town.jpg') center/cover no-repeat">
             <div class="feat-ov"></div>
             <div class="feat-content">
@@ -1414,7 +1326,7 @@
           </div>
         </a>
 
-        <a class="feat-card" href="/">
+        <a class="feat-card" href="/home?place=Reykjavik%2C%20Iceland">
           <div class="feat-img" style="background:url('/assets/places/reykjavik.jpg') center/cover no-repeat">
             <div class="feat-ov"></div>
             <div class="feat-content">
@@ -1425,7 +1337,7 @@
           </div>
         </a>
 
-        <a class="feat-card" href="/">
+        <a class="feat-card" href="/home?place=Venice%2C%20Italy">
           <div class="feat-img" style="background:url('/assets/places/venice.jpg') center/cover no-repeat">
             <div class="feat-ov"></div>
             <div class="feat-content">
@@ -1436,7 +1348,7 @@
           </div>
         </a>
 
-        <a class="feat-card" href="/">
+        <a class="feat-card" href="/home?place=New%20York%20City">
           <div class="feat-img" style="background:url('/assets/places/new-york.jpg') center/cover no-repeat">
             <div class="feat-ov"></div>
             <div class="feat-content">
@@ -1447,7 +1359,7 @@
           </div>
         </a>
 
-        <a class="feat-card" href="/">
+        <a class="feat-card" href="/home?place=Phuket%2C%20Thailand">
           <div class="feat-img" style="background:url('/assets/places/phuket.jpg') center/cover no-repeat">
             <div class="feat-ov"></div>
             <div class="feat-content">
@@ -1458,7 +1370,7 @@
           </div>
         </a>
 
-        <a class="feat-card" href="/">
+        <a class="feat-card" href="/home?place=Machu%20Picchu%2C%20Peru">
           <div class="feat-img" style="background:url('/assets/places/machu-picchu.jpg') center/cover no-repeat">
             <div class="feat-ov"></div>
             <div class="feat-content">
@@ -1482,7 +1394,7 @@
           <div class="sec-title">Top destinations this season</div>
           <div class="sec-sub">The most-planned routes and places on makeTrip right now</div>
         </div>
-        <a class="sec-more" href="/">
+        <a class="sec-more" href="/home?view=top10">
           View all on map
           <svg viewBox="0 0 24 24">
             <line x1="5" y1="12" x2="19" y2="12" />
@@ -1494,9 +1406,8 @@
       <div class="dest-grid">
 
         <a class="dest-card" href="/">
-          <div class="dest-img" style="background:linear-gradient(145deg,#1a5c4a,#0a3a18)">
+          <div class="dest-img" style="background:url('/assets/places/top/torres-del-paine.jpg') center/cover no-repeat">
             <div class="dest-img-ov"></div>
-            <span class="dest-emoji">🧊</span>
             <span class="dest-tag">Nature</span>
             <span class="dest-rating"><svg viewBox="0 0 24 24">
                 <polygon
@@ -1513,9 +1424,8 @@
         </a>
 
         <a class="dest-card" href="/">
-          <div class="dest-img" style="background:linear-gradient(145deg,#3730a3,#1e1b4b)">
+          <div class="dest-img" style="background:url('/assets/places/top/kyoto.jpg') center/cover no-repeat">
             <div class="dest-img-ov"></div>
-            <span class="dest-emoji">🏯</span>
             <span class="dest-tag">Culture</span>
             <span class="dest-rating"><svg viewBox="0 0 24 24">
                 <polygon
@@ -1532,9 +1442,8 @@
         </a>
 
         <a class="dest-card" href="/">
-          <div class="dest-img" style="background:linear-gradient(145deg,#0284c7,#0c4a6e)">
+          <div class="dest-img" style="background:url('/assets/places/top/santorini.jpg') center/cover no-repeat">
             <div class="dest-img-ov"></div>
-            <span class="dest-emoji">🏛️</span>
             <span class="dest-tag">Scenic</span>
             <span class="dest-rating"><svg viewBox="0 0 24 24">
                 <polygon
@@ -1551,9 +1460,8 @@
         </a>
 
         <a class="dest-card" href="/">
-          <div class="dest-img" style="background:linear-gradient(145deg,#78350f,#451a03)">
+          <div class="dest-img" style="background:url('/assets/places/top/machu-picchu.jpg') center/cover no-repeat">
             <div class="dest-img-ov"></div>
-            <span class="dest-emoji">🗿</span>
             <span class="dest-tag">History</span>
             <span class="dest-rating"><svg viewBox="0 0 24 24">
                 <polygon
@@ -1570,9 +1478,8 @@
         </a>
 
         <a class="dest-card" href="/">
-          <div class="dest-img" style="background:linear-gradient(145deg,#065f46,#022c22)">
+          <div class="dest-img" style="background:url('/assets/places/top/galapagos.jpg') center/cover no-repeat">
             <div class="dest-img-ov"></div>
-            <span class="dest-emoji">🐢</span>
             <span class="dest-tag">Wildlife</span>
             <span class="dest-rating"><svg viewBox="0 0 24 24">
                 <polygon
@@ -1589,9 +1496,8 @@
         </a>
 
         <a class="dest-card" href="/">
-          <div class="dest-img" style="background:linear-gradient(145deg,#b45309,#78350f)">
+          <div class="dest-img" style="background:url('/assets/places/top/amalfi-coast.jpg') center/cover no-repeat">
             <div class="dest-img-ov"></div>
-            <span class="dest-emoji">🌊</span>
             <span class="dest-tag">Scenic</span>
             <span class="dest-rating"><svg viewBox="0 0 24 24">
                 <polygon
