@@ -1,181 +1,74 @@
 """
-makeTrip — SQLite database layer
+makeTrip — MongoDB database layer
 Handles all DB setup, seed data, and reads/writes for:
   - places / mt_places       : search-bar autocomplete and place details
   - top10_places             : curated top-10 rankings (worldwide/country/category)
   - saved_plans              : plans saved from a live search
   - stops / routes / reviews : legacy schema, kept for the get_all_stops()/
                                 get_reviews() demo in __main__ below
+
+Connects to MongoDB (Atlas or any other "online"/remote cluster) via the
+MONGODB_URI env var — set it in .env, e.g.:
+  MONGODB_URI=mongodb+srv://user:pass@cluster0.xxxxx.mongodb.net
+Falls back to a local mongod (mongodb://localhost:27017) for development
+when MONGODB_URI isn't set.
 """
 
-import sqlite3
+import os
 import json
-from pathlib import Path
+import re
+from datetime import datetime, timezone
 
-DB_PATH = Path(__file__).parent / "maketrip.db"
+import certifi
+from dotenv import load_dotenv
+from pymongo import MongoClient, ASCENDING
+
+# database.py is sometimes imported before app.py's own load_dotenv() call
+# (and run standalone via `python3 database.py`), so it loads .env itself.
+load_dotenv()
+
+MONGODB_URI = os.environ.get("MONGODB_URI", "mongodb://localhost:27017")
+MONGODB_DB_NAME = os.environ.get("MONGODB_DB_NAME", "maketrip")
+
+_client = None
 
 
-def get_conn():
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row   # dict-like rows
-    conn.execute("PRAGMA foreign_keys = ON")
-    return conn
+def get_client() -> MongoClient:
+    global _client
+    if _client is None:
+        # Same fix app.py uses for urllib: macOS Python builds don't always
+        # ship a usable CA trust store, which breaks TLS to Atlas
+        # (mongodb+srv://) with CERTIFICATE_VERIFY_FAILED. Harmless no-op
+        # for a non-TLS local mongodb:// connection.
+        _client = MongoClient(MONGODB_URI, tlsCAFile=certifi.where())
+    return _client
 
 
-# ── Schema ─────────────────────────────────────────────────────────────
+def get_db():
+    """The active database handle — collections are created lazily by Mongo
+    on first write, so there's no upfront CREATE TABLE step."""
+    return get_client()[MONGODB_DB_NAME]
+
+
+# ── Schema (indexes only — Mongo collections/fields are schemaless) ──────
 def init_db():
-    with get_conn() as conn:
-        conn.executescript("""
-        CREATE TABLE IF NOT EXISTS stops (
-            id          INTEGER PRIMARY KEY AUTOINCREMENT,
-            emoji       TEXT    NOT NULL,
-            name        TEXT    NOT NULL,
-            category    TEXT    NOT NULL,   -- trek / lake / town / trail
-            description TEXT    NOT NULL,
-            rating      REAL    NOT NULL DEFAULT 0,
-            review_count INTEGER NOT NULL DEFAULT 0,
-            location    TEXT    NOT NULL,
-            altitude    TEXT,
-            temperature TEXT,
-            drive_time  TEXT,
-            drive_note  TEXT,
-            distance_km TEXT,
-            dist_from   TEXT,
-            bg_gradient TEXT,
-            lat         REAL    NOT NULL,
-            lng         REAL    NOT NULL,
-            tags        TEXT    DEFAULT '[]',   -- JSON array
-            commutes    TEXT    DEFAULT '[]'    -- JSON array of objects
-        );
-
-        CREATE TABLE IF NOT EXISTS routes (
-            id          INTEGER PRIMARY KEY AUTOINCREMENT,
-            from_name   TEXT    NOT NULL,
-            from_lat    REAL    NOT NULL,
-            from_lng    REAL    NOT NULL,
-            to_name     TEXT    NOT NULL,
-            to_lat      REAL    NOT NULL,
-            to_lng      REAL    NOT NULL,
-            distance_km INTEGER,
-            drive_hours INTEGER,
-            stop_count  INTEGER DEFAULT 0,
-            days_min    INTEGER,
-            days_max    INTEGER,
-            created_at  DATETIME DEFAULT CURRENT_TIMESTAMP
-        );
-
-        CREATE TABLE IF NOT EXISTS route_stops (
-            route_id    INTEGER REFERENCES routes(id) ON DELETE CASCADE,
-            stop_id     INTEGER REFERENCES stops(id)  ON DELETE CASCADE,
-            position    INTEGER NOT NULL,
-            PRIMARY KEY (route_id, stop_id)
-        );
-
-        CREATE TABLE IF NOT EXISTS reviews (
-            id           INTEGER PRIMARY KEY AUTOINCREMENT,
-            stop_id      INTEGER REFERENCES stops(id) ON DELETE CASCADE,
-            reviewer     TEXT    NOT NULL,
-            location     TEXT,
-            rating       INTEGER NOT NULL CHECK(rating BETWEEN 1 AND 5),
-            comment      TEXT    NOT NULL,
-            avatar_color TEXT    DEFAULT '#c94b0c',
-            initials     TEXT    DEFAULT 'TR',
-            visited_at   TEXT,
-            created_at   DATETIME DEFAULT CURRENT_TIMESTAMP
-        );
-
-        CREATE TABLE IF NOT EXISTS top10 (
-            id          INTEGER PRIMARY KEY AUTOINCREMENT,
-            list_type   TEXT    NOT NULL,   -- worldwide / country / city / category
-            rank        INTEGER NOT NULL,
-            name        TEXT    NOT NULL,
-            description TEXT    NOT NULL,
-            rating      REAL    NOT NULL,
-            tag         TEXT    NOT NULL,
-            UNIQUE(list_type, rank)
-        );
-
-        CREATE TABLE IF NOT EXISTS places (
-            id          INTEGER PRIMARY KEY AUTOINCREMENT,
-            emoji       TEXT    NOT NULL,
-            name        TEXT    NOT NULL,
-            subtitle    TEXT    NOT NULL
-        );
-
-        CREATE TABLE IF NOT EXISTS mt_places (
-            id                 INTEGER PRIMARY KEY AUTOINCREMENT,
-            city               TEXT    NOT NULL,
-            country            TEXT    NOT NULL,
-            region             TEXT,
-            rating             REAL    NOT NULL DEFAULT 0,
-            total_reviews      INTEGER NOT NULL DEFAULT 0,
-            short_description  TEXT,
-            latitude           REAL    NOT NULL,
-            longitude          REAL    NOT NULL,
-            temperature        TEXT,
-            best_season        TEXT,
-            altitude           TEXT,
-            ai_recommendation  TEXT
-        );
-
-        CREATE TABLE IF NOT EXISTS top10_places (
-            id                 INTEGER PRIMARY KEY AUTOINCREMENT,
-            list_type          TEXT    NOT NULL,   -- worldwide / country
-            country            TEXT,               -- NULL for worldwide entries
-            city               TEXT    NOT NULL,
-            category           TEXT    NOT NULL,
-            rating             REAL    NOT NULL,
-            place_information  TEXT    NOT NULL,
-            latitude           REAL,
-            longitude          REAL,
-            rank               INTEGER NOT NULL
-        );
-
-        CREATE TABLE IF NOT EXISTS saved_plans (
-            id              INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_name       TEXT    DEFAULT 'Alex Traveller',
-            user_id         INTEGER DEFAULT 1111,
-            user_email      TEXT    DEFAULT 'test@gmail.com',
-            route_id        INTEGER REFERENCES routes(id),
-            title           TEXT,
-            notes           TEXT,
-            from_name       TEXT,
-            from_lat        REAL,
-            from_lng        REAL,
-            to_name         TEXT,
-            to_lat          REAL,
-            to_lng          REAL,
-            distance_km     INTEGER,
-            duration_text   TEXT,
-            transport_mode  TEXT,
-            stops_snapshot  TEXT    DEFAULT '[]',
-            created_at      DATETIME DEFAULT CURRENT_TIMESTAMP
-        );
-        """)
-        _migrate_saved_plans_columns(conn)
+    db = get_db()
+    db.top10.create_index([("list_type", ASCENDING), ("rank", ASCENDING)], unique=True)
+    db.top10_places.create_index([("list_type", ASCENDING), ("rank", ASCENDING)])
+    db.stops.create_index("id", unique=True)
+    db.reviews.create_index("stop_id")
+    db.places.create_index("name")
+    db.mt_places.create_index("city")
+    db.saved_plans.create_index("user_id")
     print("✅  Schema ready")
 
 
-# saved_plans predates the /api/saveplan feature; this backfills the new
-# columns onto an already-existing maketrip.db without touching its data.
-def _migrate_saved_plans_columns(conn):
-    existing = {row[1] for row in conn.execute("PRAGMA table_info(saved_plans)")}
-    for name, decl in [
-        ("user_id", "INTEGER DEFAULT 1111"),
-        ("user_email", "TEXT DEFAULT 'test@gmail.com'"),
-        ("from_name", "TEXT"),
-        ("from_lat", "REAL"),
-        ("from_lng", "REAL"),
-        ("to_name", "TEXT"),
-        ("to_lat", "REAL"),
-        ("to_lng", "REAL"),
-        ("distance_km", "INTEGER"),
-        ("duration_text", "TEXT"),
-        ("transport_mode", "TEXT"),
-        ("stops_snapshot", "TEXT DEFAULT '[]'"),
-    ]:
-        if name not in existing:
-            conn.execute(f"ALTER TABLE saved_plans ADD COLUMN {name} {decl}")
+def _next_id(db, collection: str) -> int:
+    """Small integer ids (matching the old SQLite AUTOINCREMENT ids the
+    frontend already expects) — fine at this app's scale; avoids pulling in
+    a separate counters collection for a handful of writes per request."""
+    last = db[collection].find_one(sort=[("id", -1)], projection={"id": 1})
+    return (last["id"] + 1) if last else 1
 
 
 # ── Seed data ───────────────────────────────────────────────────────────
@@ -753,142 +646,129 @@ TOP10_PLACES_SEED = [
 
 
 def seed_db():
-    with get_conn() as conn:
-        # Clear existing data in dependency order
-        conn.executescript("""
-            DELETE FROM saved_plans;
-            DELETE FROM route_stops;
-            DELETE FROM reviews;
-            DELETE FROM top10;
-            DELETE FROM routes;
-            DELETE FROM stops;
-            DELETE FROM mt_places;
-            DELETE FROM top10_places;
-            DELETE FROM places;
-        """)
+    db = get_db()
 
-        # Insert stops and collect their real IDs
-        stop_ids = []
-        for s in STOPS_SEED:
-            conn.execute("""
-                INSERT INTO stops (emoji,name,category,description,rating,review_count,
-                    location,altitude,temperature,drive_time,drive_note,distance_km,
-                    dist_from,bg_gradient,lat,lng,tags,commutes)
-                VALUES (:emoji,:name,:category,:description,:rating,:review_count,
-                    :location,:altitude,:temperature,:drive_time,:drive_note,:distance_km,
-                    :dist_from,:bg_gradient,:lat,:lng,:tags,:commutes)
-            """, s)
-            stop_ids.append(conn.execute("SELECT last_insert_rowid()").fetchone()[0])
+    # Clear existing data in dependency order
+    for name in ["saved_plans", "route_stops", "reviews", "top10", "routes",
+                 "stops", "mt_places", "top10_places", "places"]:
+        db[name].delete_many({})
 
-        # Insert a default route
-        conn.execute("""
-            INSERT INTO routes (from_name,from_lat,from_lng,to_name,to_lat,to_lng,
-                distance_km,drive_hours,stop_count,days_min,days_max)
-            VALUES ('Santiago, Chile',-33.4489,-70.6693,'Puerto Natales, Chile',-51.7319,-72.5083,
-                2460,26,3,8,10)
-        """)
-        route_id = conn.execute("SELECT last_insert_rowid()").fetchone()[0]
+    # Insert stops and collect their real IDs
+    stop_ids = []
+    for i, s in enumerate(STOPS_SEED, 1):
+        db.stops.insert_one({**s, "id": i})
+        stop_ids.append(i)
 
-        # Link stops to route using their real IDs
-        for pos, sid in enumerate(stop_ids, 1):
-            conn.execute("INSERT INTO route_stops VALUES (?,?,?)", (route_id, sid, pos))
+    # Insert a default route
+    route_id = 1
+    db.routes.insert_one({
+        "id": route_id,
+        "from_name": "Santiago, Chile", "from_lat": -33.4489, "from_lng": -70.6693,
+        "to_name": "Puerto Natales, Chile", "to_lat": -51.7319, "to_lng": -72.5083,
+        "distance_km": 2460, "drive_hours": 26, "stop_count": 3,
+        "days_min": 8, "days_max": 10,
+        "created_at": datetime.now(timezone.utc),
+    })
 
-        # Insert reviews using real stop IDs
-        for r in REVIEWS_SEED:
-            # Map seed stop_id (1-based index) to actual DB id
-            actual_stop_id = stop_ids[r["stop_id"] - 1]
-            conn.execute("""
-                INSERT INTO reviews (stop_id,reviewer,location,rating,comment,avatar_color,initials,visited_at)
-                VALUES (?,?,?,?,?,?,?,?)
-            """, (actual_stop_id, r["reviewer"], r["location"], r["rating"],
-                  r["comment"], r["avatar_color"], r["initials"], r["visited_at"]))
+    # Link stops to route using their real IDs
+    db.route_stops.insert_many([
+        {"route_id": route_id, "stop_id": sid, "position": pos}
+        for pos, sid in enumerate(stop_ids, 1)
+    ])
 
-        # Insert places (autocomplete source)
-        for p in PLACES_SEED:
-            conn.execute("INSERT INTO places (emoji,name,subtitle) VALUES (:emoji,:name,:subtitle)", p)
+    # Insert reviews using real stop IDs
+    for i, r in enumerate(REVIEWS_SEED, 1):
+        # Map seed stop_id (1-based index) to actual DB id
+        actual_stop_id = stop_ids[r["stop_id"] - 1]
+        db.reviews.insert_one({
+            "id": i, "stop_id": actual_stop_id, "reviewer": r["reviewer"],
+            "location": r["location"], "rating": r["rating"], "comment": r["comment"],
+            "avatar_color": r["avatar_color"], "initials": r["initials"],
+            "visited_at": r["visited_at"], "created_at": datetime.now(timezone.utc),
+        })
 
-        # Insert mt_places (left-panel place details, keyed off the autocomplete selection)
-        for mp in MT_PLACES_SEED:
-            conn.execute("""
-                INSERT INTO mt_places (city,country,region,rating,total_reviews,short_description,
-                    latitude,longitude,temperature,best_season,altitude,ai_recommendation)
-                VALUES (:city,:country,:region,:rating,:total_reviews,:short_description,
-                    :latitude,:longitude,:temperature,:best_season,:altitude,:ai_recommendation)
-            """, mp)
+    # Insert places (autocomplete source)
+    db.places.insert_many([{**p, "id": i} for i, p in enumerate(PLACES_SEED, 1)])
 
-        # Insert top10
-        for item in TOP10_SEED:
-            conn.execute("""
-                INSERT OR REPLACE INTO top10 (list_type,rank,name,description,rating,tag)
-                VALUES (:list_type,:rank,:name,:description,:rating,:tag)
-            """, item)
+    # Insert mt_places (left-panel place details, keyed off the autocomplete selection)
+    db.mt_places.insert_many([{**mp, "id": i} for i, mp in enumerate(MT_PLACES_SEED, 1)])
 
-        # Insert top10_places (richer worldwide / by-country rankings for /api/top10)
-        for item in TOP10_PLACES_SEED:
-            conn.execute("""
-                INSERT INTO top10_places (list_type,country,city,category,rating,place_information,latitude,longitude,rank)
-                VALUES (:list_type,:country,:city,:category,:rating,:place_information,:latitude,:longitude,:rank)
-            """, item)
+    # Insert top10
+    for item in TOP10_SEED:
+        db.top10.replace_one(
+            {"list_type": item["list_type"], "rank": item["rank"]}, item, upsert=True,
+        )
 
-        # Default saved plan
-        conn.execute("""
-            INSERT INTO saved_plans (user_name, route_id, title, notes)
-            VALUES ('Alex Traveller', ?, 'Patagonia Road Trip 2024',
-                    'Dream route from Santiago all the way to Puerto Natales')
-        """, (route_id,))
+    # Insert top10_places (richer worldwide / by-country rankings for /api/top10)
+    db.top10_places.insert_many([{**item, "id": i} for i, item in enumerate(TOP10_PLACES_SEED, 1)])
+
+    # Default saved plan
+    db.saved_plans.insert_one({
+        "id": 1, "user_name": "Alex Traveller", "user_id": 1111, "user_email": "test@gmail.com",
+        "route_id": route_id, "title": "Patagonia Road Trip 2024",
+        "notes": "Dream route from Santiago all the way to Puerto Natales",
+        "from_name": None, "from_lat": None, "from_lng": None,
+        "to_name": None, "to_lat": None, "to_lng": None,
+        "distance_km": None, "duration_text": None, "transport_mode": None,
+        "stops_snapshot": [], "created_at": datetime.now(timezone.utc),
+    })
 
     print("✅  Seed data inserted")
 
 
 # ── Query helpers ───────────────────────────────────────────────────────
+def _strip_id(doc):
+    """Drops Mongo's ObjectId _id (not JSON-serializable) from a document
+    before it goes into a jsonify() response."""
+    if doc is not None:
+        doc.pop("_id", None)
+    return doc
+
+
+def _iso(dt):
+    """ISO-8601 string for a stored datetime — jsonify() can't serialize
+    Python datetime/BSON date objects directly."""
+    return dt.isoformat() if dt else dt
+
+
 def get_all_stops():
-    with get_conn() as conn:
-        rows = conn.execute("SELECT * FROM stops ORDER BY id").fetchall()
-        result = []
-        for r in rows:
-            d = dict(r)
-            d["tags"] = json.loads(d["tags"])
-            d["commutes"] = json.loads(d["commutes"])
-            result.append(d)
-        return result
+    db = get_db()
+    result = []
+    for d in db.stops.find().sort("id", ASCENDING):
+        d = _strip_id(d)
+        d["tags"] = json.loads(d["tags"])
+        d["commutes"] = json.loads(d["commutes"])
+        result.append(d)
+    return result
 
 
 def get_reviews(stop_id: int):
-    with get_conn() as conn:
-        rows = conn.execute("""
-            SELECT * FROM reviews WHERE stop_id=? ORDER BY created_at DESC
-        """, (stop_id,)).fetchall()
-        return [dict(r) for r in rows]
+    db = get_db()
+    reviews = []
+    for d in db.reviews.find({"stop_id": stop_id}).sort("created_at", -1):
+        d = _strip_id(d)
+        d["created_at"] = _iso(d.get("created_at"))
+        reviews.append(d)
+    return reviews
 
 
 def get_top10_places(list_type: str, country: str = None):
     """Worldwide, by-country, or by-category top10 rankings
     (city/country/category/rating/place_information)."""
-    with get_conn() as conn:
-        if list_type == "country":
-            rows = conn.execute("""
-                SELECT * FROM top10_places
-                WHERE list_type='country' AND country=? COLLATE NOCASE
-                ORDER BY rank
-            """, (country,)).fetchall()
-        elif list_type == "category":
-            rows = conn.execute("""
-                SELECT * FROM top10_places WHERE list_type='category' ORDER BY rank
-            """).fetchall()
-        else:
-            rows = conn.execute("""
-                SELECT * FROM top10_places WHERE list_type='worldwide' ORDER BY rank
-            """).fetchall()
-        return [dict(r) for r in rows]
+    db = get_db()
+    if list_type == "country":
+        query = {"list_type": "country", "country": {"$regex": f"^{re.escape(country or '')}$", "$options": "i"}}
+    elif list_type == "category":
+        query = {"list_type": "category"}
+    else:
+        query = {"list_type": "worldwide"}
+    return [_strip_id(d) for d in db.top10_places.find(query).sort("rank", ASCENDING)]
 
 
 def get_top10_countries():
     """Distinct countries that have a by-country top10 list, for building UI filters."""
-    with get_conn() as conn:
-        rows = conn.execute("""
-            SELECT DISTINCT country FROM top10_places WHERE list_type='country' ORDER BY country
-        """).fetchall()
-        return [r["country"] for r in rows]
+    db = get_db()
+    return sorted(db.top10_places.distinct("country", {"list_type": "country"}))
 
 
 def _flag_emoji(iso2: str) -> str:
@@ -1004,35 +884,32 @@ def get_top10_country_directory():
 
 def search_places(query: str, limit: int = 6):
     """Autocomplete lookup: matches on name or subtitle, name-prefix matches first."""
-    like = f"%{query}%"
-    with get_conn() as conn:
-        rows = conn.execute("""
-            SELECT *, (name LIKE :prefix) AS is_prefix
-            FROM places
-            WHERE name LIKE :like OR subtitle LIKE :like
-            ORDER BY is_prefix DESC, name
-            LIMIT :limit
-        """, {"like": like, "prefix": f"{query}%", "limit": limit}).fetchall()
-        return [dict(r) for r in rows]
+    db = get_db()
+    pattern = re.escape(query)
+    matches = list(db.places.find({
+        "$or": [{"name": {"$regex": pattern, "$options": "i"}},
+                {"subtitle": {"$regex": pattern, "$options": "i"}}],
+    }))
+    prefix_re = re.compile(f"^{pattern}", re.IGNORECASE)
+    matches.sort(key=lambda d: (not prefix_re.match(d["name"]), d["name"]))
+    return [_strip_id(d) for d in matches[:limit]]
 
 
 def get_mt_place(name: str):
     """Look up a place's details by the value typed into the search bar, e.g.
     'Santiago, Chile' or 'Galapagos Islands'. Matches on 'city, country' first, then city alone."""
+    db = get_db()
     name = name.strip()
     city_guess = name.split(",")[0].strip()
-    with get_conn() as conn:
-        row = conn.execute("""
-            SELECT * FROM mt_places
-            WHERE (city || ', ' || country) = ? COLLATE NOCASE
-               OR city = ? COLLATE NOCASE
-            LIMIT 1
-        """, (name, name)).fetchone()
-        if not row:
-            row = conn.execute("""
-                SELECT * FROM mt_places WHERE city = ? COLLATE NOCASE LIMIT 1
-            """, (city_guess,)).fetchone()
-        return dict(row) if row else None
+    doc = db.mt_places.find_one({
+        "$or": [
+            {"$expr": {"$eq": [{"$concat": ["$city", ", ", "$country"]}, name]}},
+            {"city": {"$regex": f"^{re.escape(name)}$", "$options": "i"}},
+        ],
+    })
+    if not doc:
+        doc = db.mt_places.find_one({"city": {"$regex": f"^{re.escape(city_guess)}$", "$options": "i"}})
+    return _strip_id(doc) if doc else None
 
 
 def save_full_plan(title: str, from_name: str, from_lat: float, from_lng: float,
@@ -1043,35 +920,28 @@ def save_full_plan(title: str, from_name: str, from_lat: float, from_lng: float,
     """Saves a plan built from a live search: the real from/to points and the
     Google Maps markers (tourist places, as {name, latitude, longitude}) found
     along that route — associated with the given user."""
-    with get_conn() as conn:
-        conn.execute("""
-            INSERT INTO saved_plans (user_id, user_email, title, notes,
-                from_name, from_lat, from_lng, to_name, to_lat, to_lng,
-                distance_km, duration_text, transport_mode, stops_snapshot)
-            VALUES (:user_id,:user_email,:title,:notes,
-                :from_name,:from_lat,:from_lng,:to_name,:to_lat,:to_lng,
-                :distance_km,:duration_text,:transport_mode,:places)
-        """, {
-            "user_id": user_id, "user_email": user_email, "title": title, "notes": notes,
-            "from_name": from_name, "from_lat": from_lat, "from_lng": from_lng,
-            "to_name": to_name, "to_lat": to_lat, "to_lng": to_lng,
-            "distance_km": distance_km, "duration_text": duration_text,
-            "transport_mode": transport_mode, "places": json.dumps(places or []),
-        })
-        return conn.execute("SELECT last_insert_rowid()").fetchone()[0]
+    db = get_db()
+    new_id = _next_id(db, "saved_plans")
+    db.saved_plans.insert_one({
+        "id": new_id, "user_id": user_id, "user_email": user_email, "title": title, "notes": notes,
+        "from_name": from_name, "from_lat": from_lat, "from_lng": from_lng,
+        "to_name": to_name, "to_lat": to_lat, "to_lng": to_lng,
+        "distance_km": distance_km, "duration_text": duration_text,
+        "transport_mode": transport_mode, "stops_snapshot": places or [],
+        "created_at": datetime.now(timezone.utc),
+    })
+    return new_id
 
 
 def get_plans_for_user(user_id: int):
-    with get_conn() as conn:
-        rows = conn.execute("""
-            SELECT * FROM saved_plans WHERE user_id=? ORDER BY created_at DESC
-        """, (user_id,)).fetchall()
-        result = []
-        for r in rows:
-            d = dict(r)
-            d["stops_snapshot"] = json.loads(d["stops_snapshot"] or "[]")
-            result.append(d)
-        return result
+    db = get_db()
+    plans = []
+    for d in db.saved_plans.find({"user_id": user_id}).sort("created_at", -1):
+        d = _strip_id(d)
+        d["created_at"] = _iso(d.get("created_at"))
+        d["stops_snapshot"] = d.get("stops_snapshot") or []
+        plans.append(d)
+    return plans
 
 
 if __name__ == "__main__":
