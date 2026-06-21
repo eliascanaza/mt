@@ -460,17 +460,22 @@ def health():
         stops = db.get_all_stops()
         return jsonify({
             "status": "ok",
-            "db": str(db.DB_PATH),
+            "db": db.MONGODB_DB_NAME,
             "stops_in_db": len(stops),
         })
     except Exception as e:
         return jsonify({"status": "error", "detail": str(e)}), 500
 
 
+# Index creation is idempotent, so it's safe to run on every boot — under
+# gunicorn this module is imported rather than run as __main__, so it has
+# to happen here rather than in the block below. seed_db() is NOT called
+# automatically: it wipes every collection before reseeding, which would
+# destroy real user data (saved_plans) on every restart/redeploy. Run it
+# manually once (`python3 database.py`) to load the reference/demo data.
+db.init_db()
+
 if __name__ == "__main__":
-    # Ensure DB is ready
-    db.init_db()
-    db.seed_db()
     print("\n🚀  makeTrip server starting at http://127.0.0.1:5004")
     print("   GET  /             → HTML app")
     print("   GET  /api/health   → health check\n")
