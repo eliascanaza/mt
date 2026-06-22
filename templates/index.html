@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>makeTrip — Discover the world, one stop at a time</title>
+  <title>exploreMore — Discover the world, one stop at a time</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link
@@ -599,6 +599,51 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      overflow: hidden;
+    }
+
+    /* trip cards show both endpoints as one photo split corner-to-corner */
+    .dest-img-half {
+      position: absolute;
+      inset: 0;
+      background-size: cover;
+      background-position: center;
+    }
+
+    .dest-img-half.from {
+      clip-path: polygon(0 0, 100% 0, 0 100%);
+    }
+
+    .dest-img-half.to {
+      clip-path: polygon(100% 0, 100% 100%, 0 100%);
+    }
+
+    .dest-img-divider {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(158deg, transparent calc(50% - 1px), rgba(255, 255, 255, .9) 50%, transparent calc(50% + 1px));
+    }
+
+    .dest-img-label {
+      position: absolute;
+      z-index: 2;
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      text-shadow: 0 1px 4px rgba(0, 0, 0, .5);
+    }
+
+    .dest-img-label.from {
+      top: 10px;
+      left: 15px;
+    }
+
+    .dest-img-label.to {
+      bottom: 10px;
+      right: 12px;
+      text-align: right;
     }
 
     .dest-img-ov {
@@ -607,28 +652,12 @@
       background: linear-gradient(to bottom, rgba(0, 0, 0, .05) 0%, rgba(0, 0, 0, .55) 100%);
     }
 
-    .dest-tag {
-      position: absolute;
-      top: 12px;
-      left: 12px;
-      z-index: 2;
-      background: rgba(0, 0, 0, .40);
-      backdrop-filter: blur(8px);
-      color: #fff;
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: .05em;
-      text-transform: uppercase;
-      padding: 4px 10px;
-      border-radius: 99px;
-    }
-
     .dest-rating {
       position: absolute;
       top: 12px;
       right: 12px;
       z-index: 2;
-      background: rgba(255, 255, 255, .15);
+      background: rgba(0, 0, 0, .40);
       backdrop-filter: blur(8px);
       border: 1px solid rgba(255, 255, 255, .25);
       color: #fff;
@@ -678,10 +707,9 @@
       flex-shrink: 0
     }
 
-    /* ── FEATURED (tall card) ── */
     .featured-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: repeat(3, 1fr);
       grid-template-rows: auto auto;
       gap: 16px;
     }
@@ -703,7 +731,8 @@
     }
 
     .feat-card.tall {
-      grid-row: span 2
+      grid-column: span 2;
+      grid-row: span 1;
     }
 
     .feat-img {
@@ -755,13 +784,37 @@
       margin-bottom: 4px
     }
 
-    .feat-card:not(.tall) .feat-name {
-      font-size: 15px
-    }
-
     .feat-sub {
       font-size: 12px;
       color: rgba(255, 255, 255, .70)
+    }
+
+    /* ── "Top destinations" hosts the mosaic cards, but uniformly large (no tall card) ── */
+    #discover .featured-grid {
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: none;
+    }
+
+    #discover .feat-card:not(.tall) .feat-name {
+      font-size: 18px;
+    }
+
+    /* ── "Places that stay with you" hosts the trip cards, with the first one big ── */
+    #top-picks .dest-grid {
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: auto auto;
+    }
+
+    #top-picks .dest-card.tall {
+      grid-row: span 2;
+    }
+
+    #top-picks .dest-card.tall .dest-img {
+      height: 440px;
+    }
+
+    #top-picks .dest-card.tall .dest-name {
+      font-size: 18px;
     }
 
     /* ── FEATURES ── */
@@ -1093,6 +1146,29 @@
       .feat-card.tall .feat-img {
         min-height: 260px
       }
+
+      #discover .featured-grid {
+        grid-template-columns: repeat(2, 1fr)
+      }
+
+      #top-picks .dest-grid {
+        grid-template-columns: 1fr
+      }
+
+      #top-picks .dest-card.tall {
+        grid-row: span 1
+      }
+
+      #top-picks .dest-card.tall .dest-img {
+        height: 320px
+      }
+
+      .dest-img-divider {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(147deg, transparent calc(50% - 1px), rgba(255, 255, 255, .9) 50%, transparent calc(50% + 1px))
+      }
+
     }
 
     @media (max-width: 600px) {
@@ -1117,6 +1193,10 @@
       }
 
       .testi-grid {
+        grid-template-columns: 1fr
+      }
+
+      #discover .featured-grid {
         grid-template-columns: 1fr
       }
 
@@ -1158,7 +1238,7 @@
             d="M10 1.5C6.41 1.5 3.5 4.41 3.5 8c0 4.9 6.5 10.5 6.5 10.5S16.5 12.9 16.5 8c0-3.59-2.91-6.5-6.5-6.5zm0 8.75a2.25 2.25 0 1 1 0-4.5 2.25 2.25 0 0 1 0 4.5z" />
         </svg>
       </div>
-      <span class="logo-text">make<strong>Trip</strong></span>
+      <span class="logo-text">explore<strong>More</strong></span>
     </a>
     <ul class="nav-links">
       <li><a href="#discover">Discover</a></li>
@@ -1249,135 +1329,153 @@
     </div>
   </section>
   <!-- ══ FEATURED (mosaic) ══ -->
-  <section class="section" style="background:var(--g50);padding-top:0" id="top-picks">
+  <section class="section" style="background:var(--g50);" id="top-picks">
     <div class="section-inner">
       <div class="sec-hdr">
         <div>
-          <div class="sec-title">Places that stay with you</div>
-          <div class="sec-sub">Destinations our travellers recommend most — and keep coming back to</div>
+          <div class="sec-eyebrow">Most Popular Plans</div>
+          <div class="sec-title">Popular plans created by our users</div>
+          <div class="sec-sub">The most-planned routes and places on exploreMore right now.</div>
         </div>
       </div>
 
-      <div class="featured-grid">
+      <div class="dest-grid">
 
-        <a class="feat-card tall" href="/home?place=Maldives">
-          <div class="feat-img" style="background:url('/assets/places/maldives.jpg') center/cover no-repeat">
-            <div class="feat-ov"></div>
-            <div class="feat-content">
-              <span class="feat-tag">#1 worldwide</span>
-              <div class="feat-name">Maldives</div>
-              <div class="feat-sub">Overwater villas above turquoise lagoons — the ultimate escape</div>
-            </div>
+        <a class="dest-card" href="/home?from=Santiago%2C%20Chile&to=Torres%20del%20Paine%2C%20Chile">
+          <div class="dest-img">
+            <div class="dest-img-half from" style="background-image:url('/assets/places/trips/santiago.jpg')"></div>
+            <div class="dest-img-half to" style="background-image:url('/assets/places/top/torres-del-paine.jpg')"></div>
+            <div class="dest-img-divider"></div>
+            <div class="dest-img-ov"></div>
+            <span class="dest-rating"><svg viewBox="0 0 24 24"
+                style="fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round">
+                <circle cx="12" cy="12" r="9" />
+                <path d="M12 7v5l3 2" />
+              </svg>35h trip</span>
+            <span class="dest-img-label from">Santiago</span>
+            <span class="dest-img-label to">Torres del Paine</span>
+          </div>
+          <div class="dest-body">
+            <div class="dest-name">Santiago &rarr; Torres del Paine</div>
+            <div class="dest-loc"><svg viewBox="0 0 24 24">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                <circle cx="12" cy="10" r="3" />
+              </svg>Via Puerto Montt, Puerto Natales</div>
           </div>
         </a>
 
-        <a class="feat-card" href="/home?place=Paris%2C%20France">
-          <div class="feat-img" style="background:url('/assets/places/paris.jpg') center/cover no-repeat">
-            <div class="feat-ov"></div>
-            <div class="feat-content">
-              <span class="feat-tag">Culture</span>
-              <div class="feat-name">Paris, France</div>
-              <div class="feat-sub">The city of love, art and timeless boulevards</div>
-            </div>
+        <a class="dest-card" href="/home?from=Tokyo%2C%20Japan&to=Kyoto%2C%20Japan">
+          <div class="dest-img">
+            <div class="dest-img-half from" style="background-image:url('/assets/places/trips/tokyo.jpg')"></div>
+            <div class="dest-img-half to" style="background-image:url('/assets/places/top/kyoto.jpg')"></div>
+            <div class="dest-img-divider"></div>
+            <div class="dest-img-ov"></div>
+            <span class="dest-rating"><svg viewBox="0 0 24 24"
+                style="fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round">
+                <circle cx="12" cy="12" r="9" />
+                <path d="M12 7v5l3 2" />
+              </svg>8h trip</span>
+            <span class="dest-img-label from">Tokyo</span>
+            <span class="dest-img-label to">Kyoto</span>
+          </div>
+          <div class="dest-body">
+            <div class="dest-name">Tokyo &rarr; Kyoto</div>
+            <div class="dest-loc"><svg viewBox="0 0 24 24">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                <circle cx="12" cy="10" r="3" />
+              </svg>Via Nagoya, Osaka</div>
           </div>
         </a>
 
-        <a class="feat-card" href="/home?place=Bora%20Bora">
-          <div class="feat-img" style="background:url('/assets/places/bora-bora.jpg') center/cover no-repeat">
-            <div class="feat-ov"></div>
-            <div class="feat-content">
-              <span class="feat-tag">Beach</span>
-              <div class="feat-name">Bora Bora</div>
-              <div class="feat-sub">Coral reefs and impossibly blue water</div>
-            </div>
+        <a class="dest-card" href="/home?from=Athens%2C%20Greece&to=Santorini%2C%20Greece">
+          <div class="dest-img">
+            <div class="dest-img-half from" style="background-image:url('/assets/places/trips/athens.jpg')"></div>
+            <div class="dest-img-half to" style="background-image:url('/assets/places/top/santorini.jpg')"></div>
+            <div class="dest-img-divider"></div>
+            <div class="dest-img-ov"></div>
+            <span class="dest-rating"><svg viewBox="0 0 24 24"
+                style="fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round">
+                <circle cx="12" cy="12" r="9" />
+                <path d="M12 7v5l3 2" />
+              </svg>11h trip</span>
+            <span class="dest-img-label from">Athens</span>
+            <span class="dest-img-label to">Santorini</span>
+          </div>
+          <div class="dest-body">
+            <div class="dest-name">Athens &rarr; Santorini</div>
+            <div class="dest-loc"><svg viewBox="0 0 24 24">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                <circle cx="12" cy="10" r="3" />
+              </svg>Via Piraeus, Mykonos</div>
           </div>
         </a>
 
-        <a class="feat-card" href="/home?place=Banff%2C%20Canada">
-          <div class="feat-img" style="background:url('/assets/places/banff.jpg') center/cover no-repeat">
-            <div class="feat-ov"></div>
-            <div class="feat-content">
-              <span class="feat-tag">Nature</span>
-              <div class="feat-name">Banff, Canada</div>
-              <div class="feat-sub">Turquoise lakes ringed by the Rockies</div>
-            </div>
+        <a class="dest-card" href="/home?from=Cusco%2C%20Peru&to=Ollantaytambo%2C%20Peru">
+          <div class="dest-img">
+            <div class="dest-img-half from" style="background-image:url('/assets/places/trips/cusco.jpg')"></div>
+            <div class="dest-img-half to" style="background-image:url('/assets/places/top/machu-picchu.jpg')"></div>
+            <div class="dest-img-divider"></div>
+            <div class="dest-img-ov"></div>
+            <span class="dest-rating"><svg viewBox="0 0 24 24"
+                style="fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round">
+                <circle cx="12" cy="12" r="9" />
+                <path d="M12 7v5l3 2" />
+              </svg>2h trip</span>
+            <span class="dest-img-label from">Cusco</span>
+            <span class="dest-img-label to">Machu Picchu</span>
+          </div>
+          <div class="dest-body">
+            <div class="dest-name">Cusco &rarr; Ollantaytambo</div>
+            <div class="dest-loc"><svg viewBox="0 0 24 24">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                <circle cx="12" cy="10" r="3" />
+              </svg>Via Sacred Valley &middot; train onward to Machu Picchu</div>
           </div>
         </a>
 
-        <a class="feat-card" href="/home?place=Dubai%2C%20UAE">
-          <div class="feat-img" style="background:url('/assets/places/dubai.jpg') center/cover no-repeat">
-            <div class="feat-ov"></div>
-            <div class="feat-content">
-              <span class="feat-tag">Luxury</span>
-              <div class="feat-name">Dubai, UAE</div>
-              <div class="feat-sub">Towering skylines meet golden desert dunes</div>
-            </div>
+        <a class="dest-card" href="/home?from=Cape%20Town%2C%20South%20Africa&to=Knysna%2C%20South%20Africa">
+          <div class="dest-img">
+            <div class="dest-img-half from" style="background-image:url('/assets/places/cape-town.jpg')"></div>
+            <div class="dest-img-half to" style="background-image:url('/assets/places/trips/knysna.jpg')"></div>
+            <div class="dest-img-divider"></div>
+            <div class="dest-img-ov"></div>
+            <span class="dest-rating"><svg viewBox="0 0 24 24"
+                style="fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round">
+                <circle cx="12" cy="12" r="9" />
+                <path d="M12 7v5l3 2" />
+              </svg>8h trip</span>
+            <span class="dest-img-label from">Cape Town</span>
+            <span class="dest-img-label to">Knysna</span>
+          </div>
+          <div class="dest-body">
+            <div class="dest-name">Cape Town &rarr; Knysna</div>
+            <div class="dest-loc"><svg viewBox="0 0 24 24">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                <circle cx="12" cy="10" r="3" />
+              </svg>Via Hermanus, Mossel Bay</div>
           </div>
         </a>
 
-        <a class="feat-card" href="/home?place=Cape%20Town%2C%20South%20Africa">
-          <div class="feat-img" style="background:url('/assets/places/cape-town.jpg') center/cover no-repeat">
-            <div class="feat-ov"></div>
-            <div class="feat-content">
-              <span class="feat-tag">Scenic</span>
-              <div class="feat-name">Cape Town, South Africa</div>
-              <div class="feat-sub">Table Mountain meets two oceans</div>
-            </div>
+        <a class="dest-card" href="/home?from=Rome%2C%20Italy&to=Amalfi%20Coast%2C%20Italy">
+          <div class="dest-img">
+            <div class="dest-img-half from" style="background-image:url('/assets/places/trips/rome.jpg')"></div>
+            <div class="dest-img-half to" style="background-image:url('/assets/places/top/amalfi-coast.jpg')"></div>
+            <div class="dest-img-divider"></div>
+            <div class="dest-img-ov"></div>
+            <span class="dest-rating"><svg viewBox="0 0 24 24"
+                style="fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round">
+                <circle cx="12" cy="12" r="9" />
+                <path d="M12 7v5l3 2" />
+              </svg>5h trip</span>
+            <span class="dest-img-label from">Rome</span>
+            <span class="dest-img-label to">Amalfi Coast</span>
           </div>
-        </a>
-
-        <a class="feat-card" href="/home?place=Reykjavik%2C%20Iceland">
-          <div class="feat-img" style="background:url('/assets/places/reykjavik.jpg') center/cover no-repeat">
-            <div class="feat-ov"></div>
-            <div class="feat-content">
-              <span class="feat-tag">Nature</span>
-              <div class="feat-name">Reykjavik, Iceland</div>
-              <div class="feat-sub">Glaciers, hot springs and the northern lights</div>
-            </div>
-          </div>
-        </a>
-
-        <a class="feat-card" href="/home?place=Venice%2C%20Italy">
-          <div class="feat-img" style="background:url('/assets/places/venice.jpg') center/cover no-repeat">
-            <div class="feat-ov"></div>
-            <div class="feat-content">
-              <span class="feat-tag">Culture</span>
-              <div class="feat-name">Venice, Italy</div>
-              <div class="feat-sub">Canals, gondolas and Renaissance grandeur</div>
-            </div>
-          </div>
-        </a>
-
-        <a class="feat-card" href="/home?place=New%20York%20City">
-          <div class="feat-img" style="background:url('/assets/places/new-york.jpg') center/cover no-repeat">
-            <div class="feat-ov"></div>
-            <div class="feat-content">
-              <span class="feat-tag">Urban</span>
-              <div class="feat-name">New York City</div>
-              <div class="feat-sub">The city that never sleeps</div>
-            </div>
-          </div>
-        </a>
-
-        <a class="feat-card" href="/home?place=Phuket%2C%20Thailand">
-          <div class="feat-img" style="background:url('/assets/places/phuket.jpg') center/cover no-repeat">
-            <div class="feat-ov"></div>
-            <div class="feat-content">
-              <span class="feat-tag">Beach</span>
-              <div class="feat-name">Phuket, Thailand</div>
-              <div class="feat-sub">Limestone cliffs and palm-lined shores</div>
-            </div>
-          </div>
-        </a>
-
-        <a class="feat-card" href="/home?place=Machu%20Picchu%2C%20Peru">
-          <div class="feat-img" style="background:url('/assets/places/machu-picchu.jpg') center/cover no-repeat">
-            <div class="feat-ov"></div>
-            <div class="feat-content">
-              <span class="feat-tag">History</span>
-              <div class="feat-name">Machu Picchu, Peru</div>
-              <div class="feat-sub">Ancient Incan citadel high in the Andes</div>
-            </div>
+          <div class="dest-body">
+            <div class="dest-name">Rome &rarr; Amalfi Coast</div>
+            <div class="dest-loc"><svg viewBox="0 0 24 24">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                <circle cx="12" cy="10" r="3" />
+              </svg>Via Naples, Sorrento</div>
           </div>
         </a>
 
@@ -1391,8 +1489,9 @@
       <div class="sec-hdr">
         <div>
           <div class="sec-eyebrow">Trending now</div>
-          <div class="sec-title">Top destinations this season</div>
-          <div class="sec-sub">The most-planned routes and places on makeTrip right now</div>
+          <div class="sec-title">Top 10 around the globe</div>
+          <div class="sec-sub">Discover the most popular travel plans for your
+            next adventure.</div>
         </div>
         <a class="sec-more" href="/home?view=top10">
           View all on map
@@ -1403,113 +1502,120 @@
         </a>
       </div>
 
-      <div class="dest-grid">
+      <div class="featured-grid">
 
-        <a class="dest-card" href="/">
-          <div class="dest-img" style="background:url('/assets/places/top/torres-del-paine.jpg') center/cover no-repeat">
-            <div class="dest-img-ov"></div>
-            <span class="dest-tag">Nature</span>
-            <span class="dest-rating"><svg viewBox="0 0 24 24">
-                <polygon
-                  points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-              </svg>4.97</span>
-          </div>
-          <div class="dest-body">
-            <div class="dest-name">Torres del Paine</div>
-            <div class="dest-loc"><svg viewBox="0 0 24 24">
-                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                <circle cx="12" cy="10" r="3" />
-              </svg>Patagonia, Chile</div>
+        <a class="feat-card tall" href="/home?place=Eiffel%20Tower%2C%20Paris%2C%20France">
+          <div class="feat-img" style="background:url('/assets/places/paris.jpg') center/cover no-repeat">
+            <div class="feat-ov"></div>
+            <div class="feat-content">
+              <span class="feat-tag">#1 worldwide</span>
+              <div class="feat-name">Eiffel Tower, Paris</div>
+              <div class="feat-sub">330 metres of iron over the Seine — the symbol of Paris itself</div>
+            </div>
           </div>
         </a>
 
-        <a class="dest-card" href="/">
-          <div class="dest-img" style="background:url('/assets/places/top/kyoto.jpg') center/cover no-repeat">
-            <div class="dest-img-ov"></div>
-            <span class="dest-tag">Culture</span>
-            <span class="dest-rating"><svg viewBox="0 0 24 24">
-                <polygon
-                  points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-              </svg>4.95</span>
-          </div>
-          <div class="dest-body">
-            <div class="dest-name">Kyoto</div>
-            <div class="dest-loc"><svg viewBox="0 0 24 24">
-                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                <circle cx="12" cy="10" r="3" />
-              </svg>Japan</div>
+        <a class="feat-card" href="/home?place=Colosseum%2C%20Rome%2C%20Italy">
+          <div class="feat-img" style="background:url('/assets/places/landmarks/colosseum.jpg') center/cover no-repeat">
+            <div class="feat-ov"></div>
+            <div class="feat-content">
+              <span class="feat-tag">#2 worldwide</span>
+              <div class="feat-name">Colosseum, Rome</div>
+              <div class="feat-sub">The largest amphitheatre ever built, once filled with 50,000 spectators</div>
+            </div>
           </div>
         </a>
 
-        <a class="dest-card" href="/">
-          <div class="dest-img" style="background:url('/assets/places/top/santorini.jpg') center/cover no-repeat">
-            <div class="dest-img-ov"></div>
-            <span class="dest-tag">Scenic</span>
-            <span class="dest-rating"><svg viewBox="0 0 24 24">
-                <polygon
-                  points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-              </svg>4.91</span>
-          </div>
-          <div class="dest-body">
-            <div class="dest-name">Santorini</div>
-            <div class="dest-loc"><svg viewBox="0 0 24 24">
-                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                <circle cx="12" cy="10" r="3" />
-              </svg>Greece</div>
+        <a class="feat-card" href="/home?place=Taj%20Mahal%2C%20Agra%2C%20India">
+          <div class="feat-img" style="background:url('/assets/places/landmarks/taj-mahal.jpg') center/cover no-repeat">
+            <div class="feat-ov"></div>
+            <div class="feat-content">
+              <span class="feat-tag">#3 worldwide</span>
+              <div class="feat-name">Taj Mahal, Agra</div>
+              <div class="feat-sub">A white-marble mausoleum and one of the most photographed buildings on Earth</div>
+            </div>
           </div>
         </a>
 
-        <a class="dest-card" href="/">
-          <div class="dest-img" style="background:url('/assets/places/top/machu-picchu.jpg') center/cover no-repeat">
-            <div class="dest-img-ov"></div>
-            <span class="dest-tag">History</span>
-            <span class="dest-rating"><svg viewBox="0 0 24 24">
-                <polygon
-                  points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-              </svg>4.90</span>
-          </div>
-          <div class="dest-body">
-            <div class="dest-name">Machu Picchu</div>
-            <div class="dest-loc"><svg viewBox="0 0 24 24">
-                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                <circle cx="12" cy="10" r="3" />
-              </svg>Peru</div>
+        <a class="feat-card" href="/home?place=Statue%20of%20Liberty%2C%20New%20York%20City%2C%20USA">
+          <div class="feat-img"
+            style="background:url('/assets/places/landmarks/statue-of-liberty.jpg') center/cover no-repeat">
+            <div class="feat-ov"></div>
+            <div class="feat-content">
+              <span class="feat-tag">#4 worldwide</span>
+              <div class="feat-name">Statue of Liberty, NYC</div>
+              <div class="feat-sub">France's 1886 gift, standing watch over New York Harbor</div>
+            </div>
           </div>
         </a>
 
-        <a class="dest-card" href="/">
-          <div class="dest-img" style="background:url('/assets/places/top/galapagos.jpg') center/cover no-repeat">
-            <div class="dest-img-ov"></div>
-            <span class="dest-tag">Wildlife</span>
-            <span class="dest-rating"><svg viewBox="0 0 24 24">
-                <polygon
-                  points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-              </svg>4.89</span>
-          </div>
-          <div class="dest-body">
-            <div class="dest-name">Galápagos Islands</div>
-            <div class="dest-loc"><svg viewBox="0 0 24 24">
-                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                <circle cx="12" cy="10" r="3" />
-              </svg>Ecuador</div>
+        <a class="feat-card" href="/home?place=Machu%20Picchu%2C%20Peru">
+          <div class="feat-img" style="background:url('/assets/places/machu-picchu.jpg') center/cover no-repeat">
+            <div class="feat-ov"></div>
+            <div class="feat-content">
+              <span class="feat-tag">#5 worldwide</span>
+              <div class="feat-name">Machu Picchu, Peru</div>
+              <div class="feat-sub">The 15th-century Inca citadel high above the Sacred Valley</div>
+            </div>
           </div>
         </a>
 
-        <a class="dest-card" href="/">
-          <div class="dest-img" style="background:url('/assets/places/top/amalfi-coast.jpg') center/cover no-repeat">
-            <div class="dest-img-ov"></div>
-            <span class="dest-tag">Scenic</span>
-            <span class="dest-rating"><svg viewBox="0 0 24 24">
-                <polygon
-                  points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-              </svg>4.88</span>
+        <a class="feat-card" href="/home?place=Great%20Wall%20of%20China%2C%20China">
+          <div class="feat-img"
+            style="background:url('/assets/places/landmarks/great-wall.jpg') center/cover no-repeat">
+            <div class="feat-ov"></div>
+            <div class="feat-content">
+              <span class="feat-tag">#6 worldwide</span>
+              <div class="feat-name">Great Wall of China</div>
+              <div class="feat-sub">21,000 kilometres of ancient fortifications across northern China's mountains</div>
+            </div>
           </div>
-          <div class="dest-body">
-            <div class="dest-name">Amalfi Coast</div>
-            <div class="dest-loc"><svg viewBox="0 0 24 24">
-                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                <circle cx="12" cy="10" r="3" />
-              </svg>Italy</div>
+        </a>
+
+        <a class="feat-card" href="/home?place=Pyramids%20of%20Giza%2C%20Cairo%2C%20Egypt">
+          <div class="feat-img"
+            style="background:url('/assets/places/landmarks/pyramids-giza.jpg') center/cover no-repeat">
+            <div class="feat-ov"></div>
+            <div class="feat-content">
+              <span class="feat-tag">#7 worldwide</span>
+              <div class="feat-name">Pyramids of Giza, Cairo</div>
+              <div class="feat-sub">The last surviving wonder of the ancient world, standing for 4,500 years</div>
+            </div>
+          </div>
+        </a>
+
+        <a class="feat-card" href="/home?place=Times%20Square%2C%20New%20York%20City%2C%20USA">
+          <div class="feat-img"
+            style="background:url('/assets/places/landmarks/times-square.jpg') center/cover no-repeat">
+            <div class="feat-ov"></div>
+            <div class="feat-content">
+              <span class="feat-tag">#8 worldwide</span>
+              <div class="feat-name">Times Square, NYC</div>
+              <div class="feat-sub">The neon-lit "Crossroads of the World"</div>
+            </div>
+          </div>
+        </a>
+
+        <a class="feat-card" href="/home?place=Kyoto%27s%20Temples%20and%20Shrines%2C%20Kyoto%2C%20Japan">
+          <div class="feat-img" style="background:url('/assets/places/top/kyoto.jpg') center/cover no-repeat">
+            <div class="feat-ov"></div>
+            <div class="feat-content">
+              <span class="feat-tag">#9 worldwide</span>
+              <div class="feat-name">Kyoto's Temples &amp; Shrines</div>
+              <div class="feat-sub">Thousands of vermilion torii gates and centuries-old wooden temples</div>
+            </div>
+          </div>
+        </a>
+
+        <a class="feat-card" href="/home?place=Grand%20Bazaar%2C%20Istanbul%2C%20Turkey">
+          <div class="feat-img"
+            style="background:url('/assets/places/landmarks/grand-bazaar.jpg') center/cover no-repeat">
+            <div class="feat-ov"></div>
+            <div class="feat-content">
+              <span class="feat-tag">#10 worldwide</span>
+              <div class="feat-name">Grand Bazaar, Istanbul</div>
+              <div class="feat-sub">One of the world's oldest covered markets, trading since the 15th century</div>
+            </div>
           </div>
         </a>
 
@@ -1576,9 +1682,9 @@
     <div class="section-inner">
       <div class="sec-hdr" style="margin-bottom:32px">
         <div>
-          <div class="sec-eyebrow">Why makeTrip</div>
+          <div class="sec-eyebrow">Why exploreMore</div>
           <div class="sec-title">Everything you need to plan the perfect trip</div>
-          <div class="sec-sub">From your first stop to your last, makeTrip keeps you on the best possible route</div>
+          <div class="sec-sub">From your first stop to your last, exploreMore keeps you on the best possible route</div>
         </div>
       </div>
 
@@ -1594,7 +1700,7 @@
         <div class="feature-card">
           <div class="feat-ic" style="background:#e6f9f3">📍</div>
           <div class="feat-h">Discover stops along the way</div>
-          <div class="feat-p">Never miss a hidden gem. makeTrip surfaces rated stops between your origin and destination
+          <div class="feat-p">Never miss a hidden gem. exploreMore surfaces rated stops between your origin and destination
             — filtered by what you love.</div>
         </div>
 
@@ -1636,7 +1742,7 @@
       <div class="sec-hdr">
         <div>
           <div class="sec-eyebrow">From our community</div>
-          <div class="sec-title">Travellers love makeTrip</div>
+          <div class="sec-title">Travellers love exploreMore</div>
         </div>
       </div>
 
@@ -1667,7 +1773,7 @@
           </div>
           <div class="testi-q">"</div>
           <p class="testi-text">I planned my entire Patagonia trip in 20 minutes. The stop suggestions were spot-on — I
-            discovered a glacier I would have completely missed. makeTrip changed how I travel.</p>
+            discovered a glacier I would have completely missed. exploreMore changed how I travel.</p>
           <div class="testi-aw">
             <div class="testi-av" style="background:#c94b0c">MR</div>
             <div>
@@ -1737,7 +1843,7 @@
           </div>
           <div class="testi-q">"</div>
           <p class="testi-text">Used "find near me" on a whim on a Sunday afternoon. Half an hour later I was driving to
-            a hidden waterfall 40 km away I had no idea existed. That's makeTrip in a nutshell.</p>
+            a hidden waterfall 40 km away I had no idea existed. That's exploreMore in a nutshell.</p>
           <div class="testi-aw">
             <div class="testi-av" style="background:#065f46">YT</div>
             <div>
@@ -1783,7 +1889,7 @@
               <path
                 d="M10 1.5C6.41 1.5 3.5 4.41 3.5 8c0 4.9 6.5 10.5 6.5 10.5S16.5 12.9 16.5 8c0-3.59-2.91-6.5-6.5-6.5zm0 8.75a2.25 2.25 0 1 1 0-4.5 2.25 2.25 0 0 1 0 4.5z" />
             </svg></div>
-          <span class="logo-text">make<strong>Trip</strong></span>
+          <span class="logo-text">explore<strong>More</strong></span>
         </a>
         <p class="foot-tagline">Discover the world, one stop at a time. Plan better trips with people who know the way.
         </p>
@@ -1821,7 +1927,7 @@
     </div>
 
     <div class="foot-bottom" style="max-width:1100px;margin:0 auto">
-      <div class="foot-copy">© 2025 makeTrip. Built for explorers everywhere.</div>
+      <div class="foot-copy">© 2025 exploreMore. Built for explorers everywhere.</div>
       <div class="foot-legal">
         <a href="#">Privacy</a>
         <a href="#">Terms</a>
