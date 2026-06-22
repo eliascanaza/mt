@@ -1,4 +1,4 @@
-# makeTrip 🗺️
+# exploreMore 🗺️
 
 A travel route explorer web app with a Python/SQLite backend and a single-page HTML/JS frontend.
 

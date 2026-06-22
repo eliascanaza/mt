@@ -1,5 +1,5 @@
 """
-makeTrip — MongoDB database layer
+exploreMore — MongoDB database layer
 Handles all DB setup, seed data, and reads/writes for:
   - places / mt_places       : search-bar autocomplete and place details
   - top10_places             : curated top-10 rankings (worldwide/country/category)

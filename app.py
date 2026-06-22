@@ -1,5 +1,5 @@
 """
-makeTrip — Flask application
+exploreMore — Flask application
 Serves the HTML frontend and exposes a REST API backed by SQLite.
 
 Endpoints:
@@ -476,7 +476,7 @@ def health():
 db.init_db()
 
 if __name__ == "__main__":
-    print("\n🚀  makeTrip server starting at http://127.0.0.1:5004")
+    print("\n🚀  exploreMore server starting at http://127.0.0.1:5004")
     print("   GET  /             → HTML app")
     print("   GET  /api/health   → health check\n")
     app.run(debug=True, host="0.0.0.0", port=5004)
