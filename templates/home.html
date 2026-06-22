@@ -4772,7 +4772,7 @@
         el.addEventListener('click', e => {
           e.stopPropagation();
           if (removeMode) { removeStop(s.id); return; }
-          selectStop(s.id); openPlacePopupFromStop(s.id);
+          selectStop(s.id, false); openPlacePopupFromStop(s.id);
         });
         const marker = new AdvancedMarkerElement({ map, position: toLatLng(s.coord), content: el });
         markers[s.id] = { marker };
@@ -5096,11 +5096,16 @@
     }
 
     /* ══ SELECT STOP ══ */
+    // flyMap=false keeps the map and left panel exactly where they are —
+    // used when a stop's map marker is clicked directly, since the user
+    // can already see it and panning/scrolling would just be disorienting.
     function selectStop(id, flyMap = true) {
       selectedId = id;
       const s = STOPS.find(x => x.id === id);
       document.querySelectorAll('.tl-stop').forEach(c => c.classList.toggle('active', +c.dataset.id === id));
-      document.querySelector(`.tl-stop[data-id="${id}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      if (flyMap) {
+        document.querySelector(`.tl-stop[data-id="${id}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
       refreshStopMarkerSelection();
       if (flyMap) {
         map.panTo(toLatLng(s.coord));
