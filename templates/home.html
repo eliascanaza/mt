@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>makeTrip — Plan your route</title>
+  <title>exploreMore — Plan your route</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link
@@ -3947,7 +3947,7 @@
             d="M10 1.5C6.41 1.5 3.5 4.41 3.5 8c0 4.9 6.5 10.5 6.5 10.5S16.5 12.9 16.5 8c0-3.59-2.91-6.5-6.5-6.5zm0 8.75a2.25 2.25 0 1 1 0-4.5 2.25 2.25 0 0 1 0 4.5z" />
         </svg>
       </div>
-      <span class="logo-text">make<strong>Trip</strong></span>
+      <span class="logo-text">explore<strong>More</strong></span>
     </a>
 
     <div class="search-pill">
@@ -4069,7 +4069,7 @@
         <div class="u-drop" id="u-drop">
           <div class="u-info">
             <div class="u-name">Alex Traveller</div>
-            <div class="u-email">alex@maketrip.app</div>
+            <div class="u-email">alex@exploremore.app</div>
           </div>
           <a class="u-item" href="/profile?tab=profile" style="text-decoration:none;color:inherit"><svg
               viewBox="0 0 24 24">
@@ -6691,12 +6691,17 @@
     function closeLo() { closeModal('lo-modal'); }
 
     // Deep links from index.html land here and trigger the matching view —
-    // "Trending now → View all on map" opens the World Wide Top 10, and
-    // clicking a floating place pill runs that place through the exact
-    // same explore-mode search a manual lookup would.
+    // "Trending now → View all on map" opens the World Wide Top 10, a
+    // floating place pill runs that place through the same explore-mode
+    // search a manual lookup would, and a from+to trip-plan card runs the
+    // exact same route search (real geocoding, real stops along the way).
     const deepLinkParams = new URLSearchParams(window.location.search);
     if (deepLinkParams.get('view') === 'top10') {
       showWorldwideOnMap();
+    } else if (deepLinkParams.get('from') && deepLinkParams.get('to')) {
+      document.getElementById('from-input').value = deepLinkParams.get('from');
+      document.getElementById('to-input').value = deepLinkParams.get('to');
+      doSearch();
     } else if (deepLinkParams.get('place')) {
       document.getElementById('from-input').value = deepLinkParams.get('place');
       doSearch();
