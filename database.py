@@ -63,6 +63,7 @@ def init_db():
     db.users.create_index("id", unique=True)
     db.users.create_index("google_sub", unique=True)
     db.users.create_index("email", unique=True)
+    db.search_history.create_index("user_id")
     print("✅  Schema ready")
 
 
@@ -1042,6 +1043,51 @@ def update_user_section(user_id: int, section: str, fields: dict):
     if update:
         db.users.update_one({"id": user_id}, {"$set": update})
     return get_user_by_id(user_id)
+
+
+def record_search(user_id: int, entry: dict):
+    """Logs one /home search (explore-mode "from" only, or a from→to route)
+    against the signed-in user — backs the History tab on profile.html."""
+    db = get_db()
+    new_id = _next_id(db, "search_history")
+    doc = {
+        "id": new_id, "user_id": user_id,
+        "from_name": entry.get("from_name"), "from_lat": entry.get("from_lat"), "from_lng": entry.get("from_lng"),
+        "from_country": entry.get("from_country"),
+        "to_name": entry.get("to_name"), "to_lat": entry.get("to_lat"), "to_lng": entry.get("to_lng"),
+        "to_country": entry.get("to_country"),
+        "distance_km": entry.get("distance_km"),
+        "created_at": datetime.now(timezone.utc),
+    }
+    db.search_history.insert_one(doc)
+    return new_id
+
+
+def get_search_history(user_id: int, limit: int = 50):
+    db = get_db()
+    out = []
+    for d in db.search_history.find({"user_id": user_id}).sort("created_at", -1).limit(limit):
+        d = _strip_id(d)
+        d["created_at"] = _iso(d.get("created_at"))
+        out.append(d)
+    return out
+
+
+def get_search_history_stats(user_id: int):
+    """Countries visited / places explored / km travelled — aggregated from
+    every recorded search rather than stored separately, so they can never
+    drift out of sync with the history list."""
+    db = get_db()
+    countries, places, km_total = set(), set(), 0
+    for d in db.search_history.find({"user_id": user_id}):
+        for country in (d.get("from_country"), d.get("to_country")):
+            if country:
+                countries.add(country)
+        for place in (d.get("from_name"), d.get("to_name")):
+            if place:
+                places.add(place)
+        km_total += d.get("distance_km") or 0
+    return {"countries_visited": len(countries), "places_explored": len(places), "km_travelled": km_total}
 
 
 if __name__ == "__main__":

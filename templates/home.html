@@ -6467,6 +6467,14 @@
             if (route) {
               applyRouteStats(route);
               lastRoutePath = route.overview_path;
+              const routeMeters = route.legs.reduce((a, l) => a + l.distance.value, 0);
+              recordSearchHistory({
+                from_name: fromGeo.formatted, from_lat: FROM.coord[1], from_lng: FROM.coord[0],
+                from_country: countryFromFormatted(fromGeo.formatted),
+                to_name: toGeo.formatted, to_lat: TO.coord[1], to_lng: TO.coord[0],
+                to_country: countryFromFormatted(toGeo.formatted),
+                distance_km: Math.round(routeMeters / 1000),
+              });
 
               // Search Google Places for real tourist attractions along the driven path
               STOPS = await findTouristStopsAlongRoute(lastRoutePath, placesCount);
@@ -6511,7 +6519,30 @@
         loadSuggestedPlaces(FROM.coord, fromVal);
         map.panTo(toLatLng(FROM.coord));
         map.setZoom(11);
+        recordSearchHistory({
+          from_name: fromGeo.formatted, from_lat: FROM.coord[1], from_lng: FROM.coord[0],
+          from_country: countryFromFormatted(fromGeo.formatted),
+        });
       }
+    }
+
+    // Best-effort "<city>, <region>, <country>" -> "<country>" guess, used
+    // only to tally "Countries visited" on the History tab.
+    function countryFromFormatted(formatted) {
+      if (!formatted) return null;
+      const parts = formatted.split(',').map(p => p.trim()).filter(Boolean);
+      return parts.length ? parts[parts.length - 1] : null;
+    }
+
+    // Fire-and-forget — a logged-out visitor can still search freely, the
+    // server just won't have a session to attach the entry to (401, ignored).
+    function recordSearchHistory(entry) {
+      if (!CURRENT_USER) return;
+      fetch('/api/history/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(entry),
+      }).catch(() => { /* best-effort, ignore */ });
     }
 
     function renderExploreMode(fromVal) {

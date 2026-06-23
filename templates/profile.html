@@ -756,8 +756,20 @@
     }
 
     .hbox-icon {
-      font-size: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       margin-bottom: 6px
+    }
+
+    .hbox-icon svg {
+      width: 20px;
+      height: 20px;
+      fill: none;
+      stroke: var(--red);
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round
     }
 
     .timeline-card {
@@ -1399,104 +1411,43 @@
 
       <div class="hist-stats">
         <div class="hbox">
-          <div class="hbox-icon">🌍</div>
-          <div class="hbox-val">12</div>
+          <div class="hbox-icon">
+            <svg viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="2" y1="12" x2="22" y2="12" />
+              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+            </svg>
+          </div>
+          <div class="hbox-val" id="hbox-countries">0</div>
           <div class="hbox-lbl">Countries visited</div>
         </div>
         <div class="hbox">
-          <div class="hbox-icon">📍</div>
-          <div class="hbox-val">47</div>
+          <div class="hbox-icon">
+            <svg viewBox="0 0 24 24">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+              <circle cx="12" cy="10" r="3" />
+            </svg>
+          </div>
+          <div class="hbox-val" id="hbox-places">0</div>
           <div class="hbox-lbl">Places explored</div>
         </div>
         <div class="hbox">
-          <div class="hbox-icon">🛣️</div>
-          <div class="hbox-val">8.4k</div>
+          <div class="hbox-icon">
+            <svg viewBox="0 0 24 24">
+              <circle cx="6" cy="19" r="2" />
+              <circle cx="18" cy="5" r="2" />
+              <path d="M8 19h7a4 4 0 0 0 4-4 4 4 0 0 0-4-4H9a4 4 0 0 1-4-4 4 4 0 0 1 4-4h7" />
+            </svg>
+          </div>
+          <div class="hbox-val" id="hbox-km">0</div>
           <div class="hbox-lbl">km travelled</div>
         </div>
       </div>
 
-      <div class="timeline-card">
-
-        <div class="trip-row">
-          <div class="trip-dot" style="background:#e6f9f3">🧊</div>
-          <div class="trip-info">
-            <div class="trip-route">
-              Buenos Aires
-              <svg viewBox="0 0 24 24">
-                <line x1="5" y1="12" x2="19" y2="12" />
-                <polyline points="12 5 19 12 12 19" />
-              </svg>
-              Ushuaia
-            </div>
-            <div class="trip-meta"><b>7 stops</b> · 3,200 km · 12 days · Argentina</div>
-          </div>
-          <div class="trip-date"><strong>Jan 2024</strong>Completed</div>
+      <div class="timeline-card" id="history-timeline">
+        <div style="padding:24px;text-align:center;font-size:13px;color:var(--g600)" id="history-empty">
+          Loading…
         </div>
-
-        <div class="trip-row">
-          <div class="trip-dot" style="background:#eff6ff">⛰️</div>
-          <div class="trip-info">
-            <div class="trip-route">
-              Santiago
-              <svg viewBox="0 0 24 24">
-                <line x1="5" y1="12" x2="19" y2="12" />
-                <polyline points="12 5 19 12 12 19" />
-              </svg>
-              Torres del Paine
-            </div>
-            <div class="trip-meta"><b>5 stops</b> · 2,100 km · 8 days · Chile</div>
-          </div>
-          <div class="trip-date"><strong>Mar 2023</strong>Completed</div>
-        </div>
-
-        <div class="trip-row">
-          <div class="trip-dot" style="background:#fdf4ff">🗿</div>
-          <div class="trip-info">
-            <div class="trip-route">
-              Lima
-              <svg viewBox="0 0 24 24">
-                <line x1="5" y1="12" x2="19" y2="12" />
-                <polyline points="12 5 19 12 12 19" />
-              </svg>
-              Machu Picchu
-            </div>
-            <div class="trip-meta"><b>4 stops</b> · 1,100 km · 5 days · Peru</div>
-          </div>
-          <div class="trip-date"><strong>Sep 2022</strong>Completed</div>
-        </div>
-
-        <div class="trip-row">
-          <div class="trip-dot" style="background:#fff7ed">🌋</div>
-          <div class="trip-info">
-            <div class="trip-route">
-              Mendoza
-              <svg viewBox="0 0 24 24">
-                <line x1="5" y1="12" x2="19" y2="12" />
-                <polyline points="12 5 19 12 12 19" />
-              </svg>
-              Bariloche
-            </div>
-            <div class="trip-meta"><b>3 stops</b> · 690 km · 4 days · Argentina</div>
-          </div>
-          <div class="trip-date"><strong>Feb 2022</strong>Completed</div>
-        </div>
-
-        <div class="trip-row">
-          <div class="trip-dot" style="background:#fef9c3">🏰</div>
-          <div class="trip-info">
-            <div class="trip-route">
-              Bogotá
-              <svg viewBox="0 0 24 24">
-                <line x1="5" y1="12" x2="19" y2="12" />
-                <polyline points="12 5 19 12 12 19" />
-              </svg>
-              Cartagena
-            </div>
-            <div class="trip-meta"><b>5 stops</b> · 1,050 km · 7 days · Colombia</div>
-          </div>
-          <div class="trip-date"><strong>Nov 2021</strong>Completed</div>
-        </div>
-
       </div>
     </div><!-- /tab-history -->
 
@@ -1840,6 +1791,53 @@
       }
     }
 
+    const HISTORY_DOT_COLORS = ['#e6f9f3', '#eff6ff', '#fdf4ff', '#fff7ed', '#fef9c3'];
+
+    function historyRowHtml(entry, index) {
+      const from = shortName(entry.from_name) || 'Unknown';
+      const to = entry.to_name ? shortName(entry.to_name) : null;
+      const metaParts = [];
+      if (entry.distance_km) metaParts.push(`${Number(entry.distance_km).toLocaleString()} km`);
+      metaParts.push(entry.to_country || entry.from_country || 'Unknown');
+      return `
+        <div class="trip-row">
+          <div class="trip-dot" style="background:${HISTORY_DOT_COLORS[index % HISTORY_DOT_COLORS.length]}">
+            <svg viewBox="0 0 24 24"
+              style="width:16px;height:16px;stroke:var(--g800);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+              <circle cx="12" cy="10" r="3" />
+            </svg>
+          </div>
+          <div class="trip-info">
+            <div class="trip-route">
+              ${from}${to ? `<svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>${to}` : ''}
+            </div>
+            <div class="trip-meta">${metaParts.join(' · ')}</div>
+          </div>
+          <div class="trip-date"><strong>${monthYear(entry.created_at)}</strong>${timeAgo(entry.created_at)}</div>
+        </div>`;
+    }
+
+    async function loadHistory() {
+      const container = document.getElementById('history-timeline');
+      try {
+        const res = await fetch('/api/history');
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to load history');
+
+        document.getElementById('hbox-countries').textContent = data.stats.countries_visited;
+        document.getElementById('hbox-places').textContent = data.stats.places_explored;
+        document.getElementById('hbox-km').textContent = Number(data.stats.km_travelled).toLocaleString();
+
+        const history = data.history || [];
+        container.innerHTML = history.length
+          ? history.map(historyRowHtml).join('')
+          : '<div style="padding:24px;text-align:center;font-size:13px;color:var(--g600)">No searches yet — start exploring on the map</div>';
+      } catch (err) {
+        container.innerHTML = '<div style="padding:24px;text-align:center;font-size:13px;color:var(--g600)">Couldn\'t load history</div>';
+      }
+    }
+
     let _tt;
     function showToast(msg) {
       clearTimeout(_tt);
@@ -1892,7 +1890,7 @@
       if (!user) {
         page.style.display = 'none';
         overlay.classList.add('open');
-        ['hstat-trips', 'hstat-countries', 'hstat-places', 'hstat-reviews']
+        ['hstat-trips', 'hstat-countries', 'hstat-places', 'hstat-reviews', 'hbox-countries', 'hbox-places', 'hbox-km']
           .forEach(id => { document.getElementById(id).textContent = '0'; });
         return;
       }
@@ -1931,6 +1929,7 @@
       });
 
       loadMyPlans();
+      loadHistory();
     }
 
     async function refreshAuthState() {

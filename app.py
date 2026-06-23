@@ -493,6 +493,32 @@ def api_update_profile_section(section):
     return jsonify({"ok": True, "user": user})
 
 
+# ── Search history (History tab) — /home logs every search here; the
+# Countries visited / Places explored / km travelled stats are aggregated
+# from this log rather than tracked separately. ───────────────────────────
+@app.route("/api/history/search", methods=["POST"])
+def api_record_search():
+    user_id = session.get("user_id")
+    if not user_id:
+        return jsonify({"error": "Not signed in"}), 401
+    data = request.get_json(silent=True) or {}
+    if not data.get("from_name"):
+        return jsonify({"error": "Missing from_name"}), 400
+    entry_id = db.record_search(user_id, data)
+    return jsonify({"ok": True, "id": entry_id}), 201
+
+
+@app.route("/api/history", methods=["GET"])
+def api_get_history():
+    user_id = session.get("user_id")
+    if not user_id:
+        return jsonify({"error": "Not signed in"}), 401
+    return jsonify({
+        "history": db.get_search_history(user_id),
+        "stats": db.get_search_history_stats(user_id),
+    })
+
+
 @app.route("/api/getsavedplan", methods=["GET"])
 def api_get_saved_plans():
     user_id = request.args.get("user_id", type=int) or session.get("user_id", 1111)
