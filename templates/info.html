@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>exploreMore</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap"
+    rel="stylesheet">
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0
+    }
+
+    :root {
+      --white: #ffffff;
+      --black: #111111;
+      --g50: #f9f9f9;
+      --g100: #f2f2f2;
+      --g200: #e5e5e5;
+      --g300: #d0d0d0;
+      --g400: #ababab;
+      --g600: #6b6b6b;
+      --g800: #3d3d3d;
+      --red: #FF385C;
+      --red-d: #d62f4b;
+      --border: #e5e5e5;
+      --sh-sm: 0 1px 4px rgba(0, 0, 0, .07), 0 2px 8px rgba(0, 0, 0, .04);
+      --r-md: 10px;
+      --r-xl: 22px;
+      --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--white);
+      color: var(--black);
+      -webkit-font-smoothing: antialiased;
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    .nav {
+      position: sticky;
+      top: 0;
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 40px;
+      height: 66px;
+      background: rgba(255, 255, 255, .95);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+    }
+
+    .logo-mark {
+      width: 32px;
+      height: 32px;
+      border-radius: 9px;
+      background: var(--red);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .logo-mark svg {
+      width: 18px;
+      height: 18px;
+      fill: #fff
+    }
+
+    .logo-text {
+      font-size: 18px;
+      font-weight: 400;
+      letter-spacing: -.3px;
+      color: var(--black)
+    }
+
+    .logo-text strong {
+      font-weight: 700
+    }
+
+    .btn-ghost {
+      text-decoration: none;
+      color: var(--black);
+      font-size: 13px;
+      font-weight: 600;
+      padding: 8px 16px;
+      border-radius: var(--r-md);
+      border: 1px solid var(--border);
+      background: var(--white);
+      transition: background .15s, box-shadow .15s;
+    }
+
+    .btn-ghost:hover {
+      background: var(--g50);
+      box-shadow: var(--sh-sm)
+    }
+
+    main {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 72px 24px 96px;
+    }
+
+    .info-eyebrow {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .09em;
+      color: var(--red);
+      margin-bottom: 12px;
+    }
+
+    .info-title {
+      font-size: clamp(28px, 4vw, 40px);
+      font-weight: 800;
+      letter-spacing: -.03em;
+      margin-bottom: 18px;
+    }
+
+    .info-body {
+      color: var(--g800);
+      font-size: 15px;
+      line-height: 1.75;
+    }
+
+    .info-body p {
+      margin-bottom: 16px;
+    }
+
+    .info-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 36px;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--black);
+      border-bottom: 1.5px solid var(--border);
+      padding-bottom: 1px;
+    }
+
+    .info-back:hover {
+      color: var(--red);
+      border-color: var(--red)
+    }
+
+    footer {
+      background: var(--black);
+      color: rgba(255, 255, 255, .5);
+      padding: 28px 40px;
+      text-align: center;
+      font-size: 12px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <nav class="nav">
+    <a class="logo" href="/">
+      <div class="logo-mark">
+        <svg viewBox="0 0 20 20">
+          <path
+            d="M10 1.5C6.41 1.5 3.5 4.41 3.5 8c0 4.9 6.5 10.5 6.5 10.5S16.5 12.9 16.5 8c0-3.59-2.91-6.5-6.5-6.5zm0 8.75a2.25 2.25 0 1 1 0-4.5 2.25 2.25 0 0 1 0 4.5z" />
+        </svg>
+      </div>
+      <span class="logo-text">explore<strong>More</strong></span>
+    </a>
+    <a class="btn-ghost" href="/profile">Sign in</a>
+  </nav>
+
+  <main>
+    <div class="info-eyebrow">exploreMore</div>
+    <h1 class="info-title" id="info-title">&nbsp;</h1>
+    <div class="info-body" id="info-body"></div>
+    <a class="info-back" href="/">
+      &larr; Back to home
+    </a>
+  </main>
+
+  <footer>© 2026 exploreMore. Built for explorers everywhere.</footer>
+
+  <script>
+    const PAGES = {
+      about: {
+        title: 'About exploreMore',
+        body: [
+          'exploreMore helps travellers plan smarter trips — mapping routes, surfacing hidden stops along the way, and ranking the destinations worth the detour.',
+          'We\'re a small team obsessed with the idea that the best part of a trip is often something you find on the way there.',
+        ],
+      },
+      blog: {
+        title: 'Blog',
+        body: [
+          'Our blog is on its way — travel guides, route ideas, and stories from the exploreMore community will land here soon.',
+        ],
+      },
+      careers: {
+        title: 'Careers',
+        body: [
+          'We\'re not hiring right now, but check back soon — we\'ll post open roles here as the team grows.',
+        ],
+      },
+      privacy: {
+        title: 'Privacy Policy',
+        body: [
+          'We only collect what\'s needed to plan your trips and keep your account working — things like your saved routes, plans, and basic profile details.',
+          'We don\'t sell your data. Location data you share is used solely to power search and route suggestions.',
+        ],
+      },
+      terms: {
+        title: 'Terms of Service',
+        body: [
+          'By using exploreMore you agree to use the service for personal, non-commercial trip planning.',
+          'Routes, ratings, and place information are provided for guidance only — always double check critical travel details before you go.',
+        ],
+      },
+      cookies: {
+        title: 'Cookie Policy',
+        body: [
+          'exploreMore uses minimal cookies to keep you signed in and remember your preferences. We don\'t use third-party advertising cookies.',
+        ],
+      },
+    };
+
+    const key = new URLSearchParams(window.location.search).get('page');
+    const page = PAGES[key] || {
+      title: 'Page not found',
+      body: ['This page doesn\'t exist yet.'],
+    };
+
+    document.title = `${page.title} — exploreMore`;
+    document.getElementById('info-title').textContent = page.title;
+    document.getElementById('info-body').innerHTML = page.body.map(p => `<p>${p}</p>`).join('');
+  </script>
+</body>
+
+</html>

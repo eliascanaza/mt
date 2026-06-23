@@ -57,6 +57,11 @@ def home():
     return render_template("home.html", google_maps_api_key=app.config["GOOGLE_MAPS_API_KEY"])
 
 
+@app.route("/info")
+def info():
+    return send_from_directory("templates", "info.html")
+
+
 # ── Top 10 places (worldwide / by country / by category) ──────────────────
 @app.route("/api/top10", methods=["GET"])
 def api_top10_places():
