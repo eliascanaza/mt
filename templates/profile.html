@@ -951,219 +951,7 @@
       }
     }
 
-    /* ── logout confirm dialog ── */
-    .lo-bg {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, .6);
-      backdrop-filter: blur(4px);
-      z-index: 9500;
-      align-items: center;
-      justify-content: center;
-      padding: 24px;
-    }
-
-    .lo-bg.open {
-      display: flex
-    }
-
-    .lo-dialog {
-      background: #fff;
-      border-radius: 22px;
-      width: 100%;
-      max-width: 380px;
-      overflow: hidden;
-      box-shadow: 0 24px 64px rgba(0, 0, 0, .28);
-      animation: loSlideUp .22s cubic-bezier(.4, 0, .2, 1);
-    }
-
-    @keyframes loSlideUp {
-      from {
-        opacity: 0;
-        transform: translateY(16px) scale(.96)
-      }
-
-      to {
-        opacity: 1;
-        transform: translateY(0) scale(1)
-      }
-    }
-
-    .lo-top {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 32px 28px 24px;
-      text-align: center;
-    }
-
-    .lo-icon-wrap {
-      width: 56px;
-      height: 56px;
-      border-radius: 50%;
-      background: #fff0f2;
-      border: 1.5px solid #fecdd3;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 18px;
-    }
-
-    .lo-icon-wrap svg {
-      width: 24px;
-      height: 24px;
-      stroke: #FF385C;
-      fill: none;
-      stroke-width: 2;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-    }
-
-    .lo-title {
-      font-size: 17px;
-      font-weight: 800;
-      color: #111;
-      letter-spacing: -.02em;
-      margin-bottom: 8px
-    }
-
-    .lo-sub {
-      font-size: 13px;
-      color: #6b6b6b;
-      line-height: 1.55;
-      max-width: 280px
-    }
-
-    .lo-actions {
-      display: flex;
-      border-top: 1px solid #e5e5e5
-    }
-
-    .lo-cancel {
-      flex: 1;
-      padding: 16px;
-      background: none;
-      border: none;
-      border-right: 1px solid #e5e5e5;
-      font-family: var(--font);
-      font-size: 14px;
-      font-weight: 600;
-      color: #6b6b6b;
-      cursor: pointer;
-      transition: background .15s, color .15s;
-    }
-
-    .lo-cancel:hover {
-      background: #f9f9f9;
-      color: #111
-    }
-
-    .lo-confirm {
-      flex: 1;
-      padding: 16px;
-      background: none;
-      border: none;
-      font-family: var(--font);
-      font-size: 14px;
-      font-weight: 700;
-      color: #FF385C;
-      cursor: pointer;
-      transition: background .15s;
-    }
-
-    .lo-confirm:hover {
-      background: #fff0f2
-    }
-
-    /* ── SIGN IN ── */
-    .si-overlay {
-      position: fixed;
-      inset: 0;
-      z-index: 9999;
-      background: rgba(0, 0, 0, .5);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
-
-    .si-overlay.open {
-      display: flex
-    }
-
-    .si-modal {
-      background: var(--white);
-      border-radius: var(--r-xl);
-      max-width: 380px;
-      width: 100%;
-      padding: 32px 28px;
-      text-align: center;
-      position: relative;
-      box-shadow: var(--sh-lg);
-    }
-
-    .si-close {
-      position: absolute;
-      top: 14px;
-      right: 14px;
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      border: none;
-      background: var(--g100);
-      color: var(--g600);
-      font-size: 16px;
-      cursor: pointer;
-      line-height: 1;
-    }
-
-    .si-close:hover {
-      background: var(--g200)
-    }
-
-    .si-modal .logo-mark {
-      width: 44px;
-      height: 44px;
-      border-radius: 9px;
-      background: var(--red);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin: 0 auto 16px;
-    }
-
-    .si-modal .logo-mark svg {
-      width: 24px;
-      height: 24px;
-      fill: #fff
-    }
-
-    .si-title {
-      font-size: 20px;
-      font-weight: 800;
-      letter-spacing: -.02em;
-      margin-bottom: 8px
-    }
-
-    .si-sub {
-      font-size: 13px;
-      color: var(--g600);
-      line-height: 1.55;
-      margin-bottom: 24px
-    }
-
-    .si-gbtn {
-      display: flex;
-      justify-content: center;
-      min-height: 44px
-    }
-
-    .si-fallback {
-      font-size: 12px;
-      color: var(--g600);
-      margin-top: 8px
-    }
+    {% include "partials/_auth_styles.html" %}
   </style>
 </head>
 
@@ -1849,17 +1637,7 @@
       _tt = setTimeout(() => { t.style.display = 'none'; }, 2800);
     }
 
-    function confirmLogout() {
-      document.getElementById('lo-modal').classList.add('open');
-      document.body.style.overflow = 'hidden';
-    }
-    function closeLo() {
-      document.getElementById('lo-modal').classList.remove('open');
-      document.body.style.overflow = '';
-    }
-
     /* ══ AUTH (Google Sign-In) ══ */
-    const GOOGLE_CLIENT_ID = {{ google_client_id | tojson }};
 
     function initials(name) {
       const parts = (name || '').trim().split(/\s+/).filter(Boolean);
@@ -1932,15 +1710,7 @@
       loadHistory();
     }
 
-    async function refreshAuthState() {
-      try {
-        const res = await fetch('/api/auth/me');
-        const data = await res.json();
-        applyAuthState(data.authenticated ? data.user : null);
-      } catch (err) {
-        applyAuthState(null);
-      }
-    }
+    const LOGOUT_REDIRECT = '/';
 
     async function handleGoogleCredential(response) {
       try {
@@ -1955,11 +1725,6 @@
       } catch (err) {
         alert(`Couldn't sign in — ${err.message}`);
       }
-    }
-
-    async function doLogout() {
-      try { await fetch('/api/auth/logout', { method: 'POST' }); } catch (err) { /* ignore */ }
-      window.location.href = '/';
     }
 
     async function saveProfileSection(section, fields, successMessage) {
@@ -2014,63 +1779,18 @@
     function saveToggle(section, key, value) {
       saveProfileSection(section, { [key]: value }, 'Saved!');
     }
-
-    window.addEventListener('load', () => {
-      refreshAuthState();
-      if (!GOOGLE_CLIENT_ID || !window.google?.accounts?.id) {
-        document.getElementById('si-fallback').style.display = 'block';
-        return;
-      }
-      google.accounts.id.initialize({
-        client_id: GOOGLE_CLIENT_ID,
-        callback: handleGoogleCredential,
-      });
-      google.accounts.id.renderButton(
-        document.getElementById('g_id_signin_container'),
-        { theme: 'outline', size: 'large', shape: 'pill', width: 280 },
-      );
-    });
   </script>
+  {% include "partials/_auth_script.html" %}
 
   <!-- ══ LOGOUT CONFIRM ══ -->
-  <div class="lo-bg" id="lo-modal" onclick="if(event.target===this)closeLo()">
-    <div class="lo-dialog">
-      <div class="lo-top">
-        <div class="lo-icon-wrap">
-          <svg viewBox="0 0 24 24">
-            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-            <polyline points="16 17 21 12 16 7" />
-            <line x1="21" y1="12" x2="9" y2="12" />
-          </svg>
-        </div>
-        <div class="lo-title">Log out?</div>
-        <div class="lo-sub">You'll be redirected to the home page. Your saved plans won't be affected.</div>
-      </div>
-      <div class="lo-actions">
-        <button class="lo-cancel" onclick="closeLo()">Stay</button>
-        <button class="lo-confirm" onclick="doLogout()">Log out</button>
-      </div>
-    </div>
-  </div>
+  {% set lo_sub = "You'll be redirected to the home page. Your saved plans won't be affected." %}
+  {% include "partials/_logout_modal.html" %}
 
   <!-- ══ SIGN IN ══ -->
-  <div class="si-overlay" id="si-overlay">
-    <div class="si-modal">
-      <button class="si-close" onclick="window.location.href='/'" aria-label="Back to home">&times;</button>
-      <div class="logo-mark">
-        <svg viewBox="0 0 20 20">
-          <path
-            d="M10 1.5C6.41 1.5 3.5 4.41 3.5 8c0 4.9 6.5 10.5 6.5 10.5S16.5 12.9 16.5 8c0-3.59-2.91-6.5-6.5-6.5zm0 8.75a2.25 2.25 0 1 1 0-4.5 2.25 2.25 0 0 1 0 4.5z" />
-        </svg>
-      </div>
-      <div class="si-title">Sign in to view your profile</div>
-      <p class="si-sub">Sign in with Google to see your saved plans, trip history, and account details.</p>
-      <div class="si-gbtn" id="g_id_signin_container"></div>
-      <div class="si-fallback" id="si-fallback" style="display:none">
-        Google sign-in isn't available right now. Please try again later.
-      </div>
-    </div>
-  </div>
+  {% set si_title = "Sign in to view your profile" %}
+  {% set si_sub = "Sign in with Google to see your saved plans, trip history, and account details." %}
+  {% set si_close_action = "window.location.href='/'" %}
+  {% include "partials/_signin_modal.html" %}
 </body>
 
 </html>

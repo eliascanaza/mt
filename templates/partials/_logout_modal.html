@@ -1,0 +1,24 @@
+{# Logout confirmation dialog, triggered by confirmLogout() (see
+   partials/_user_nav.html and the Settings > Danger zone "Log out" button).
+   Override {% set lo_sub = "..." %} before including for page-specific
+   copy. Needs partials/_auth_styles.html (CSS) and partials/_auth_script.html
+   (JS: confirmLogout/closeLo/doLogout) on the including page. #}
+<div class="lo-bg" id="lo-modal" onclick="if(event.target===this)closeLo()">
+  <div class="lo-dialog">
+    <div class="lo-top">
+      <div class="lo-icon-wrap">
+        <svg viewBox="0 0 24 24">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+          <polyline points="16 17 21 12 16 7" />
+          <line x1="21" y1="12" x2="9" y2="12" />
+        </svg>
+      </div>
+      <div class="lo-title">Log out?</div>
+      <div class="lo-sub">{{ lo_sub|default("You'll be signed out of exploreMore on this device.") }}</div>
+    </div>
+    <div class="lo-actions">
+      <button class="lo-cancel" onclick="closeLo()">Stay</button>
+      <button class="lo-confirm" onclick="doLogout()">Log out</button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,24 @@
+{# Google sign-in popup. Override before including, e.g.:
+     {% set si_title = "Sign in to view your profile" %}
+     {% set si_sub = "Sign in with Google to see your saved plans, trip history, and account details." %}
+     {% set si_close_action = "window.location.href='/'" %}
+   Needs partials/_auth_styles.html (CSS) and partials/_auth_script.html (JS)
+   on the including page. #}
+<div class="si-overlay" id="si-overlay"{% if not si_close_action %} onclick="if(event.target===this)closeSignIn()"{% endif %}>
+  <div class="si-modal">
+    <button class="si-close" onclick="{{ si_close_action|default('closeSignIn()') }}" aria-label="Close">&times;</button>
+    <div class="logo-mark"
+      style="background:var(--red);width:44px;height:44px;border-radius:9px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px">
+      <svg viewBox="0 0 20 20" style="width:24px;height:24px;fill:#fff">
+        <path
+          d="M10 1.5C6.41 1.5 3.5 4.41 3.5 8c0 4.9 6.5 10.5 6.5 10.5S16.5 12.9 16.5 8c0-3.59-2.91-6.5-6.5-6.5zm0 8.75a2.25 2.25 0 1 1 0-4.5 2.25 2.25 0 0 1 0 4.5z" />
+      </svg>
+    </div>
+    <div class="si-title">{{ si_title|default("Welcome to exploreMore") }}</div>
+    <p class="si-sub">{{ si_sub|default("Sign in with Google to save your plans, track trip history, and pick up where you left off.") }}</p>
+    <div class="si-gbtn" id="g_id_signin_container"></div>
+    <div class="si-fallback" id="si-fallback" style="display:none">
+      Google sign-in isn't available right now. Please try again later.
+    </div>
+  </div>
+</div>

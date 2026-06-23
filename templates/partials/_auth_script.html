@@ -1,0 +1,79 @@
+{# Shared auth JS: sign-in popup, logout confirm, and Google Identity
+   Services init. The including page must define its own:
+     - function applyAuthState(user) { ... }       (page-specific UI update)
+     - function handleGoogleCredential(response) { ... }  (POSTs the
+       credential to /api/auth/google, then calls applyAuthState/closeSignIn)
+     - function toggleDropdown() { ... }  (only if the page has a user-pill
+       dropdown — home.html's also closes its other open dropdowns first, so
+       this stays page-specific rather than shared)
+   Order doesn't matter — refreshAuthState()/the GIS callback below only run
+   after the whole page has loaded, by which point every <script> on the
+   page (wherever this is included) has already defined its functions.
+
+   Optionally set `const LOGOUT_REDIRECT = '/';` before including if this
+   page should navigate away after logging out (home.html, profile.html);
+   omit it to update the UI in place instead (index.html). #}
+<script>
+  const GOOGLE_CLIENT_ID = {{ google_client_id | tojson }};
+
+  function closeDropdown() {
+    document.getElementById('u-drop')?.classList.remove('open');
+  }
+
+  function openSignIn() {
+    document.getElementById('si-overlay').classList.add('open');
+  }
+  function closeSignIn() {
+    document.getElementById('si-overlay').classList.remove('open');
+  }
+
+  function confirmLogout() {
+    document.getElementById('lo-modal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeLo() {
+    document.getElementById('lo-modal').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  async function doLogout() {
+    try { await fetch('/api/auth/logout', { method: 'POST' }); } catch (err) { /* best-effort */ }
+    closeLo();
+    if (typeof LOGOUT_REDIRECT !== 'undefined' && LOGOUT_REDIRECT) {
+      window.location.href = LOGOUT_REDIRECT;
+    } else {
+      closeDropdown();
+      applyAuthState(null);
+    }
+  }
+
+  async function refreshAuthState() {
+    try {
+      const res = await fetch('/api/auth/me');
+      const data = await res.json();
+      applyAuthState(data.authenticated ? data.user : null);
+    } catch (err) {
+      applyAuthState(null);
+    }
+  }
+
+  document.addEventListener('click', (e) => {
+    if (!document.getElementById('u-pill')?.contains(e.target)) closeDropdown();
+  });
+
+  window.addEventListener('load', () => {
+    refreshAuthState();
+    if (!GOOGLE_CLIENT_ID || !window.google?.accounts?.id) {
+      document.getElementById('si-fallback').style.display = 'block';
+      return;
+    }
+    google.accounts.id.initialize({
+      client_id: GOOGLE_CLIENT_ID,
+      callback: handleGoogleCredential,
+    });
+    google.accounts.id.renderButton(
+      document.getElementById('g_id_signin_container'),
+      { theme: 'outline', size: 'large', shape: 'pill', width: 280 },
+    );
+  });
+</script>

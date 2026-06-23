@@ -612,160 +612,7 @@
       stroke-linejoin: round
     }
 
-    /* user pill */
-    .user-wrap {
-      position: relative
-    }
-
-    .user-pill {
-      display: flex;
-      align-items: center;
-      gap: 9px;
-      border: 1px solid var(--border);
-      border-radius: 22px;
-      padding: 6px 6px 6px 14px;
-      cursor: pointer;
-      background: var(--white);
-      transition: box-shadow .2s;
-      user-select: none
-    }
-
-    .user-pill:hover {
-      box-shadow: var(--sh-md)
-    }
-
-    .signin-pill {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      border: 1px solid var(--border);
-      border-radius: 22px;
-      padding: 9px 18px;
-      cursor: pointer;
-      background: var(--white);
-      font-family: var(--font);
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--black);
-      transition: box-shadow .2s;
-    }
-
-    .signin-pill:hover {
-      box-shadow: var(--sh-md)
-    }
-
-    .user-pill .hb {
-      width: 14px;
-      height: 14px;
-      stroke: var(--g600);
-      fill: none;
-      stroke-width: 2;
-      stroke-linecap: round
-    }
-
-    .u-av {
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      background: var(--red);
-      display: flex;
-      align-items: center;
-      justify-content: center
-    }
-
-    .u-av svg {
-      width: 16px;
-      height: 16px;
-      fill: #fff
-    }
-
-    .u-drop {
-      display: none;
-      position: absolute;
-      top: calc(100% + 10px);
-      right: 0;
-      background: var(--white);
-      border: 1px solid var(--border);
-      border-radius: var(--r-lg);
-      box-shadow: var(--sh-xl);
-      min-width: 210px;
-      overflow: hidden;
-      z-index: 9500;
-      animation: dropIn .16s ease
-    }
-
-    .u-drop.open {
-      display: block
-    }
-
-    .u-info {
-      padding: 13px 16px;
-      border-bottom: 1px solid var(--border)
-    }
-
-    .u-name {
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--black)
-    }
-
-    .u-email {
-      font-size: 11px;
-      color: var(--g600);
-      margin-top: 1px
-    }
-
-    .u-item {
-      display: flex;
-      align-items: center;
-      gap: 11px;
-      padding: 11px 16px;
-      font-size: 13px;
-      color: var(--black);
-      cursor: pointer;
-      transition: background .12s
-    }
-
-    .u-item:hover {
-      background: var(--g50)
-    }
-
-    .u-item svg {
-      width: 15px;
-      height: 15px;
-      stroke: var(--g600);
-      fill: none;
-      stroke-width: 1.8;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-      flex-shrink: 0
-    }
-
-    .u-div {
-      height: 1px;
-      background: var(--border);
-      margin: 4px 0
-    }
-
-    .u-item.logout {
-      color: var(--red)
-    }
-
-    .u-item.logout svg {
-      stroke: var(--red)
-    }
-
-    @keyframes dropIn {
-      from {
-        opacity: 0;
-        transform: translateY(-6px)
-      }
-
-      to {
-        opacity: 1;
-        transform: translateY(0)
-      }
-    }
+    {% include "partials/_auth_styles.html" %}
 
     /* ══════════ MAIN ══════════ */
     .main {
@@ -3348,131 +3195,6 @@
       font-size: 13px
     }
 
-    /* ── logout confirm dialog ── */
-    .lo-bg {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, .6);
-      backdrop-filter: blur(4px);
-      z-index: 9500;
-      align-items: center;
-      justify-content: center;
-      padding: 24px
-    }
-
-    .lo-bg.open {
-      display: flex
-    }
-
-    .lo-dialog {
-      background: var(--white);
-      border-radius: var(--r-xl);
-      width: 100%;
-      max-width: 380px;
-      overflow: hidden;
-      box-shadow: 0 24px 64px rgba(0, 0, 0, .28);
-      animation: loSlideUp .22s cubic-bezier(.4, 0, .2, 1)
-    }
-
-    @keyframes loSlideUp {
-      from {
-        opacity: 0;
-        transform: translateY(16px) scale(.96)
-      }
-
-      to {
-        opacity: 1;
-        transform: translateY(0) scale(1)
-      }
-    }
-
-    .lo-top {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 32px 28px 24px;
-      text-align: center;
-    }
-
-    .lo-icon-wrap {
-      width: 56px;
-      height: 56px;
-      border-radius: 50%;
-      background: #fff0f2;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 18px;
-      border: 1.5px solid #fecdd3;
-    }
-
-    .lo-icon-wrap svg {
-      width: 24px;
-      height: 24px;
-      stroke: var(--red);
-      fill: none;
-      stroke-width: 2;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-    }
-
-    .lo-title {
-      font-size: 17px;
-      font-weight: 800;
-      color: var(--black);
-      letter-spacing: -.02em;
-      margin-bottom: 8px;
-    }
-
-    .lo-sub {
-      font-size: 13px;
-      color: var(--g600);
-      line-height: 1.55;
-      max-width: 280px;
-    }
-
-    .lo-actions {
-      display: flex;
-      border-top: 1px solid var(--border);
-    }
-
-    .lo-cancel {
-      flex: 1;
-      padding: 16px;
-      background: none;
-      border: none;
-      font-family: var(--font);
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--g600);
-      cursor: pointer;
-      border-right: 1px solid var(--border);
-      transition: background .15s, color .15s;
-    }
-
-    .lo-cancel:hover {
-      background: var(--g50);
-      color: var(--black)
-    }
-
-    .lo-confirm {
-      flex: 1;
-      padding: 16px;
-      background: none;
-      border: none;
-      font-family: var(--font);
-      font-size: 14px;
-      font-weight: 700;
-      color: var(--red);
-      cursor: pointer;
-      transition: background .15s;
-    }
-
-    .lo-confirm:hover {
-      background: #fff0f2
-    }
-
     .sp-icon-wrap {
       background: #eff6ff;
       border-color: #bfdbfe;
@@ -3955,88 +3677,6 @@
       border-radius: 2px
     }
 
-    /* ── SIGN IN ── */
-    .si-overlay {
-      position: fixed;
-      inset: 0;
-      z-index: 9999;
-      background: rgba(0, 0, 0, .5);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
-
-    .si-overlay.open {
-      display: flex
-    }
-
-    .si-modal {
-      background: var(--white);
-      border-radius: var(--r-xl);
-      max-width: 380px;
-      width: 100%;
-      padding: 32px 28px;
-      text-align: center;
-      position: relative;
-      box-shadow: var(--sh-xl);
-    }
-
-    .si-close {
-      position: absolute;
-      top: 14px;
-      right: 14px;
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      border: none;
-      background: var(--g100);
-      color: var(--g600);
-      font-size: 16px;
-      cursor: pointer;
-      line-height: 1;
-    }
-
-    .si-close:hover {
-      background: var(--g200)
-    }
-
-    .si-modal .logo-mark {
-      width: 44px;
-      height: 44px;
-      margin: 0 auto 16px;
-    }
-
-    .si-modal .logo-mark svg {
-      width: 24px;
-      height: 24px
-    }
-
-    .si-title {
-      font-size: 20px;
-      font-weight: 800;
-      letter-spacing: -.02em;
-      margin-bottom: 8px
-    }
-
-    .si-sub {
-      font-size: 13px;
-      color: var(--g600);
-      line-height: 1.55;
-      margin-bottom: 24px
-    }
-
-    .si-gbtn {
-      display: flex;
-      justify-content: center;
-      min-height: 44px
-    }
-
-    .si-fallback {
-      font-size: 12px;
-      color: var(--g600);
-      margin-top: 8px
-    }
   </style>
 </head>
 
@@ -4158,37 +3798,7 @@
       </div>
 
       <!-- User -->
-      <button class="signin-pill" id="signin-pill" onclick="openSignIn()" style="display:none">Sign in</button>
-      <div class="user-wrap" id="user-wrap" style="display:none">
-        <div class="user-pill" id="u-pill" onclick="toggleDropdown()">
-          <svg class="hb" viewBox="0 0 24 24">
-            <line x1="3" y1="6" x2="21" y2="6" />
-            <line x1="3" y1="12" x2="21" y2="12" />
-            <line x1="3" y1="18" x2="21" y2="18" />
-          </svg>
-          <div class="u-av"><svg viewBox="0 0 24 24">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-              <circle cx="12" cy="7" r="4" />
-            </svg></div>
-        </div>
-        <div class="u-drop" id="u-drop">
-          <div class="u-info">
-            <div class="u-name" id="u-name">Traveller</div>
-            <div class="u-email" id="u-email"></div>
-          </div>
-          <a class="u-item" href="/profile?tab=profile" style="text-decoration:none;color:inherit"><svg
-              viewBox="0 0 24 24">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-              <circle cx="12" cy="7" r="4" />
-            </svg>Profile</a>
-          <div class="u-div"></div>
-          <div class="u-item logout" onclick="confirmLogout()"><svg viewBox="0 0 24 24">
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-              <polyline points="16 17 21 12 16 7" />
-              <line x1="21" y1="12" x2="9" y2="12" />
-            </svg>Log out</div>
-        </div>
-      </div>
+      {% include "partials/_user_nav.html" %}
     </div>
   </nav>
 
@@ -4393,26 +4003,8 @@
 
   <!-- ══ TOP 10 MODAL ══ -->
   <!-- ══ LOGOUT CONFIRM ══ -->
-  <div class="lo-bg" id="lo-modal" onclick="if(event.target===this)closeLo()">
-    <div class="lo-dialog">
-      <div class="lo-top">
-        <div class="lo-icon-wrap">
-          <svg viewBox="0 0 24 24">
-            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-            <polyline points="16 17 21 12 16 7" />
-            <line x1="21" y1="12" x2="9" y2="12" />
-          </svg>
-        </div>
-        <div class="lo-title">Log out?</div>
-        <div class="lo-sub">You'll be taken to the home page. Any unsaved changes to your current trip will be lost.
-        </div>
-      </div>
-      <div class="lo-actions">
-        <button class="lo-cancel" onclick="closeLo()">Stay</button>
-        <button class="lo-confirm" onclick="doLogout()">Log out</button>
-      </div>
-    </div>
-  </div>
+  {% set lo_sub = "You'll be taken to the home page. Any unsaved changes to your current trip will be lost." %}
+  {% include "partials/_logout_modal.html" %}
 
   <!-- ══ SAVE PLAN ══ -->
   <div class="lo-bg" id="sp-modal" onclick="if(event.target===this)closeSavePlan()">
@@ -5614,12 +5206,13 @@
     function closeModal(id) { document.getElementById(id).classList.remove('open'); document.body.style.overflow = ''; }
 
     /* ══ DROPDOWNS ══ */
+    // closeDropdown() comes from partials/_auth_script.html — this page just
+    // needs toggleDropdown to also close the other open dropdowns first.
     function toggleDropdown() {
       const dd = document.getElementById('u-drop');
       const isOpen = dd.classList.toggle('open');
       if (isOpen) { closeTop10(); closeAllAC(); }
     }
-    function closeDropdown() { document.getElementById('u-drop').classList.remove('open'); }
 
 
     /* ══ COUNTRY SEARCH FUNCTIONS ══ */
@@ -6805,7 +6398,6 @@
 
     /* ══ OUTSIDE CLICK ══ */
     document.addEventListener('click', e => {
-      if (!document.getElementById('u-pill')?.contains(e.target)) closeDropdown();
       if (!document.getElementById('t10-btn')?.contains(e.target) && !document.getElementById('t10-drop')?.contains(e.target)) closeTop10();
       if (!e.target.closest('.sp-seg')) closeAllAC();
     });
@@ -6878,9 +6470,6 @@
       }
     }
 
-    function confirmLogout() { openModal('lo-modal'); }
-    function closeLo() { closeModal('lo-modal'); }
-
     // Deep links from index.html land here and trigger the matching view —
     // "Trending now → View all on map" opens the World Wide Top 10, a
     // floating place pill runs that place through the same explore-mode
@@ -6901,35 +6490,15 @@
     }
   </script>
 
-  <!-- ══ SIGN IN ══ -->
-  <div class="si-overlay" id="si-overlay" onclick="if(event.target===this)closeSignIn()">
-    <div class="si-modal">
-      <button class="si-close" onclick="closeSignIn()" aria-label="Close">&times;</button>
-      <div class="logo-mark" style="background:var(--red);width:44px;height:44px;border-radius:9px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px">
-        <svg viewBox="0 0 20 20" style="width:24px;height:24px;fill:#fff">
-          <path
-            d="M10 1.5C6.41 1.5 3.5 4.41 3.5 8c0 4.9 6.5 10.5 6.5 10.5S16.5 12.9 16.5 8c0-3.59-2.91-6.5-6.5-6.5zm0 8.75a2.25 2.25 0 1 1 0-4.5 2.25 2.25 0 0 1 0 4.5z" />
-        </svg>
-      </div>
-      <div class="si-title">Welcome to exploreMore</div>
-      <p class="si-sub">Sign in with Google to save your plans, track trip history, and pick up where you left off.</p>
-      <div class="si-gbtn" id="g_id_signin_container"></div>
-      <div class="si-fallback" id="si-fallback" style="display:none">
-        Google sign-in isn't available right now. Please try again later.
-      </div>
-    </div>
-  </div>
+  {% include "partials/_signin_modal.html" %}
 
   <script>
-    const GOOGLE_CLIENT_ID = {{ google_client_id | tojson }};
+    const LOGOUT_REDIRECT = '/';
 
-    function openSignIn() {
-      document.getElementById('si-overlay').classList.add('open');
-    }
-
-    function closeSignIn() {
-      document.getElementById('si-overlay').classList.remove('open');
-    }
+    let CURRENT_USER = null;
+    // Set when "Save plan" is clicked while signed out, so we can resume
+    // straight into the save dialog once the sign-in popup succeeds.
+    let pendingSaveAfterSignIn = false;
 
     async function handleGoogleCredential(response) {
       try {
@@ -6947,11 +6516,6 @@
       }
     }
 
-    let CURRENT_USER = null;
-    // Set when "Save plan" is clicked while signed out, so we can resume
-    // straight into the save dialog once the sign-in popup succeeds.
-    let pendingSaveAfterSignIn = false;
-
     function applyAuthState(user) {
       CURRENT_USER = user;
       document.getElementById('signin-pill').style.display = user ? 'none' : 'flex';
@@ -6965,38 +6529,8 @@
         }
       }
     }
-
-    async function refreshAuthState() {
-      try {
-        const res = await fetch('/api/auth/me');
-        const data = await res.json();
-        applyAuthState(data.authenticated ? data.user : null);
-      } catch (err) {
-        applyAuthState(null);
-      }
-    }
-
-    async function doLogout() {
-      try { await fetch('/api/auth/logout', { method: 'POST' }); } catch (err) { /* ignore */ }
-      window.location.href = '/';
-    }
-
-    window.addEventListener('load', () => {
-      refreshAuthState();
-      if (!GOOGLE_CLIENT_ID || !window.google?.accounts?.id) {
-        document.getElementById('si-fallback').style.display = 'block';
-        return;
-      }
-      google.accounts.id.initialize({
-        client_id: GOOGLE_CLIENT_ID,
-        callback: handleGoogleCredential,
-      });
-      google.accounts.id.renderButton(
-        document.getElementById('g_id_signin_container'),
-        { theme: 'outline', size: 'large', shape: 'pill', width: 280 },
-      );
-    });
   </script>
+  {% include "partials/_auth_script.html" %}
 </body>
 
 </html>
