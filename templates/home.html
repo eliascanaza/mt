@@ -6795,6 +6795,11 @@
     }
 
     function openSavePlan() {
+      if (!CURRENT_USER) {
+        pendingSaveAfterSignIn = true;
+        openSignIn();
+        return;
+      }
       document.getElementById('sp-name-input').value = '';
       openModal('sp-modal');
       setTimeout(() => document.getElementById('sp-name-input').focus(), 50);
@@ -6911,12 +6916,22 @@
       }
     }
 
+    let CURRENT_USER = null;
+    // Set when "Save plan" is clicked while signed out, so we can resume
+    // straight into the save dialog once the sign-in popup succeeds.
+    let pendingSaveAfterSignIn = false;
+
     function applyAuthState(user) {
+      CURRENT_USER = user;
       document.getElementById('signin-pill').style.display = user ? 'none' : 'flex';
       document.getElementById('user-wrap').style.display = user ? 'block' : 'none';
       if (user) {
         document.getElementById('u-name').textContent = user.name;
         document.getElementById('u-email').textContent = user.email;
+        if (pendingSaveAfterSignIn) {
+          pendingSaveAfterSignIn = false;
+          openSavePlan();
+        }
       }
     }
 

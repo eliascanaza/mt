@@ -1205,19 +1205,19 @@
       </div>
       <div class="hero-stats">
         <div class="hstat">
-          <div class="hstat-val">8</div>
+          <div class="hstat-val" id="hstat-trips">0</div>
           <div class="hstat-lbl">Trips</div>
         </div>
         <div class="hstat">
-          <div class="hstat-val">12</div>
+          <div class="hstat-val" id="hstat-countries">0</div>
           <div class="hstat-lbl">Countries</div>
         </div>
         <div class="hstat">
-          <div class="hstat-val">47</div>
+          <div class="hstat-val" id="hstat-places">0</div>
           <div class="hstat-lbl">Places</div>
         </div>
         <div class="hstat">
-          <div class="hstat-val">23</div>
+          <div class="hstat-val" id="hstat-reviews">0</div>
           <div class="hstat-lbl">Reviews</div>
         </div>
       </div>
@@ -1281,21 +1281,22 @@
             </div>
             <div class="form-field">
               <label class="form-label">Phone</label>
-              <input class="form-input" type="tel" placeholder="+1 555 000 0000">
+              <input class="form-input" type="tel" placeholder="+1 555 000 0000" id="profile-phone-input">
             </div>
             <div class="form-field form-full">
               <label class="form-label">Bio</label>
-              <textarea class="form-textarea"
-                placeholder="Tell other travellers about yourself…">Passionate traveller with a love for Patagonia, street food, and off-the-beaten-path adventures. Always planning the next trip.</textarea>
+              <textarea class="form-textarea" id="profile-bio-input"
+                placeholder="Tell other travellers about yourself…"></textarea>
               <span class="form-hint">Shown on your public profile and reviews</span>
             </div>
             <div class="form-field">
               <label class="form-label">Home city</label>
-              <input class="form-input" type="text" placeholder="e.g. Buenos Aires">
+              <input class="form-input" type="text" placeholder="e.g. Buenos Aires" id="profile-homecity-input">
             </div>
             <div class="form-field">
               <label class="form-label">Nationality</label>
-              <select class="form-select">
+              <select class="form-select" id="profile-nationality-input">
+                <option value="">Select…</option>
                 <option>🇦🇷 Argentina</option>
                 <option>🇨🇱 Chile</option>
                 <option>🇧🇷 Brazil</option>
@@ -1309,8 +1310,8 @@
           </div>
         </div>
         <div class="form-footer">
-          <button class="btn btn-secondary">Discard</button>
-          <button class="btn btn-primary" onclick="showToast('Profile saved!')">
+          <button class="btn btn-secondary" onclick="discardInfoForm()">Discard</button>
+          <button class="btn btn-primary" onclick="saveInfoForm()">
             <svg viewBox="0 0 24 24">
               <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
               <polyline points="17 21 17 13 7 13 7 21" />
@@ -1332,36 +1333,36 @@
           <div class="form-grid">
             <div class="form-field">
               <label class="form-label">Travel style</label>
-              <select class="form-select">
+              <select class="form-select" id="pref-travelstyle-input">
                 <option>🎒 Backpacker</option>
-                <option selected>🏨 Comfort traveller</option>
+                <option>🏨 Comfort traveller</option>
                 <option>💎 Luxury</option>
                 <option>🌿 Eco traveller</option>
               </select>
             </div>
             <div class="form-field">
               <label class="form-label">Preferred activities</label>
-              <select class="form-select">
+              <select class="form-select" id="pref-activities-input">
                 <option>🏔️ Adventure & trekking</option>
-                <option selected>🍽️ Food & culture</option>
+                <option>🍽️ Food & culture</option>
                 <option>🏖️ Beach & relaxation</option>
                 <option>🏛️ History & heritage</option>
               </select>
             </div>
             <div class="form-field">
               <label class="form-label">Typical trip length</label>
-              <select class="form-select">
+              <select class="form-select" id="pref-triplength-input">
                 <option>Weekend (1–3 days)</option>
-                <option selected>Short trip (4–7 days)</option>
+                <option>Short trip (4–7 days)</option>
                 <option>Two weeks</option>
                 <option>Month+</option>
               </select>
             </div>
             <div class="form-field">
               <label class="form-label">Travel companions</label>
-              <select class="form-select">
+              <select class="form-select" id="pref-companions-input">
                 <option>Solo</option>
-                <option selected>Couple</option>
+                <option>Couple</option>
                 <option>Friends group</option>
                 <option>Family with kids</option>
               </select>
@@ -1369,7 +1370,7 @@
           </div>
         </div>
         <div class="form-footer">
-          <button class="btn btn-primary" onclick="showToast('Preferences saved!')">
+          <button class="btn btn-primary" onclick="saveTravelPrefsForm()">
             <svg viewBox="0 0 24 24">
               <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
               <polyline points="17 21 17 13 7 13 7 21" />
@@ -1513,8 +1514,8 @@
         <div class="card-body" style="padding:6px 20px">
           <div class="pref-row">
             <div class="pref-lbl">Language</div>
-            <select class="pref-select">
-              <option selected>🇬🇧 English</option>
+            <select class="pref-select" id="app-language-input">
+              <option>🇬🇧 English</option>
               <option>🇪🇸 Español</option>
               <option>🇫🇷 Français</option>
               <option>🇩🇪 Deutsch</option>
@@ -1524,8 +1525,8 @@
           </div>
           <div class="pref-row">
             <div class="pref-lbl">Currency</div>
-            <select class="pref-select">
-              <option selected>USD — US Dollar</option>
+            <select class="pref-select" id="app-currency-input">
+              <option>USD — US Dollar</option>
               <option>EUR — Euro</option>
               <option>GBP — British Pound</option>
               <option>ARS — Argentine Peso</option>
@@ -1535,15 +1536,15 @@
           </div>
           <div class="pref-row">
             <div class="pref-lbl">Distance units</div>
-            <select class="pref-select">
-              <option selected>Kilometres (km)</option>
+            <select class="pref-select" id="app-distanceunit-input">
+              <option>Kilometres (km)</option>
               <option>Miles (mi)</option>
             </select>
           </div>
           <div class="pref-row">
             <div class="pref-lbl">Map style</div>
-            <select class="pref-select">
-              <option selected>Light (default)</option>
+            <select class="pref-select" id="app-mapstyle-input">
+              <option>Light (default)</option>
               <option>Dark</option>
               <option>Satellite</option>
               <option>Terrain</option>
@@ -1551,7 +1552,7 @@
           </div>
         </div>
         <div class="form-footer">
-          <button class="btn btn-primary" onclick="showToast('Preferences saved!')">Save preferences</button>
+          <button class="btn btn-primary" onclick="saveAppSettingsForm()">Save preferences</button>
         </div>
       </div>
 
@@ -1569,7 +1570,8 @@
               <div class="toggle-name">Weekly travel digest</div>
               <div class="toggle-desc">Top destinations and curated route ideas every Friday</div>
             </div>
-            <label class="toggle"><input type="checkbox" checked>
+            <label class="toggle"><input type="checkbox" id="notif-weekly_digest"
+                onchange="saveToggle('notifications','weekly_digest',this.checked)">
               <div class="toggle-track"></div>
             </label>
           </div>
@@ -1578,7 +1580,8 @@
               <div class="toggle-name">Trip reminders</div>
               <div class="toggle-desc">Alerts before your planned departure dates</div>
             </div>
-            <label class="toggle"><input type="checkbox" checked>
+            <label class="toggle"><input type="checkbox" id="notif-trip_reminders"
+                onchange="saveToggle('notifications','trip_reminders',this.checked)">
               <div class="toggle-track"></div>
             </label>
           </div>
@@ -1587,7 +1590,8 @@
               <div class="toggle-name">New destinations nearby</div>
               <div class="toggle-desc">Notify me when new stops are added along my saved routes</div>
             </div>
-            <label class="toggle"><input type="checkbox">
+            <label class="toggle"><input type="checkbox" id="notif-new_destinations"
+                onchange="saveToggle('notifications','new_destinations',this.checked)">
               <div class="toggle-track"></div>
             </label>
           </div>
@@ -1596,7 +1600,8 @@
               <div class="toggle-name">Review replies</div>
               <div class="toggle-desc">Email me when someone replies to my reviews</div>
             </div>
-            <label class="toggle"><input type="checkbox" checked>
+            <label class="toggle"><input type="checkbox" id="notif-review_replies"
+                onchange="saveToggle('notifications','review_replies',this.checked)">
               <div class="toggle-track"></div>
             </label>
           </div>
@@ -1605,7 +1610,8 @@
               <div class="toggle-name">Promotional offers</div>
               <div class="toggle-desc">Partner deals, discounts and seasonal campaigns</div>
             </div>
-            <label class="toggle"><input type="checkbox">
+            <label class="toggle"><input type="checkbox" id="notif-promotional_offers"
+                onchange="saveToggle('notifications','promotional_offers',this.checked)">
               <div class="toggle-track"></div>
             </label>
           </div>
@@ -1626,7 +1632,8 @@
               <div class="toggle-name">Public profile</div>
               <div class="toggle-desc">Other users can see your profile page and stats</div>
             </div>
-            <label class="toggle"><input type="checkbox" checked>
+            <label class="toggle"><input type="checkbox" id="privacy-public_profile"
+                onchange="saveToggle('privacy','public_profile',this.checked)">
               <div class="toggle-track"></div>
             </label>
           </div>
@@ -1635,7 +1642,8 @@
               <div class="toggle-name">Share trip history</div>
               <div class="toggle-desc">Let others see the trips and destinations you've completed</div>
             </div>
-            <label class="toggle"><input type="checkbox" checked>
+            <label class="toggle"><input type="checkbox" id="privacy-share_trip_history"
+                onchange="saveToggle('privacy','share_trip_history',this.checked)">
               <div class="toggle-track"></div>
             </label>
           </div>
@@ -1644,7 +1652,8 @@
               <div class="toggle-name">Show visited places on map</div>
               <div class="toggle-desc">Display a heatmap of your explored locations publicly</div>
             </div>
-            <label class="toggle"><input type="checkbox">
+            <label class="toggle"><input type="checkbox" id="privacy-show_visited_places"
+                onchange="saveToggle('privacy','show_visited_places',this.checked)">
               <div class="toggle-track"></div>
             </label>
           </div>
@@ -1653,7 +1662,8 @@
               <div class="toggle-name">Allow data for recommendations</div>
               <div class="toggle-desc">Use your history to improve destination suggestions</div>
             </div>
-            <label class="toggle"><input type="checkbox" checked>
+            <label class="toggle"><input type="checkbox" id="privacy-allow_data_for_recommendations"
+                onchange="saveToggle('privacy','allow_data_for_recommendations',this.checked)">
               <div class="toggle-track"></div>
             </label>
           </div>
@@ -1665,25 +1675,14 @@
         <div class="card-hdr">
           <div>
             <div class="card-title">Account</div>
-            <div class="card-sub">Password and account management</div>
+            <div class="card-sub">You sign in with Google — there's no separate exploreMore password</div>
           </div>
         </div>
         <div class="card-body">
-          <div class="form-grid">
-            <div class="form-field">
-              <label class="form-label">Current password</label>
-              <input class="form-input" type="password" placeholder="••••••••">
-            </div>
-            <div></div>
-            <div class="form-field">
-              <label class="form-label">New password</label>
-              <input class="form-input" type="password" placeholder="••••••••">
-            </div>
-            <div class="form-field">
-              <label class="form-label">Confirm new password</label>
-              <input class="form-input" type="password" placeholder="••••••••">
-            </div>
-          </div>
+          <p style="font-size:13px;color:var(--g600);line-height:1.6">
+            Your account is secured by your Google sign-in (<span id="account-google-email">—</span>). To change your
+            password or review security activity, manage it directly in your Google Account.
+          </p>
         </div>
         <div class="form-footer" style="justify-content:space-between">
           <button class="btn btn-secondary" onclick="showToast('Data export requested. Check your email.')">
@@ -1694,7 +1693,8 @@
             </svg>
             Export my data
           </button>
-          <button class="btn btn-primary" onclick="showToast('Password updated!')">Update password</button>
+          <a class="btn btn-primary" href="https://myaccount.google.com/security" target="_blank" rel="noopener"
+            style="text-decoration:none">Manage Google Account</a>
         </div>
       </div>
 
@@ -1874,12 +1874,26 @@
       return new Date(iso).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
     }
 
+    let CURRENT_USER = null;
+
+    function fillInfoForm(info) {
+      document.getElementById('profile-firstname-input').value = info.first_name || '';
+      document.getElementById('profile-lastname-input').value = info.last_name || '';
+      document.getElementById('profile-phone-input').value = info.phone || '';
+      document.getElementById('profile-bio-input').value = info.bio || '';
+      document.getElementById('profile-homecity-input').value = info.home_city || '';
+      document.getElementById('profile-nationality-input').value = info.nationality || '';
+    }
+
     function applyAuthState(user) {
       const overlay = document.getElementById('si-overlay');
       const page = document.getElementById('page');
+      CURRENT_USER = user;
       if (!user) {
         page.style.display = 'none';
         overlay.classList.add('open');
+        ['hstat-trips', 'hstat-countries', 'hstat-places', 'hstat-reviews']
+          .forEach(id => { document.getElementById(id).textContent = '0'; });
         return;
       }
       overlay.classList.remove('open');
@@ -1888,10 +1902,34 @@
       document.getElementById('hero-name').textContent = user.name || 'Traveller';
       document.getElementById('hero-email').textContent = user.email || '';
       document.getElementById('hero-since-text').textContent = `Member since ${monthYear(user.created_at)}`;
-      const [firstName, ...rest] = (user.name || '').split(' ');
-      document.getElementById('profile-firstname-input').value = firstName || '';
-      document.getElementById('profile-lastname-input').value = rest.join(' ');
+      document.getElementById('account-google-email').textContent = user.email || '';
       document.getElementById('profile-email-input').value = user.email || '';
+      fillInfoForm(user.info || {});
+
+      const prefs = user.travel_prefs || {};
+      document.getElementById('pref-travelstyle-input').value = prefs.travel_style || '';
+      document.getElementById('pref-activities-input').value = prefs.preferred_activities || '';
+      document.getElementById('pref-triplength-input').value = prefs.trip_length || '';
+      document.getElementById('pref-companions-input').value = prefs.companions || '';
+
+      const appSettings = user.app_settings || {};
+      document.getElementById('app-language-input').value = appSettings.language || '';
+      document.getElementById('app-currency-input').value = appSettings.currency || '';
+      document.getElementById('app-distanceunit-input').value = appSettings.distance_unit || '';
+      document.getElementById('app-mapstyle-input').value = appSettings.map_style || '';
+
+      const notifications = user.notifications || {};
+      Object.entries(notifications).forEach(([key, val]) => {
+        const el = document.getElementById(`notif-${key}`);
+        if (el) el.checked = !!val;
+      });
+
+      const privacy = user.privacy || {};
+      Object.entries(privacy).forEach(([key, val]) => {
+        const el = document.getElementById(`privacy-${key}`);
+        if (el) el.checked = !!val;
+      });
+
       loadMyPlans();
     }
 
@@ -1923,6 +1961,59 @@
     async function doLogout() {
       try { await fetch('/api/auth/logout', { method: 'POST' }); } catch (err) { /* ignore */ }
       window.location.href = '/';
+    }
+
+    async function saveProfileSection(section, fields, successMessage) {
+      try {
+        const res = await fetch(`/api/profile/${section}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(fields),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to save');
+        CURRENT_USER = data.user;
+        showToast(successMessage);
+      } catch (err) {
+        showToast(`Couldn't save — ${err.message}`);
+      }
+    }
+
+    function saveInfoForm() {
+      saveProfileSection('info', {
+        first_name: document.getElementById('profile-firstname-input').value.trim(),
+        last_name: document.getElementById('profile-lastname-input').value.trim(),
+        phone: document.getElementById('profile-phone-input').value.trim(),
+        bio: document.getElementById('profile-bio-input').value.trim(),
+        home_city: document.getElementById('profile-homecity-input').value.trim(),
+        nationality: document.getElementById('profile-nationality-input').value,
+      }, 'Profile saved!');
+    }
+
+    function discardInfoForm() {
+      if (CURRENT_USER) fillInfoForm(CURRENT_USER.info || {});
+    }
+
+    function saveTravelPrefsForm() {
+      saveProfileSection('travel_prefs', {
+        travel_style: document.getElementById('pref-travelstyle-input').value,
+        preferred_activities: document.getElementById('pref-activities-input').value,
+        trip_length: document.getElementById('pref-triplength-input').value,
+        companions: document.getElementById('pref-companions-input').value,
+      }, 'Preferences saved!');
+    }
+
+    function saveAppSettingsForm() {
+      saveProfileSection('app_settings', {
+        language: document.getElementById('app-language-input').value,
+        currency: document.getElementById('app-currency-input').value,
+        distance_unit: document.getElementById('app-distanceunit-input').value,
+        map_style: document.getElementById('app-mapstyle-input').value,
+      }, 'Preferences saved!');
+    }
+
+    function saveToggle(section, key, value) {
+      saveProfileSection(section, { [key]: value }, 'Saved!');
     }
 
     window.addEventListener('load', () => {

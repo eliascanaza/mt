@@ -947,6 +947,46 @@ def get_plans_for_user(user_id: int):
     return plans
 
 
+# Defaults shown by the static profile.html form fields before a user has
+# ever saved their own choices — kept here so freshly-created and
+# legacy users both read back a complete, consistent shape.
+DEFAULT_TRAVEL_PREFS = {
+    "travel_style": "🏨 Comfort traveller",
+    "preferred_activities": "🍽️ Food & culture",
+    "trip_length": "Short trip (4–7 days)",
+    "companions": "Couple",
+}
+
+DEFAULT_APP_SETTINGS = {
+    "language": "🇬🇧 English",
+    "currency": "USD — US Dollar",
+    "distance_unit": "Kilometres (km)",
+    "map_style": "Light (default)",
+}
+
+DEFAULT_NOTIFICATIONS = {
+    "weekly_digest": True,
+    "trip_reminders": True,
+    "new_destinations": False,
+    "review_replies": True,
+    "promotional_offers": False,
+}
+
+DEFAULT_PRIVACY = {
+    "public_profile": True,
+    "share_trip_history": True,
+    "show_visited_places": False,
+    "allow_data_for_recommendations": True,
+}
+
+PROFILE_SECTIONS = {"info", "travel_prefs", "app_settings", "notifications", "privacy"}
+
+
+def _default_info(name: str):
+    first, _, last = (name or "").strip().partition(" ")
+    return {"first_name": first, "last_name": last, "phone": "", "bio": "", "home_city": "", "nationality": ""}
+
+
 def get_or_create_google_user(google_sub: str, email: str, name: str, picture: str):
     """Looks up a user by their Google account id, creating one on first
     sign-in. Refreshes name/picture on every login since those can change
@@ -958,14 +998,18 @@ def get_or_create_google_user(google_sub: str, email: str, name: str, picture: s
             {"google_sub": google_sub},
             {"$set": {"name": name, "email": email, "picture": picture}},
         )
-        existing["name"], existing["email"], existing["picture"] = name, email, picture
-        return _strip_id(existing)
+        return get_user_by_id(existing["id"])
 
     new_id = _next_id(db, "users")
     doc = {
         "id": new_id, "google_sub": google_sub, "email": email,
         "name": name, "picture": picture,
         "created_at": datetime.now(timezone.utc),
+        "info": _default_info(name),
+        "travel_prefs": dict(DEFAULT_TRAVEL_PREFS),
+        "app_settings": dict(DEFAULT_APP_SETTINGS),
+        "notifications": dict(DEFAULT_NOTIFICATIONS),
+        "privacy": dict(DEFAULT_PRIVACY),
     }
     db.users.insert_one(doc)
     return _strip_id(doc)
@@ -978,7 +1022,26 @@ def get_user_by_id(user_id: int):
         return None
     doc = _strip_id(doc)
     doc["created_at"] = _iso(doc.get("created_at"))
+    # Backfills any section a user created before these existed — keeps the
+    # shape complete without a migration.
+    doc.setdefault("info", _default_info(doc.get("name")))
+    doc.setdefault("travel_prefs", dict(DEFAULT_TRAVEL_PREFS))
+    doc.setdefault("app_settings", dict(DEFAULT_APP_SETTINGS))
+    doc.setdefault("notifications", dict(DEFAULT_NOTIFICATIONS))
+    doc.setdefault("privacy", dict(DEFAULT_PRIVACY))
     return doc
+
+
+def update_user_section(user_id: int, section: str, fields: dict):
+    """Merges `fields` into one of the user's profile sub-documents (e.g.
+    "info", "notifications") — used by each Save button on profile.html."""
+    if section not in PROFILE_SECTIONS:
+        raise ValueError(f"Unknown profile section: {section}")
+    db = get_db()
+    update = {f"{section}.{k}": v for k, v in fields.items()}
+    if update:
+        db.users.update_one({"id": user_id}, {"$set": update})
+    return get_user_by_id(user_id)
 
 
 if __name__ == "__main__":

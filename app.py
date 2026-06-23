@@ -478,6 +478,21 @@ def api_auth_logout():
     return jsonify({"ok": True})
 
 
+# ── Profile forms (Personal Info, Travel Preferences, App Settings,
+# Notifications, Privacy) — each profile.html "Save" button PUTs its
+# section's fields here, scoped to the signed-in session user. ──────────────
+@app.route("/api/profile/<section>", methods=["PUT"])
+def api_update_profile_section(section):
+    if section not in db.PROFILE_SECTIONS:
+        return jsonify({"error": f"Unknown profile section: {section}"}), 404
+    user_id = session.get("user_id")
+    if not user_id:
+        return jsonify({"error": "Not signed in"}), 401
+    fields = request.get_json(silent=True) or {}
+    user = db.update_user_section(user_id, section, fields)
+    return jsonify({"ok": True, "user": user})
+
+
 @app.route("/api/getsavedplan", methods=["GET"])
 def api_get_saved_plans():
     user_id = request.args.get("user_id", type=int) or session.get("user_id", 1111)
