@@ -25,7 +25,9 @@ import urllib.request
 from concurrent.futures import ThreadPoolExecutor
 import certifi
 from dotenv import load_dotenv
-from flask import Flask, jsonify, request, send_from_directory, render_template
+from flask import Flask, jsonify, request, send_from_directory, render_template, session
+from google.oauth2 import id_token as google_id_token
+from google.auth.transport import requests as google_auth_requests
 
 import database as db
 
@@ -39,22 +41,28 @@ load_dotenv()
 app = Flask(__name__, template_folder="templates", static_folder="assets", static_url_path="/assets")
 app.config["JSON_SORT_KEYS"] = False
 app.config["GOOGLE_MAPS_API_KEY"] = os.environ.get("GOOGLE_MAPS_API_KEY", "")
+app.config["GOOGLE_CLIENT_ID"] = os.environ.get("GOOGLE_CLIENT_ID", "")
+app.secret_key = os.environ.get("SECRET_KEY", "dev-only-insecure-key-change-me")
 
 
 # ── HTML frontend ────────────────────────────────────────────────────────
 @app.route("/")
 def index():
-    return send_from_directory("templates", "index.html")
+    return render_template("index.html", google_client_id=app.config["GOOGLE_CLIENT_ID"])
 
 
 @app.route("/profile")
 def profile():
-    return send_from_directory("templates", "profile.html")
+    return render_template("profile.html", google_client_id=app.config["GOOGLE_CLIENT_ID"])
 
 
 @app.route("/home")
 def home():
-    return render_template("home.html", google_maps_api_key=app.config["GOOGLE_MAPS_API_KEY"])
+    return render_template(
+        "home.html",
+        google_maps_api_key=app.config["GOOGLE_MAPS_API_KEY"],
+        google_client_id=app.config["GOOGLE_CLIENT_ID"],
+    )
 
 
 @app.route("/info")
@@ -427,9 +435,52 @@ def api_suggestion():
 
 
 # ── Fetch saved plans (for the "My Plans" tab, most recently saved first) ──
+# ── Auth (Google Sign-In) ──────────────────────────────────────────────────
+@app.route("/api/auth/google", methods=["POST"])
+def api_auth_google():
+    data = request.get_json(silent=True) or {}
+    credential = data.get("credential")
+    if not credential:
+        return jsonify({"error": "Missing credential"}), 400
+    if not app.config["GOOGLE_CLIENT_ID"]:
+        return jsonify({"error": "Google sign-in is not configured"}), 500
+
+    try:
+        payload = google_id_token.verify_oauth2_token(
+            credential, google_auth_requests.Request(), app.config["GOOGLE_CLIENT_ID"],
+        )
+    except ValueError:
+        return jsonify({"error": "Invalid Google credential"}), 401
+
+    user = db.get_or_create_google_user(
+        google_sub=payload["sub"],
+        email=payload.get("email", ""),
+        name=payload.get("name") or payload.get("email", "Traveller"),
+        picture=payload.get("picture", ""),
+    )
+    session["user_id"] = user["id"]
+    return jsonify({"ok": True, "user": user})
+
+
+@app.route("/api/auth/me", methods=["GET"])
+def api_auth_me():
+    user_id = session.get("user_id")
+    user = db.get_user_by_id(user_id) if user_id else None
+    if not user:
+        session.clear()
+        return jsonify({"authenticated": False}), 401
+    return jsonify({"authenticated": True, "user": user})
+
+
+@app.route("/api/auth/logout", methods=["POST"])
+def api_auth_logout():
+    session.clear()
+    return jsonify({"ok": True})
+
+
 @app.route("/api/getsavedplan", methods=["GET"])
 def api_get_saved_plans():
-    user_id = request.args.get("user_id", 1111, type=int)
+    user_id = request.args.get("user_id", type=int) or session.get("user_id", 1111)
     plans = db.get_plans_for_user(user_id)
     return jsonify({"plans": plans, "count": len(plans)})
 
@@ -443,12 +494,14 @@ def api_save_plan_full():
     if missing:
         return jsonify({"error": f"Missing fields: {', '.join(missing)}"}), 400
 
+    session_user = db.get_user_by_id(session["user_id"]) if session.get("user_id") else None
+
     plan_id = db.save_full_plan(
         title=data["title"],
         from_name=data["from_name"], from_lat=float(data["from_lat"]), from_lng=float(data["from_lng"]),
         to_name=data["to_name"], to_lat=float(data["to_lat"]), to_lng=float(data["to_lng"]),
-        user_id=data.get("user_id", 1111),
-        user_email=data.get("user_email", "test@gmail.com"),
+        user_id=session_user["id"] if session_user else data.get("user_id", 1111),
+        user_email=session_user["email"] if session_user else data.get("user_email", "test@gmail.com"),
         distance_km=data.get("distance_km"),
         duration_text=data.get("duration_text"),
         transport_mode=data.get("transport_mode"),

@@ -10,6 +10,7 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap"
     rel="stylesheet">
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <style>
     *,
     *::before,
@@ -1248,6 +1249,89 @@
         flex-direction: column
       }
     }
+
+    /* ── SIGN IN ── */
+    .si-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 999;
+      background: rgba(0, 0, 0, .5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .si-overlay.open {
+      display: flex
+    }
+
+    .si-modal {
+      background: var(--white);
+      border-radius: var(--r-xl);
+      max-width: 380px;
+      width: 100%;
+      padding: 32px 28px;
+      text-align: center;
+      position: relative;
+      box-shadow: var(--sh-xl);
+    }
+
+    .si-close {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: none;
+      background: var(--g100);
+      color: var(--g600);
+      font-size: 16px;
+      cursor: pointer;
+      line-height: 1;
+    }
+
+    .si-close:hover {
+      background: var(--g200)
+    }
+
+    .si-modal .logo-mark {
+      width: 44px;
+      height: 44px;
+      margin: 0 auto 16px;
+    }
+
+    .si-modal .logo-mark svg {
+      width: 24px;
+      height: 24px
+    }
+
+    .si-title {
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -.02em;
+      margin-bottom: 8px
+    }
+
+    .si-sub {
+      font-size: 13px;
+      color: var(--g600);
+      line-height: 1.55;
+      margin-bottom: 24px
+    }
+
+    .si-gbtn {
+      display: flex;
+      justify-content: center;
+      min-height: 44px
+    }
+
+    .si-fallback {
+      font-size: 12px;
+      color: var(--g600);
+      margin-top: 8px
+    }
   </style>
 </head>
 
@@ -1270,7 +1354,7 @@
       <li><a href="#discover">Discover</a></li>
     </ul>
     <div class="nav-actions">
-      <a class="btn-ghost" href="/profile">Sign in</a>
+      <button class="btn-ghost" onclick="openSignIn()">Sign in</button>
     </div>
   </nav>
 
@@ -1982,9 +2066,9 @@
             </svg>
             Open the map
           </a>
-          <a class="hero-btn-ghost" href="/profile">
+          <button class="hero-btn-ghost" onclick="openSignIn()">
             Sign in
-          </a>
+          </button>
         </div>
       </div>
     </div>
@@ -2041,6 +2125,67 @@
       </div>
     </div>
   </footer>
+
+  <!-- ══ SIGN IN ══ -->
+  <div class="si-overlay" id="si-overlay" onclick="if(event.target===this)closeSignIn()">
+    <div class="si-modal">
+      <button class="si-close" onclick="closeSignIn()" aria-label="Close">&times;</button>
+      <div class="logo-mark">
+        <svg viewBox="0 0 20 20">
+          <path
+            d="M10 1.5C6.41 1.5 3.5 4.41 3.5 8c0 4.9 6.5 10.5 6.5 10.5S16.5 12.9 16.5 8c0-3.59-2.91-6.5-6.5-6.5zm0 8.75a2.25 2.25 0 1 1 0-4.5 2.25 2.25 0 0 1 0 4.5z" />
+        </svg>
+      </div>
+      <div class="si-title">Welcome to exploreMore</div>
+      <p class="si-sub">Sign in with Google to save your plans, track trip history, and pick up where you left off.</p>
+      <div class="si-gbtn" id="g_id_signin_container"></div>
+      <div class="si-fallback" id="si-fallback" style="display:none">
+        Google sign-in isn't available right now. Please try again later.
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const GOOGLE_CLIENT_ID = {{ google_client_id | tojson }};
+
+    function openSignIn() {
+      document.getElementById('si-overlay').classList.add('open');
+    }
+
+    function closeSignIn() {
+      document.getElementById('si-overlay').classList.remove('open');
+    }
+
+    async function handleGoogleCredential(response) {
+      try {
+        const res = await fetch('/api/auth/google', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ credential: response.credential }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Sign-in failed');
+        window.location.href = '/profile';
+      } catch (err) {
+        alert(`Couldn't sign in — ${err.message}`);
+      }
+    }
+
+    window.addEventListener('load', () => {
+      if (!GOOGLE_CLIENT_ID || !window.google?.accounts?.id) {
+        document.getElementById('si-fallback').style.display = 'block';
+        return;
+      }
+      google.accounts.id.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: handleGoogleCredential,
+      });
+      google.accounts.id.renderButton(
+        document.getElementById('g_id_signin_container'),
+        { theme: 'outline', size: 'large', shape: 'pill', width: 280 },
+      );
+    });
+  </script>
 </body>
 
 </html>

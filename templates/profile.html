@@ -10,6 +10,7 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap"
     rel="stylesheet">
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <style>
     *,
     *::before,
@@ -1062,6 +1063,95 @@
     .lo-confirm:hover {
       background: #fff0f2
     }
+
+    /* ── SIGN IN ── */
+    .si-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background: rgba(0, 0, 0, .5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .si-overlay.open {
+      display: flex
+    }
+
+    .si-modal {
+      background: var(--white);
+      border-radius: var(--r-xl);
+      max-width: 380px;
+      width: 100%;
+      padding: 32px 28px;
+      text-align: center;
+      position: relative;
+      box-shadow: var(--sh-lg);
+    }
+
+    .si-close {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: none;
+      background: var(--g100);
+      color: var(--g600);
+      font-size: 16px;
+      cursor: pointer;
+      line-height: 1;
+    }
+
+    .si-close:hover {
+      background: var(--g200)
+    }
+
+    .si-modal .logo-mark {
+      width: 44px;
+      height: 44px;
+      border-radius: 9px;
+      background: var(--red);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 16px;
+    }
+
+    .si-modal .logo-mark svg {
+      width: 24px;
+      height: 24px;
+      fill: #fff
+    }
+
+    .si-title {
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -.02em;
+      margin-bottom: 8px
+    }
+
+    .si-sub {
+      font-size: 13px;
+      color: var(--g600);
+      line-height: 1.55;
+      margin-bottom: 24px
+    }
+
+    .si-gbtn {
+      display: flex;
+      justify-content: center;
+      min-height: 44px
+    }
+
+    .si-fallback {
+      font-size: 12px;
+      color: var(--g600);
+      margin-top: 8px
+    }
   </style>
 </head>
 
@@ -1087,12 +1177,12 @@
   </nav>
 
   <!-- ══ PAGE ══ -->
-  <div class="page">
+  <div class="page" id="page" style="display:none">
 
     <!-- HERO -->
     <div class="hero">
-      <div class="hero-av">
-        AT
+      <div class="hero-av" id="hero-av">
+        <span id="hero-av-initials"></span>
         <div class="hero-av-edit" title="Change photo">
           <svg viewBox="0 0 24 24">
             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
@@ -1101,8 +1191,8 @@
         </div>
       </div>
       <div class="hero-info">
-        <div class="hero-name">Alex Traveller</div>
-        <div class="hero-email">alex@exploremore.app</div>
+        <div class="hero-name" id="hero-name">Traveller</div>
+        <div class="hero-email" id="hero-email"></div>
         <div class="hero-since">
           <svg viewBox="0 0 24 24">
             <rect x="3" y="4" width="18" height="18" rx="2" />
@@ -1110,7 +1200,7 @@
             <line x1="8" y1="2" x2="8" y2="6" />
             <line x1="3" y1="10" x2="21" y2="10" />
           </svg>
-          Member since March 2022
+          <span id="hero-since-text">Member since —</span>
         </div>
       </div>
       <div class="hero-stats">
@@ -1179,15 +1269,15 @@
           <div class="form-grid">
             <div class="form-field">
               <label class="form-label">First name</label>
-              <input class="form-input" type="text" value="Alex">
+              <input class="form-input" type="text" id="profile-firstname-input">
             </div>
             <div class="form-field">
               <label class="form-label">Last name</label>
-              <input class="form-input" type="text" value="Traveller">
+              <input class="form-input" type="text" id="profile-lastname-input">
             </div>
             <div class="form-field">
               <label class="form-label">Email</label>
-              <input class="form-input" type="email" value="alex@exploremore.app">
+              <input class="form-input" type="email" id="profile-email-input" disabled>
             </div>
             <div class="form-field">
               <label class="form-label">Phone</label>
@@ -1672,8 +1762,6 @@
     if (urlTab) switchTab(urlTab);
 
     /* ══ MY PLANS (loaded from /api/getsavedplan) ══ */
-    const CURRENT_USER_ID = 1111;
-
     function timeAgo(sqlTimestamp) {
       // SQLite's CURRENT_TIMESTAMP has no timezone suffix — it's UTC, so add 'Z'
       const then = new Date(sqlTimestamp.replace(' ', 'T') + 'Z').getTime();
@@ -1738,7 +1826,9 @@
       const grid = document.getElementById('plans-grid');
       const countEl = document.getElementById('plans-count');
       try {
-        const res = await fetch(`/api/getsavedplan?user_id=${CURRENT_USER_ID}`);
+        // No user_id passed — the server attributes plans to the signed-in
+        // session user.
+        const res = await fetch('/api/getsavedplan');
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to load plans');
         const plans = data.plans || []; // API already orders most-recent-first
@@ -1749,8 +1839,6 @@
         grid.innerHTML = '';
       }
     }
-
-    loadMyPlans();
 
     let _tt;
     function showToast(msg) {
@@ -1771,6 +1859,87 @@
       document.getElementById('lo-modal').classList.remove('open');
       document.body.style.overflow = '';
     }
+
+    /* ══ AUTH (Google Sign-In) ══ */
+    const GOOGLE_CLIENT_ID = {{ google_client_id | tojson }};
+
+    function initials(name) {
+      const parts = (name || '').trim().split(/\s+/).filter(Boolean);
+      if (!parts.length) return '?';
+      return (parts[0][0] + (parts[1]?.[0] || '')).toUpperCase();
+    }
+
+    function monthYear(iso) {
+      if (!iso) return '—';
+      return new Date(iso).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    }
+
+    function applyAuthState(user) {
+      const overlay = document.getElementById('si-overlay');
+      const page = document.getElementById('page');
+      if (!user) {
+        page.style.display = 'none';
+        overlay.classList.add('open');
+        return;
+      }
+      overlay.classList.remove('open');
+      page.style.display = '';
+      document.getElementById('hero-av-initials').textContent = initials(user.name);
+      document.getElementById('hero-name').textContent = user.name || 'Traveller';
+      document.getElementById('hero-email').textContent = user.email || '';
+      document.getElementById('hero-since-text').textContent = `Member since ${monthYear(user.created_at)}`;
+      const [firstName, ...rest] = (user.name || '').split(' ');
+      document.getElementById('profile-firstname-input').value = firstName || '';
+      document.getElementById('profile-lastname-input').value = rest.join(' ');
+      document.getElementById('profile-email-input').value = user.email || '';
+      loadMyPlans();
+    }
+
+    async function refreshAuthState() {
+      try {
+        const res = await fetch('/api/auth/me');
+        const data = await res.json();
+        applyAuthState(data.authenticated ? data.user : null);
+      } catch (err) {
+        applyAuthState(null);
+      }
+    }
+
+    async function handleGoogleCredential(response) {
+      try {
+        const res = await fetch('/api/auth/google', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ credential: response.credential }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Sign-in failed');
+        applyAuthState(data.user);
+      } catch (err) {
+        alert(`Couldn't sign in — ${err.message}`);
+      }
+    }
+
+    async function doLogout() {
+      try { await fetch('/api/auth/logout', { method: 'POST' }); } catch (err) { /* ignore */ }
+      window.location.href = '/';
+    }
+
+    window.addEventListener('load', () => {
+      refreshAuthState();
+      if (!GOOGLE_CLIENT_ID || !window.google?.accounts?.id) {
+        document.getElementById('si-fallback').style.display = 'block';
+        return;
+      }
+      google.accounts.id.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: handleGoogleCredential,
+      });
+      google.accounts.id.renderButton(
+        document.getElementById('g_id_signin_container'),
+        { theme: 'outline', size: 'large', shape: 'pill', width: 280 },
+      );
+    });
   </script>
 
   <!-- ══ LOGOUT CONFIRM ══ -->
@@ -1789,7 +1958,26 @@
       </div>
       <div class="lo-actions">
         <button class="lo-cancel" onclick="closeLo()">Stay</button>
-        <button class="lo-confirm" onclick="window.location.href='/home'">Log out</button>
+        <button class="lo-confirm" onclick="doLogout()">Log out</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SIGN IN ══ -->
+  <div class="si-overlay" id="si-overlay">
+    <div class="si-modal">
+      <button class="si-close" onclick="window.location.href='/'" aria-label="Back to home">&times;</button>
+      <div class="logo-mark">
+        <svg viewBox="0 0 20 20">
+          <path
+            d="M10 1.5C6.41 1.5 3.5 4.41 3.5 8c0 4.9 6.5 10.5 6.5 10.5S16.5 12.9 16.5 8c0-3.59-2.91-6.5-6.5-6.5zm0 8.75a2.25 2.25 0 1 1 0-4.5 2.25 2.25 0 0 1 0 4.5z" />
+        </svg>
+      </div>
+      <div class="si-title">Sign in to view your profile</div>
+      <p class="si-sub">Sign in with Google to see your saved plans, trip history, and account details.</p>
+      <div class="si-gbtn" id="g_id_signin_container"></div>
+      <div class="si-fallback" id="si-fallback" style="display:none">
+        Google sign-in isn't available right now. Please try again later.
       </div>
     </div>
   </div>

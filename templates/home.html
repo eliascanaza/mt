@@ -12,6 +12,7 @@
     rel="stylesheet">
   <script
     src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&libraries=marker,places&v=weekly"></script>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <style>
     /* ── reset ── */
     *,
@@ -630,6 +631,26 @@
     }
 
     .user-pill:hover {
+      box-shadow: var(--sh-md)
+    }
+
+    .signin-pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      padding: 9px 18px;
+      cursor: pointer;
+      background: var(--white);
+      font-family: var(--font);
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--black);
+      transition: box-shadow .2s;
+    }
+
+    .signin-pill:hover {
       box-shadow: var(--sh-md)
     }
 
@@ -3933,6 +3954,89 @@
       background: var(--g200);
       border-radius: 2px
     }
+
+    /* ── SIGN IN ── */
+    .si-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background: rgba(0, 0, 0, .5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .si-overlay.open {
+      display: flex
+    }
+
+    .si-modal {
+      background: var(--white);
+      border-radius: var(--r-xl);
+      max-width: 380px;
+      width: 100%;
+      padding: 32px 28px;
+      text-align: center;
+      position: relative;
+      box-shadow: var(--sh-xl);
+    }
+
+    .si-close {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: none;
+      background: var(--g100);
+      color: var(--g600);
+      font-size: 16px;
+      cursor: pointer;
+      line-height: 1;
+    }
+
+    .si-close:hover {
+      background: var(--g200)
+    }
+
+    .si-modal .logo-mark {
+      width: 44px;
+      height: 44px;
+      margin: 0 auto 16px;
+    }
+
+    .si-modal .logo-mark svg {
+      width: 24px;
+      height: 24px
+    }
+
+    .si-title {
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -.02em;
+      margin-bottom: 8px
+    }
+
+    .si-sub {
+      font-size: 13px;
+      color: var(--g600);
+      line-height: 1.55;
+      margin-bottom: 24px
+    }
+
+    .si-gbtn {
+      display: flex;
+      justify-content: center;
+      min-height: 44px
+    }
+
+    .si-fallback {
+      font-size: 12px;
+      color: var(--g600);
+      margin-top: 8px
+    }
   </style>
 </head>
 
@@ -4054,7 +4158,8 @@
       </div>
 
       <!-- User -->
-      <div class="user-wrap">
+      <button class="signin-pill" id="signin-pill" onclick="openSignIn()" style="display:none">Sign in</button>
+      <div class="user-wrap" id="user-wrap" style="display:none">
         <div class="user-pill" id="u-pill" onclick="toggleDropdown()">
           <svg class="hb" viewBox="0 0 24 24">
             <line x1="3" y1="6" x2="21" y2="6" />
@@ -4068,8 +4173,8 @@
         </div>
         <div class="u-drop" id="u-drop">
           <div class="u-info">
-            <div class="u-name">Alex Traveller</div>
-            <div class="u-email">alex@exploremore.app</div>
+            <div class="u-name" id="u-name">Traveller</div>
+            <div class="u-email" id="u-email"></div>
           </div>
           <a class="u-item" href="/profile?tab=profile" style="text-decoration:none;color:inherit"><svg
               viewBox="0 0 24 24">
@@ -4304,7 +4409,7 @@
       </div>
       <div class="lo-actions">
         <button class="lo-cancel" onclick="closeLo()">Stay</button>
-        <button class="lo-confirm" onclick="window.location.href='/'">Log out</button>
+        <button class="lo-confirm" onclick="doLogout()">Log out</button>
       </div>
     </div>
   </div>
@@ -4609,7 +4714,8 @@
       return VISIT_DURATION_BY_CAT[cat] || VISIT_DURATION_BY_CAT.attraction;
     }
 
-    // No auth system yet — every save is attributed to this mock user.
+    // Fallback id for anonymous saves — the server overrides this with the
+    // real signed-in user's id from the session when one exists.
     const CURRENT_USER_ID = 1111;
 
     // How many tourist stops to look for along the route — controlled by the
@@ -6757,6 +6863,93 @@
       document.getElementById('from-input').value = deepLinkParams.get('place');
       doSearch();
     }
+  </script>
+
+  <!-- ══ SIGN IN ══ -->
+  <div class="si-overlay" id="si-overlay" onclick="if(event.target===this)closeSignIn()">
+    <div class="si-modal">
+      <button class="si-close" onclick="closeSignIn()" aria-label="Close">&times;</button>
+      <div class="logo-mark" style="background:var(--red);width:44px;height:44px;border-radius:9px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px">
+        <svg viewBox="0 0 20 20" style="width:24px;height:24px;fill:#fff">
+          <path
+            d="M10 1.5C6.41 1.5 3.5 4.41 3.5 8c0 4.9 6.5 10.5 6.5 10.5S16.5 12.9 16.5 8c0-3.59-2.91-6.5-6.5-6.5zm0 8.75a2.25 2.25 0 1 1 0-4.5 2.25 2.25 0 0 1 0 4.5z" />
+        </svg>
+      </div>
+      <div class="si-title">Welcome to exploreMore</div>
+      <p class="si-sub">Sign in with Google to save your plans, track trip history, and pick up where you left off.</p>
+      <div class="si-gbtn" id="g_id_signin_container"></div>
+      <div class="si-fallback" id="si-fallback" style="display:none">
+        Google sign-in isn't available right now. Please try again later.
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const GOOGLE_CLIENT_ID = {{ google_client_id | tojson }};
+
+    function openSignIn() {
+      document.getElementById('si-overlay').classList.add('open');
+    }
+
+    function closeSignIn() {
+      document.getElementById('si-overlay').classList.remove('open');
+    }
+
+    async function handleGoogleCredential(response) {
+      try {
+        const res = await fetch('/api/auth/google', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ credential: response.credential }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Sign-in failed');
+        closeSignIn();
+        applyAuthState(data.user);
+      } catch (err) {
+        alert(`Couldn't sign in — ${err.message}`);
+      }
+    }
+
+    function applyAuthState(user) {
+      document.getElementById('signin-pill').style.display = user ? 'none' : 'flex';
+      document.getElementById('user-wrap').style.display = user ? 'block' : 'none';
+      if (user) {
+        document.getElementById('u-name').textContent = user.name;
+        document.getElementById('u-email').textContent = user.email;
+      }
+    }
+
+    async function refreshAuthState() {
+      try {
+        const res = await fetch('/api/auth/me');
+        const data = await res.json();
+        applyAuthState(data.authenticated ? data.user : null);
+      } catch (err) {
+        applyAuthState(null);
+      }
+    }
+
+    async function doLogout() {
+      try { await fetch('/api/auth/logout', { method: 'POST' }); } catch (err) { /* ignore */ }
+      window.location.href = '/';
+    }
+
+    window.addEventListener('load', () => {
+      refreshAuthState();
+      if (!GOOGLE_CLIENT_ID || !window.google?.accounts?.id) {
+        document.getElementById('si-fallback').style.display = 'block';
+        return;
+      }
+      google.accounts.id.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: handleGoogleCredential,
+      });
+      google.accounts.id.renderButton(
+        document.getElementById('g_id_signin_container'),
+        { theme: 'outline', size: 'large', shape: 'pill', width: 280 },
+      );
+    });
   </script>
 </body>
 

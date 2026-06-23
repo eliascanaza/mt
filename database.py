@@ -60,6 +60,9 @@ def init_db():
     db.places.create_index("name")
     db.mt_places.create_index("city")
     db.saved_plans.create_index("user_id")
+    db.users.create_index("id", unique=True)
+    db.users.create_index("google_sub", unique=True)
+    db.users.create_index("email", unique=True)
     print("✅  Schema ready")
 
 
@@ -942,6 +945,40 @@ def get_plans_for_user(user_id: int):
         d["stops_snapshot"] = d.get("stops_snapshot") or []
         plans.append(d)
     return plans
+
+
+def get_or_create_google_user(google_sub: str, email: str, name: str, picture: str):
+    """Looks up a user by their Google account id, creating one on first
+    sign-in. Refreshes name/picture on every login since those can change
+    on the Google side."""
+    db = get_db()
+    existing = db.users.find_one({"google_sub": google_sub})
+    if existing:
+        db.users.update_one(
+            {"google_sub": google_sub},
+            {"$set": {"name": name, "email": email, "picture": picture}},
+        )
+        existing["name"], existing["email"], existing["picture"] = name, email, picture
+        return _strip_id(existing)
+
+    new_id = _next_id(db, "users")
+    doc = {
+        "id": new_id, "google_sub": google_sub, "email": email,
+        "name": name, "picture": picture,
+        "created_at": datetime.now(timezone.utc),
+    }
+    db.users.insert_one(doc)
+    return _strip_id(doc)
+
+
+def get_user_by_id(user_id: int):
+    db = get_db()
+    doc = db.users.find_one({"id": user_id})
+    if not doc:
+        return None
+    doc = _strip_id(doc)
+    doc["created_at"] = _iso(doc.get("created_at"))
+    return doc
 
 
 if __name__ == "__main__":
