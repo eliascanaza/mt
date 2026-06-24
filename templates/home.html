@@ -271,8 +271,8 @@
        since the icon itself is a fixed illustration, not an empty circle */
     .ww-marker-icon {
       position: relative;
-      width: 55px;
-      height: 40px;
+      width: 48px;
+      height: 48px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -280,8 +280,8 @@
     }
 
     .ww-marker-icon img {
-      width: 125%;
-      height: 125%;
+      width: 48px;
+      height: 48px;
       object-fit: contain;
     }
 
@@ -612,7 +612,9 @@
       stroke-linejoin: round
     }
 
-    {% include "partials/_auth_styles.html" %}
+      {
+      % include "partials/_auth_styles.html" %
+    }
 
     /* ══════════ MAIN ══════════ */
     .main {
@@ -1865,13 +1867,13 @@
     .save-btn {
       position: absolute;
       top: 14px;
-      right: 50px;
+      right: 10px;
       z-index: 10;
       background: var(--white);
       border: 1px solid var(--border);
       border-radius: var(--r-md);
       box-shadow: var(--sh-sm);
-      padding: 7px 14px;
+      padding: 12px 21px;
       display: flex;
       align-items: center;
       gap: 6px;
@@ -3656,8 +3658,7 @@
       }
 
       .zoom-box {
-        top: 10px;
-        right: 10px
+        display: none
       }
 
       .stats-row {
@@ -4763,7 +4764,7 @@
 
     // Fallback icon for any numbered map marker that matches nothing more
     // specific — a generic "nature scene" cropped from general.png.
-    const MARKER_ICON_SRC = '/assets/img/icons/markers/general/forest.png';
+    const MARKER_ICON_SRC = '/assets/img/icons/markers/general/generic-stop.png';
 
     // The World Wide Top10 list is 10 specific landmarks, each with its own
     // hand-drawn icon (cropped from one sprite sheet) instead of the generic
@@ -4781,26 +4782,43 @@
       'Grand Bazaar': 'grand-bazaar',
     };
 
-    // Nearby-places/route-stop markers: a few extra famous landmarks (cropped
-    // from top20.png) get their own icon when a place's name matches one;
-    // everything else falls back to a category icon cropped from general.png
-    // (lake/nature/mountain/beach), and "town"/unmatched places fall back to
-    // the generic forest icon (MARKER_ICON_SRC) per general.png.
-    const TOP20_MARKER_ICON = {
-      'louvre': 'louvre-pyramid',
-      "st. peter's": 'st-peters-basilica',
-      'saint peter': 'st-peters-basilica',
-      'niagara': 'niagara-falls',
-      'temple of heaven': 'temple-of-heaven',
-      'las vegas': 'las-vegas',
-      'christ the redeemer': 'christ-the-redeemer',
-      'corcovado': 'christ-the-redeemer',
-      'acropolis': 'acropolis',
-      'parthenon': 'acropolis',
-      'versailles': 'versailles',
-      'chichen itza': 'chichen-itza',
-      'chichén itzá': 'chichen-itza',
+    // Landmark icon lookup for route-stop and nearby-place markers.
+    // Keys are lowercase substrings matched against place.name; values are
+    // paths relative to /assets/img/icons/markers/ (no leading slash, no .png).
+    // top10/ = worldwide Top10 icons; top20/ = extended famous-landmark icons.
+    const LANDMARK_ICON = {
+      // ── top20/ ───────────────────────────────────────────────────────────
+      'louvre': 'top20/louvre-pyramid',
+      "st. peter's": 'top20/st-peters-basilica',
+      'saint peter': 'top20/st-peters-basilica',
+      'niagara': 'top20/niagara-falls',
+      'temple of heaven': 'top20/temple-of-heaven',
+      'las vegas': 'top20/las-vegas',
+      'christ the redeemer': 'top20/christ-the-redeemer',
+      'corcovado': 'top20/christ-the-redeemer',
+      'acropolis': 'top20/acropolis',
+      'parthenon': 'top20/acropolis',
+      'versailles': 'top20/versailles',
+      'chichen itza': 'top20/chichen-itza',
+      'chichén itzá': 'top20/chichen-itza',
+      // ── top10/ ───────────────────────────────────────────────────────────
+      'eiffel': 'top10/eiffel-tower',
+      'colosseum': 'top10/colosseum',
+      'coliseum': 'top10/colosseum',
+      'taj mahal': 'top10/taj-mahal',
+      'statue of liberty': 'top10/statue-of-liberty',
+      'machu picchu': 'top10/machu-picchu',
+      'great wall': 'top10/great-wall-of-china',
+      'pyramids of giza': 'top10/pyramids-of-giza',
+      'pyramid of giza': 'top10/pyramids-of-giza',
+      'great pyramid': 'top10/pyramids-of-giza',
+      'sphinx': 'top10/pyramids-of-giza',
+      'times square': 'top10/times-square',
+      'kyoto': 'top10/kyoto-temples',
+      'fushimi inari': 'top10/kyoto-temples',
+      'grand bazaar': 'top10/grand-bazaar',
     };
+
     // Category → marker image file inside /assets/img/icons/markers/general/.
     // When a new image is added (e.g. cave.png), just update the value here.
     const GENERAL_MARKER_ICON = {
@@ -4810,18 +4828,19 @@
       mountain: 'mountain',
       forest: 'forest',
       // Categories that reuse the closest existing image until their own is added
-      waterfall: 'lake',      // water feature → lake
-      island: 'beach',     // coastal       → beach
-      cave: 'mountain',  // rocky/dark     → mountain
-      desert: 'mountain',  // arid/rocky     → mountain
-      ancient: 'forest',    // fallback       → forest
-      town: 'forest',    // fallback       → forest
-      park: 'forest',    // nature         → forest
-      attraction: 'forest',    // generic        → forest
+      waterfall: 'lake',          // water feature  → lake
+      island: 'beach',         // coastal         → beach
+      cave: 'mountain',      // rocky/dark       → mountain
+      desert: 'mountain',      // arid/rocky       → mountain
+      // Cultural / built places and true unknowns use the generic pin
+      ancient: 'generic-stop',
+      town: 'generic-stop',
+      park: 'generic-stop',
+      attraction: 'generic-stop',
       // Legacy filter-tab keys
       trek: 'forest',
       trail: 'mountain',
-      city: 'forest',
+      city: 'generic-stop',
     };
 
     // Emoji shown on the left-panel stop card, matched to the category.
@@ -4832,50 +4851,58 @@
     };
 
     // Classifies a Google Places result into one of the known categories.
-    // Name/vicinity keywords are checked first (most precise for natural
-    // features that Google lumps under 'natural_feature'); structured
-    // types are the fallback for cultural/built places.
+    // Name/vicinity text is checked first (most reliable for natural features
+    // that Google lumps under 'natural_feature'); Google place types are used
+    // as a fallback for built/cultural places where the name isn't decisive.
     function classifyPlace(place) {
       const name = (place.name || '').toLowerCase();
       const vicinity = (place.vicinity || '').toLowerCase();
       const text = `${name} ${vicinity}`;
-      const types = place.types || [];
+      const types = new Set(place.types || []);
 
-      // Water features
-      if (/\b(lake|lagoon|laguna|loch|pond|reservoir|cenote)\b/.test(text)) return 'lake';
-      if (/\b(waterfall|falls|cascade|rapids)\b/.test(text)) return 'waterfall';
-      if (/\b(beach|coast|bay|cove|playa|strand)\b/.test(text)) return 'beach';
-      if (/\b(island|isle|islet|atoll)\b/.test(text)) return 'island';
+      // Water features — beach type checked via Google types first since the
+      // word "beach" in a vicinity can be misleading (e.g. "Beach Road, …")
+      if (types.has('beach') || /\b(beach|playa|strand|shore|seashore|seaside|reef|coral|baia|baie)\b/.test(text)) return 'beach';
+      if (/\b(coast|bay|cove)\b/.test(name)) return 'beach';
+      if (/\b(lake|lagoon|laguna|loch|pond|reservoir|cenote|lagoa|hot spring|thermal spring|geyser|hot pool)\b/.test(text)) return 'lake';
+      if (/\b(river|río|rio|stream|creek|canal)\b/.test(name)) return 'lake';
+      if (/\b(waterfall|falls|cascade|rapids|salto)\b/.test(text)) return 'waterfall';
+      if (/\b(island|isle|islet|atoll|archipelago|isola)\b/.test(text)) return 'island';
 
       // Terrain
-      if (/\b(mountain|mount|peak|summit|volcano|volc[aá]n|cerro|sierra|ridge|cliff|canyon|gorge|fjord|glacier)\b/.test(text)) return 'mountain';
-      if (/\b(cave|cavern|grotto|tunnel|sinkhole)\b/.test(text)) return 'cave';
-      if (/\b(desert|dune|dunes|sahara|badlands)\b/.test(text)) return 'desert';
-      if (/\b(forest|jungle|woods|rainforest|selva|woodland|grove|mangrove)\b/.test(text)) return 'forest';
+      if (/\b(mountain|mount|peak|summit|volcano|volc[aá]n|cerro|sierra|ridge|cliff|canyon|gorge|fjord|glacier|valley|glen|vale|ravine|mesa|plateau|col|pass|col·legi)\b/.test(text)) return 'mountain';
+      if (/\b(cave|cavern|grotto|tunnel|sinkhole|cenote)\b/.test(text)) return 'cave';
+      if (/\b(desert|dune|dunes|sahara|badlands|steppe|wadi)\b/.test(text)) return 'desert';
+      if (/\b(forest|jungle|woods|rainforest|selva|woodland|grove|mangrove|bosque)\b/.test(text)) return 'forest';
 
-      // Historical / cultural
-      if (/\b(ruin|ruins|ancient|temple|pyramid|aztec|inca|maya|roman|greek|medieval|archaeological|acropolis|castle|fortress|citadel|monastery|cathedral|mosque|basilica|shrine)\b/.test(text)) return 'ancient';
-      if (/\b(town|village|plaza|square|market|old town|centro|historic)\b/.test(text)) return 'town';
+      // Historical / cultural (expanded with palace, monument, memorial, etc.)
+      if (/\b(ruin|ruins|ancient|temple|pyramid|aztec|inca|maya|roman|greek|medieval|archaeological|acropolis|castle|fortress|citadel|monastery|cathedral|mosque|basilica|shrine|palace|monument|memorial|colosseum|coliseum|amphitheatre|amphitheater|aqueduct|arch|lighthouse|mausoleum|necropolis)\b/.test(text)) return 'ancient';
+      if (/\b(town|village|plaza|square|market|old town|centro|historic|bazaar|medina|bazar|souk|souq)\b/.test(text)) return 'town';
 
-      // Nature / park
-      if (/\b(park|garden|reserve|sanctuary|wildlife|botanical|preserve)\b/.test(text)) return 'park';
+      // Nature / park (expanded with wetland types)
+      if (/\b(park|garden|reserve|sanctuary|wildlife|botanical|preserve|savanna|savannah|grassland|wetland|swamp|marsh)\b/.test(text)) return 'park';
 
-      // Structured types fallback
-      if (types.some(t => ['museum', 'art_gallery'].includes(t))) return 'ancient';
-      if (types.some(t => ['church', 'place_of_worship', 'synagogue', 'mosque', 'hindu_temple'].includes(t))) return 'ancient';
-      if (types.some(t => ['park', 'campground', 'natural_feature'].includes(t))) return 'forest';
-      if (types.some(t => ['city_hall', 'locality', 'neighborhood'].includes(t))) return 'town';
+      // Attraction catch-all for man-made draws not covered above
+      if (/\b(theme park|waterpark|amusement|aquarium|zoo|stadium|arena|tower|bridge|cable car|gondola)\b/.test(text)) return 'attraction';
+
+      // Type-based fallbacks (Google Places structured types)
+      if (types.has('museum') || types.has('art_gallery')) return 'ancient';
+      if (types.has('church') || types.has('place_of_worship') || types.has('synagogue') || types.has('mosque') || types.has('hindu_temple')) return 'ancient';
+      if (types.has('zoo') || types.has('aquarium')) return 'park';
+      if (types.has('amusement_park') || types.has('stadium')) return 'attraction';
+      if (types.has('park') || types.has('campground') || types.has('natural_feature')) return 'forest';
+      if (types.has('city_hall') || types.has('locality') || types.has('neighborhood')) return 'town';
 
       return 'attraction';
     }
 
-    // Picks the best marker icon for a nearby-place/route-stop item: a
-    // specific top20 landmark match by name, else a general.png category
-    // icon by place.cat, else the generic forest fallback.
+    // Picks the best marker icon for a nearby-place/route-stop item.
+    // Priority: known landmark (LANDMARK_ICON, covers top10 + top20) →
+    // category icon (GENERAL_MARKER_ICON) → generic fallback.
     function resolvePlaceIconSrc(place) {
       const name = (place.name || '').toLowerCase();
-      const top20Key = Object.keys(TOP20_MARKER_ICON).find(k => name.includes(k));
-      if (top20Key) return `/assets/img/icons/markers/top20/${TOP20_MARKER_ICON[top20Key]}.png`;
+      const landmarkKey = Object.keys(LANDMARK_ICON).find(k => name.includes(k));
+      if (landmarkKey) return `/assets/img/icons/markers/${LANDMARK_ICON[landmarkKey]}.png`;
       const generalFile = GENERAL_MARKER_ICON[place.cat];
       if (generalFile) return `/assets/img/icons/markers/general/${generalFile}.png`;
       return MARKER_ICON_SRC;
