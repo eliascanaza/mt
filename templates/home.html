@@ -271,8 +271,8 @@
        since the icon itself is a fixed illustration, not an empty circle */
     .ww-marker-icon {
       position: relative;
-      width: 36px;
-      height: 36px;
+      width: 55px;
+      height: 40px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -618,6 +618,7 @@
     .main {
       display: flex;
       flex: 1;
+      min-height: 0;
       overflow: hidden
     }
 
@@ -625,6 +626,7 @@
     .left {
       width: 35%;
       min-width: 320px;
+      min-height: 0;
       display: flex;
       flex-direction: column;
       border-right: 1px solid var(--border);
@@ -641,7 +643,8 @@
     }
 
     .left-scroll {
-      height: 100%;
+      flex: 1;
+      min-height: 0;
       overflow-y: auto;
       scrollbar-width: thin;
       scrollbar-color: var(--g200) transparent
@@ -729,9 +732,9 @@
     }
 
     .sugg-route-card:hover {
-      border-color: var(--green);
+      border-color: var(--red);
       box-shadow: var(--sh-sm);
-      background: var(--green-bg);
+      background: var(--red-bg);
     }
 
     .sugg-route-path {
@@ -1720,6 +1723,11 @@
       stroke-width: 2;
       stroke-linecap: round;
       stroke-linejoin: round
+    }
+
+    /* drag handle — mobile only */
+    .drag-handle {
+      display: none
     }
 
     /* ══════════ MAP ══════════ */
@@ -3377,10 +3385,17 @@
       .map-side {
         position: absolute !important;
         inset: 0 !important;
-        height: 100% !important;
-        width: 100% !important;
         flex: none;
         z-index: 0
+      }
+
+      /* Absolute inset avoids the height:100% percentage chain problem
+         where flex:1 ancestors have no explicit pixel height. */
+      #map {
+        position: absolute !important;
+        inset: 0 !important;
+        width: auto !important;
+        height: auto !important
       }
 
       .left {
@@ -3406,6 +3421,10 @@
         max-height: var(--mobile-panel-max, 80vh)
       }
 
+      .left.sheet-initial {
+        max-height: var(--mobile-panel-initial, 50vh)
+      }
+
       .left.collapsed {
         max-height: 50px !important
       }
@@ -3414,18 +3433,44 @@
         transform: translateY(110%)
       }
 
-      .left::before {
-        content: '';
-        display: block;
-        width: 40px;
-        height: 4px;
-        background: var(--g200);
-        border-radius: 2px;
-        margin: 10px auto 2px
+      .left.dragging {
+        transition: none !important
+      }
+
+      .drag-handle {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        padding: 10px 0 8px;
+        flex-shrink: 0;
+        cursor: grab;
+        touch-action: none;
+        -webkit-user-select: none;
+        user-select: none
+      }
+
+      .drag-handle:active {
+        cursor: grabbing
+      }
+
+      .drag-pill {
+        width: 44px;
+        height: 5px;
+        background: var(--g300);
+        border-radius: 99px;
+        transition: width .2s ease, background .2s ease
+      }
+
+      .drag-handle:active .drag-pill,
+      .left.dragging .drag-pill {
+        width: 64px;
+        background: var(--g400)
       }
 
       .left-scroll {
-        height: 100% !important;
+        flex: 1 !important;
+        min-height: 0 !important;
         overflow-y: auto !important
       }
 
@@ -3436,7 +3481,7 @@
       .panel-toggle {
         display: flex !important;
         position: absolute;
-        bottom: calc(var(--mobile-panel-max, 80vh) + 12px);
+        bottom: calc(var(--panel-h, var(--mobile-panel-max, 80vh)) + 12px);
         right: 16px;
         left: auto;
         top: auto;
@@ -3459,13 +3504,17 @@
         transition: bottom .32s cubic-bezier(.4, 0, .2, 1)
       }
 
+      .panel-toggle.dragging-toggle {
+        transition: none !important
+      }
+
       .panel-toggle.flipped {
         bottom: 16px
       }
 
       /* sits just above the "Route details" / "Hide details" pill, tracking it as it moves */
       .places-controls {
-        bottom: calc(var(--mobile-panel-max, 80vh) + 12px + 56px);
+        bottom: calc(var(--panel-h, var(--mobile-panel-max, 80vh)) + 12px + 56px);
         right: 16px;
         transition: bottom .32s cubic-bezier(.4, 0, .2, 1)
       }
@@ -3676,7 +3725,6 @@
       background: var(--g200);
       border-radius: 2px
     }
-
   </style>
 </head>
 
@@ -3808,6 +3856,10 @@
     <!-- LEFT PANEL -->
     <div class="left" id="left-panel">
 
+      <div class="drag-handle" id="drag-handle">
+        <div class="drag-pill"></div>
+      </div>
+
       <!-- ranking panel — slides in over the route content -->
       <div class="ranking-panel" id="ranking-panel">
         <div class="rp-hdr">
@@ -3842,9 +3894,11 @@
             </p>
           </div>
 
+          <div class="to-divider"><span class="to-label">OR</span></div>
+
           <!-- one-click trip ideas — same empty state, gone the moment a real search runs -->
           <div class="sugg-routes" id="sugg-routes">
-            <div class="sugg-routes-title">Or try one of these</div>
+            <div class="sugg-routes-title">Recommended</div>
             <div class="sugg-routes-list" id="sugg-routes-list"></div>
           </div>
 
@@ -4350,6 +4404,33 @@
       return b;
     }
 
+    // Returns the visible panel height that overlaps the map on mobile.
+    // Returns 0 when the panel is hidden (off-screen via transform).
+    function mobilePanelHeight() {
+      if (window.innerWidth > 767) return 0;
+      const panel = document.getElementById('left-panel');
+      if (!panel || panel.classList.contains('panel-hidden')) return 0;
+      return panel.getBoundingClientRect().height;
+    }
+
+    // Mobile-aware fitBounds: adds extra bottom padding to keep markers
+    // visible above the bottom sheet panel that overlays the map.
+    function mapFitBounds(bounds, basePadding) {
+      const p = basePadding ?? 80;
+      if (window.innerWidth > 767) { map.fitBounds(bounds, p); return; }
+      const panelH = mobilePanelHeight();
+      map.fitBounds(bounds, { top: p, right: p, bottom: panelH + p, left: p });
+    }
+
+    // Mobile-aware panTo: offsets the pan so the target sits in the center
+    // of the visible area above the bottom sheet panel.
+    function mapPanTo(latlng) {
+      map.panTo(latlng);
+      if (window.innerWidth > 767) return;
+      const panelH = mobilePanelHeight();
+      if (panelH > 0) map.panBy(0, Math.round(panelH / 2));
+    }
+
     const map = new google.maps.Map(document.getElementById('map'), {
       mapId: '2cd47264004a9b29612b2d59',
       center: { lat: 20, lng: 0 },
@@ -4366,19 +4447,44 @@
       routePolylines = [];
     }
 
-    // Walking gets a dotted line; driving/flying/train get a bold solid line.
-    function drawRoutePath(path, { geodesic = false, dashed = false } = {}) {
+    // Draws the route on the map.
+    // `legs` is an optional array of per-leg step paths (from requestRoute).
+    // When present each leg is drawn individually on the top layer so the
+    // line follows every road curve between markers; the halo/white backing
+    // are drawn over the full concatenated path for a seamless look.
+    function drawRoutePath(path, { geodesic = false, dashed = false, legs = null } = {}) {
       clearRoutePolylines();
-      routePolylines.push(new google.maps.Polyline({ map, path, geodesic, strokeColor: '#FF385C', strokeOpacity: .16, strokeWeight: 20 }));
-      routePolylines.push(new google.maps.Polyline({ map, path, geodesic, strokeColor: '#ffffff', strokeOpacity: .95, strokeWeight: 11 }));
-      if (dashed) {
-        routePolylines.push(new google.maps.Polyline({
-          map, path, geodesic, strokeOpacity: 0,
-          icons: [{ icon: { path: 'M 0,-1 0,1', strokeOpacity: 1, strokeColor: '#FF385C', strokeWeight: 6, scale: 3 }, offset: '0', repeat: '14px' }],
-        }));
-      } else {
-        routePolylines.push(new google.maps.Polyline({ map, path, geodesic, strokeColor: '#FF385C', strokeOpacity: .95, strokeWeight: 6 }));
-      }
+
+      // Soft outer glow — drawn once over the full path.
+      routePolylines.push(new google.maps.Polyline({
+        map, path, geodesic,
+        strokeColor: '#FF385C', strokeOpacity: .10, strokeWeight: 28,
+      }));
+      // White contrast backing — also full path for a gapless appearance.
+      routePolylines.push(new google.maps.Polyline({
+        map, path, geodesic,
+        strokeColor: '#ffffff', strokeOpacity: .90, strokeWeight: 12,
+      }));
+
+      // Top colour layer: draw per leg so each segment precisely follows its
+      // own road geometry. Falls back to the single full path (Plane / no legs).
+      const segments = legs?.length ? legs : [path];
+      segments.forEach(seg => {
+        if (dashed) {
+          routePolylines.push(new google.maps.Polyline({
+            map, path: seg, geodesic, strokeOpacity: 0,
+            icons: [{
+              icon: { path: 'M 0,-1 0,1', strokeOpacity: 1, strokeColor: '#FF385C', strokeWeight: 6, scale: 3 },
+              offset: '0', repeat: '14px',
+            }],
+          }));
+        } else {
+          routePolylines.push(new google.maps.Polyline({
+            map, path: seg, geodesic,
+            strokeColor: '#FF385C', strokeOpacity: .90, strokeWeight: 5,
+          }));
+        }
+      });
     }
 
     const directionsService = new google.maps.DirectionsService();
@@ -4479,11 +4585,12 @@
         const coord = [loc.lng(), loc.lat()];
         const distKm = Math.round(haversineKm(prevCoord, coord));
 
+        const cat = classifyPlace(best);
         stops.push({
           id: stops.length + 1,
-          emoji: '📍',
+          emoji: PLACE_CAT_EMOJI[cat] || '📍',
           name: best.name,
-          cat: 'attraction',
+          cat,
           desc: best.vicinity || '',
           rating: best.rating ? best.rating.toFixed(1) : '—',
           reviews: (best.user_ratings_total || 0).toLocaleString(),
@@ -4558,7 +4665,7 @@
         useStops: true,
         onResult: route => {
           applyRouteStats(route);
-          map.fitBounds(boundsOf([FROM.coord, TO.coord, ...STOPS.map(s => s.coord)]), 80);
+          mapFitBounds(boundsOf([FROM.coord, TO.coord, ...STOPS.map(s => s.coord)]), 80);
         },
       });
     }
@@ -4584,7 +4691,7 @@
             useStops: true,
             onResult: routedThroughStops => {
               applyRouteStats(routedThroughStops);
-              map.fitBounds(boundsOf([FROM.coord, TO.coord, ...STOPS.map(s => s.coord)]), 80);
+              mapFitBounds(boundsOf([FROM.coord, TO.coord, ...STOPS.map(s => s.coord)]), 80);
             },
           });
         } else {
@@ -4694,9 +4801,73 @@
       'chichen itza': 'chichen-itza',
       'chichén itzá': 'chichen-itza',
     };
+    // Category → marker image file inside /assets/img/icons/markers/general/.
+    // When a new image is added (e.g. cave.png), just update the value here.
     const GENERAL_MARKER_ICON = {
-      lake: 'lake', trek: 'forest', trail: 'mountain', beach: 'beach',
+      // Categories with a dedicated image
+      lake: 'lake',
+      beach: 'beach',
+      mountain: 'mountain',
+      forest: 'forest',
+      // Categories that reuse the closest existing image until their own is added
+      waterfall: 'lake',      // water feature → lake
+      island: 'beach',     // coastal       → beach
+      cave: 'mountain',  // rocky/dark     → mountain
+      desert: 'mountain',  // arid/rocky     → mountain
+      ancient: 'forest',    // fallback       → forest
+      town: 'forest',    // fallback       → forest
+      park: 'forest',    // nature         → forest
+      attraction: 'forest',    // generic        → forest
+      // Legacy filter-tab keys
+      trek: 'forest',
+      trail: 'mountain',
+      city: 'forest',
     };
+
+    // Emoji shown on the left-panel stop card, matched to the category.
+    const PLACE_CAT_EMOJI = {
+      lake: '🏞️', beach: '🏖️', mountain: '⛰️', forest: '🌲',
+      waterfall: '💦', island: '🏝️', cave: '🕳️', desert: '🏜️',
+      ancient: '🏛️', town: '🏘️', park: '🌿', attraction: '📍',
+    };
+
+    // Classifies a Google Places result into one of the known categories.
+    // Name/vicinity keywords are checked first (most precise for natural
+    // features that Google lumps under 'natural_feature'); structured
+    // types are the fallback for cultural/built places.
+    function classifyPlace(place) {
+      const name = (place.name || '').toLowerCase();
+      const vicinity = (place.vicinity || '').toLowerCase();
+      const text = `${name} ${vicinity}`;
+      const types = place.types || [];
+
+      // Water features
+      if (/\b(lake|lagoon|laguna|loch|pond|reservoir|cenote)\b/.test(text)) return 'lake';
+      if (/\b(waterfall|falls|cascade|rapids)\b/.test(text)) return 'waterfall';
+      if (/\b(beach|coast|bay|cove|playa|strand)\b/.test(text)) return 'beach';
+      if (/\b(island|isle|islet|atoll)\b/.test(text)) return 'island';
+
+      // Terrain
+      if (/\b(mountain|mount|peak|summit|volcano|volc[aá]n|cerro|sierra|ridge|cliff|canyon|gorge|fjord|glacier)\b/.test(text)) return 'mountain';
+      if (/\b(cave|cavern|grotto|tunnel|sinkhole)\b/.test(text)) return 'cave';
+      if (/\b(desert|dune|dunes|sahara|badlands)\b/.test(text)) return 'desert';
+      if (/\b(forest|jungle|woods|rainforest|selva|woodland|grove|mangrove)\b/.test(text)) return 'forest';
+
+      // Historical / cultural
+      if (/\b(ruin|ruins|ancient|temple|pyramid|aztec|inca|maya|roman|greek|medieval|archaeological|acropolis|castle|fortress|citadel|monastery|cathedral|mosque|basilica|shrine)\b/.test(text)) return 'ancient';
+      if (/\b(town|village|plaza|square|market|old town|centro|historic)\b/.test(text)) return 'town';
+
+      // Nature / park
+      if (/\b(park|garden|reserve|sanctuary|wildlife|botanical|preserve)\b/.test(text)) return 'park';
+
+      // Structured types fallback
+      if (types.some(t => ['museum', 'art_gallery'].includes(t))) return 'ancient';
+      if (types.some(t => ['church', 'place_of_worship', 'synagogue', 'mosque', 'hindu_temple'].includes(t))) return 'ancient';
+      if (types.some(t => ['park', 'campground', 'natural_feature'].includes(t))) return 'forest';
+      if (types.some(t => ['city_hall', 'locality', 'neighborhood'].includes(t))) return 'town';
+
+      return 'attraction';
+    }
 
     // Picks the best marker icon for a nearby-place/route-stop item: a
     // specific top20 landmark match by name, else a general.png category
@@ -4749,7 +4920,10 @@
       directionsService.route(request, (result, status) => {
         if (status === google.maps.DirectionsStatus.OK) {
           const route = result.routes[0];
-          drawRoutePath(route.overview_path, { dashed: mode === 'Walk' });
+          // Build per-leg paths from step-level geometry — far more detail
+          // than overview_path, which cuts corners on winding/local roads.
+          const legs = route.legs.map(leg => leg.steps.flatMap(s => s.path));
+          drawRoutePath(legs.flat(), { dashed: mode === 'Walk', legs });
 
           // route.waypoint_order maps Directions' chosen order back to indices
           // in routeStops; resync STOPS (and its markers/timeline) to match.
@@ -4850,7 +5024,7 @@
       }
       refreshStopMarkerSelection();
       if (flyMap) {
-        map.panTo(toLatLng(s.coord));
+        mapPanTo(toLatLng(s.coord));
         map.setZoom(9);
       }
     }
@@ -5191,7 +5365,7 @@
 
       plotRankingMarkers(list);
 
-      if (coords.length) map.fitBounds(boundsOf(coords), 60);
+      if (coords.length) mapFitBounds(boundsOf(coords), 60);
 
       openRankingPanel(
         'Top 10 by Category',
@@ -5335,6 +5509,15 @@
     const TRAVELER_TODO_BY_CAT = {
       trek: ['Lace up real hiking boots — trails here can be steep and rocky.', 'Start early to catch the best light and avoid afternoon wind.', 'Carry a refillable water bottle; services are limited on the trail.', 'Hire a local guide for anything resembling a multi-day route.'],
       lake: ['Rent a kayak or paddleboard to get out on the water.', 'Pack a picnic — the shoreline has plenty of spots to relax.', 'Check the water temperature before swimming; it runs colder than it looks.', 'Visit early morning for the calmest water and best reflections.'],
+      waterfall: ['Visit in the morning before the tourist crowds arrive.', 'Wear shoes with grip — rocks near the base are almost always wet.', 'Bring a dry bag if you plan to get close to the spray.', 'A wide-angle lens (or phone panorama) does justice to the scale.'],
+      beach: ['Go early morning for calm water and empty sand.', 'Check the tide chart before planning water activities.', 'Apply reef-safe sunscreen if snorkeling or diving nearby.', 'Shade and fresh water can be scarce — bring both.'],
+      island: ['Check ferry schedules in advance; services can be infrequent.', 'Pack everything you need — island shops often have limited stock.', 'Rent a bike or scooter to explore beyond the main port town.', 'Book accommodation early; island options fill up fast in season.'],
+      mountain: ['Check weather and trail conditions before heading out.', 'Wear layers — temperatures shift fast once you gain elevation.', 'Carry an offline map; signal drops out in the backcountry.', 'Pace yourself if you are not acclimatized yet.'],
+      cave: ['Bring or rent a headlamp — phone torches drain fast underground.', 'Wear closed-toe shoes; cave floors are uneven and often wet.', 'Stick to marked paths; venturing off-trail can be dangerous.', 'Temperatures inside are usually cooler — bring a light layer.'],
+      desert: ['Carry far more water than you think you need.', 'Start desert walks before sunrise to beat the heat.', 'Tell someone your route and expected return time.', 'A wide-brimmed hat and long sleeves protect better than sunscreen alone.'],
+      forest: ['Stay on marked trails to protect both the ecosystem and yourself.', 'Check for ticks after walks through dense vegetation.', 'Pack a rain layer — forest microclimates can be unpredictable.', 'Keep noise low; wildlife is more visible when you move quietly.'],
+      park: ['Download an offline map of the park before you lose cell signal.', 'Arrive early — parking and popular viewpoints fill up quickly.', 'Pack out all your rubbish; leave-no-trace applies everywhere.', 'Ask the park ranger station for the current trail conditions.'],
+      ancient: ['Buy tickets and book time slots online to skip the queue.', 'Visit late afternoon for softer light and fewer crowds.', 'Hire a certified local guide — the stories behind the stones matter.', 'Photography rules vary by site; check before you pull the camera out.'],
       town: ['Wander the old town on foot — most highlights are walkable.', 'Try the local specialty dish at a family-run restaurant.', 'Visit the main square or market for a feel of daily life.', 'Ask locals for their favorite under-the-radar spot.'],
       trail: ['Check weather and trail conditions before heading out.', 'Wear layers — temperatures shift fast once you gain elevation.', 'Carry an offline map; signal drops out in the backcountry.', 'Pace yourself if you are not acclimatized yet.'],
       city: ['Spend your first day just getting oriented in the historic center.', 'Use public transit or rideshares to skip the parking hassle.', 'Book popular restaurants a day ahead.', 'Ask your accommodation for a few local-only recommendations.'],
@@ -5348,12 +5531,18 @@
       'Don\'t skip travel insurance, especially around outdoor activities.',
       'Avoid drinking tap water if locals don\'t — check first.',
     ];
-    // Maps the broader Top10-style tags onto the same buckets above.
+    // Maps classifyPlace categories and legacy Top10-style tags to
+    // TRAVELER_TODO_BY_CAT keys. New lowercase categories that already exist
+    // as direct keys don't need entries here, but aliases cover the ones
+    // whose key is a redirect (e.g. 'Beach' capitalised from old filter tabs).
     const TRAVELER_CAT_ALIASES = {
+      // Legacy capitalized Top10 / filter-tab tags
       Nature: 'trek', Trekking: 'trek', Wildlife: 'trek', Stargazing: 'trek',
-      Mountains: 'trail', Adventure: 'trail',
-      Beach: 'lake',
-      City: 'town', Culture: 'town', History: 'town', Gastronomy: 'town', Art: 'town', Romantic: 'town', Wellness: 'town', 'Art & Food': 'town', Science: 'town', Scenic: 'town',
+      Mountains: 'mountain', Adventure: 'trail',
+      Beach: 'beach',
+      City: 'city', Culture: 'ancient', History: 'ancient', Gastronomy: 'town',
+      Art: 'town', Romantic: 'town', Wellness: 'town', 'Art & Food': 'town',
+      Science: 'ancient', Scenic: 'park',
     };
 
     function hashStr(s) {
@@ -5529,7 +5718,7 @@
       const item = currentRankingList[index];
       if (item && item.coord) {
         selectRankingMarker(index);
-        map.panTo(toLatLng(item.coord));
+        mapPanTo(toLatLng(item.coord));
         map.setZoom(6);
       }
     }
@@ -5553,7 +5742,7 @@
 
       plotRankingMarkers(list);
 
-      map.fitBounds(boundsOf(list.map(item => item.coord)), 70);
+      mapFitBounds(boundsOf(list.map(item => item.coord)), 70);
 
       openRankingPanel(
         `Top 10 · ${country}`,
@@ -5617,7 +5806,7 @@
         nearbyMarkers.push(m);
       });
       const allCoords = [FROM.coord, ...list.map(p => p.coord)];
-      map.fitBounds(boundsOf(allCoords), 60);
+      mapFitBounds(boundsOf(allCoords), 60);
     }
 
     // Deletes a place from the nearby-places set entirely (not just the
@@ -5674,7 +5863,7 @@
 
       plotRankingMarkers(wwData);
 
-      if (coords.length) map.fitBounds(boundsOf(coords), 60);
+      if (coords.length) mapFitBounds(boundsOf(coords), 60);
 
       openRankingPanel(
         'Top 10 World Wide',
@@ -5809,8 +5998,9 @@
       }
 
       if (hasRoute) {
+        const cat = classifyPlace({ name, vicinity: geo.formatted || '' });
         const newStop = {
-          emoji: '📍', name, cat: 'attraction',
+          emoji: PLACE_CAT_EMOJI[cat] || '📍', name, cat,
           desc: '', rating: '—', reviews: '0', loc: geo.formatted,
           alt: '—', altNote: 'Added manually', temp: '—',
           bg: STOP_BGS[STOPS.length % STOP_BGS.length],
@@ -5826,13 +6016,14 @@
           useStops: true,
           onResult: route => {
             applyRouteStats(route);
-            map.fitBounds(boundsOf([FROM.coord, TO.coord, ...STOPS.map(s => s.coord)]), 80);
+            mapFitBounds(boundsOf([FROM.coord, TO.coord, ...STOPS.map(s => s.coord)]), 80);
           },
         });
       } else {
         const distKm = Math.round(haversineKm(FROM.coord, geo.coord));
+        const manualCat = classifyPlace({ name, vicinity: geo.formatted || '' });
         const newPlace = {
-          emoji: '📍', name, cat: 'attraction', tag: 'Added',
+          emoji: PLACE_CAT_EMOJI[manualCat] || '📍', name, cat: manualCat, tag: 'Added',
           desc: geo.formatted || 'Added manually', rating: '—', reviews: '0',
           dist: `${distKm} km`, time: estimateDriveTime(distKm),
           coord: geo.coord,
@@ -5860,7 +6051,7 @@
       });
       const coords = [FROM.coord, TO.coord, ...list.map(s => s.coord)];
       if (list.length) {
-        map.fitBounds(boundsOf(coords), 80);
+        mapFitBounds(boundsOf(coords), 80);
       }
     }
 
@@ -5891,7 +6082,7 @@
           applyRouteStats(route);
           if (!route && mode !== 'Plane') return;
           const bounds = mode === 'Plane' ? [FROM.coord, TO.coord] : [FROM.coord, TO.coord, ...STOPS.map(s => s.coord)];
-          map.fitBounds(boundsOf(bounds), 80);
+          mapFitBounds(boundsOf(bounds), 80);
         },
       });
     }
@@ -5914,6 +6105,13 @@
         panel.classList.toggle('panel-hidden', !panelOpen_);
         panel.classList.remove('collapsed');
         toggle.classList.toggle('flipped', !panelOpen_);
+        // Redraw tiles after the transition so the map fills its container,
+        // but do NOT reposition the viewport — keep the map where the user
+        // left it.
+        setTimeout(() => {
+          google.maps.event.trigger(map, 'resize');
+          syncTogglePosition();
+        }, 340);
       } else {
         panel.classList.toggle('collapsed', !panelOpen_);
         toggle.classList.toggle('flipped', !panelOpen_);
@@ -5925,10 +6123,10 @@
     function openLeftPanel() {
       const panel = document.getElementById('left-panel');
       const toggle = document.getElementById('panel-toggle');
-      panel.classList.remove('collapsed', 'panel-hidden');
+      panel.classList.remove('collapsed', 'panel-hidden', 'sheet-initial');
       toggle.classList.remove('flipped');
       panelOpen_ = true;
-      setTimeout(() => google.maps.event.trigger(map, 'resize'), 340);
+      setTimeout(() => { google.maps.event.trigger(map, 'resize'); syncTogglePosition(); }, 340);
     }
 
     /* ══ START TRIP (open in Google/Apple Maps) ══ */
@@ -6039,6 +6237,20 @@
 
       openLeftPanel();
 
+      // On mobile, hide the panel immediately after search so the map is
+      // visible with results. The toggle ("Route details") lets users expand.
+      if (window.innerWidth <= 767) {
+        const _p = document.getElementById('left-panel');
+        const _t = document.getElementById('panel-toggle');
+        _p.classList.add('panel-hidden');
+        _p.classList.remove('sheet-expanded', 'sheet-initial');
+        _t.classList.add('flipped');
+        panelOpen_ = false;
+        // Tell Google Maps it now occupies the full viewport so fitBounds
+        // uses the correct dimensions in the calls that follow.
+        google.maps.event.trigger(map, 'resize');
+      }
+
       if (toGeo) {
         TO.coord = toGeo.coord;
         TO.name = toGeo.formatted;
@@ -6083,7 +6295,7 @@
                   useStops: true,
                   onResult: routedThroughStops => {
                     if (routedThroughStops) applyRouteStats(routedThroughStops);
-                    map.fitBounds(boundsOf([FROM.coord, TO.coord, ...STOPS.map(s => s.coord)]), 80);
+                    mapFitBounds(boundsOf([FROM.coord, TO.coord, ...STOPS.map(s => s.coord)]), 80);
                   },
                 });
               }
@@ -6095,7 +6307,7 @@
             }
           },
         });
-        map.fitBounds(boundsOf([FROM.coord, TO.coord]), 80);
+        mapFitBounds(boundsOf([FROM.coord, TO.coord]), 80);
       } else {
         currentTo = '';
         hasRoute = false;
@@ -6110,7 +6322,7 @@
         rebuildStopMarkers([]);
         renderExploreMode(fromVal);
         loadSuggestedPlaces(FROM.coord, fromVal);
-        map.panTo(toLatLng(FROM.coord));
+        mapPanTo(toLatLng(FROM.coord));
         map.setZoom(11);
         recordSearchHistory({
           from_name: fromGeo.formatted, from_lat: FROM.coord[1], from_lng: FROM.coord[0],
@@ -6230,7 +6442,7 @@
       const p = currentNearbyRanked[i];
       if (!p) return;
       selectNearbyMarker(i);
-      map.panTo(toLatLng(p.coord));
+      mapPanTo(toLatLng(p.coord));
       map.setZoom(15);
     }
 
@@ -6298,7 +6510,7 @@
         drawRoutePath(route.overview_path);
         const { distanceText, durationText } = routeTotals(route);
         showToast(`Suggested route: ${distanceText} · ${durationText} round trip`);
-        map.fitBounds(boundsOf([FROM.coord, ...places.map(p => p.coord)]), 70);
+        mapFitBounds(boundsOf([FROM.coord, ...places.map(p => p.coord)]), 70);
       });
     }
 
@@ -6368,32 +6580,129 @@
       const available = window.innerHeight - navBottom - PANEL_TOGGLE_RESERVE_PX;
       const max = Math.max(Math.min(window.innerHeight * 0.80, available), window.innerHeight * 0.30);
       document.documentElement.style.setProperty('--mobile-panel-max', `${max}px`);
+      document.documentElement.style.setProperty('--mobile-panel-initial', `${Math.round(available * 0.50)}px`);
+    }
+
+    // Keeps the "Hide details" toggle pinned just above the panel's current
+    // top edge by updating --panel-h to the panel's live measured height.
+    function syncTogglePosition() {
+      if (window.innerWidth > 767) return;
+      const panel = document.getElementById('left-panel');
+      if (!panel) return;
+      const h = panel.getBoundingClientRect().height;
+      document.documentElement.style.setProperty('--panel-h', `${h}px`);
     }
 
     document.addEventListener('DOMContentLoaded', () => {
       updateMobilePanelMaxHeight();
-      window.addEventListener('resize', updateMobilePanelMaxHeight);
-      window.addEventListener('orientationchange', updateMobilePanelMaxHeight);
+
+      // Trigger a map resize after layout settles so Google Maps recomputes
+      // its tile canvas to fill the actual #map dimensions on all screen sizes.
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        google.maps.event.trigger(map, 'resize');
+      }));
+
+      window.addEventListener('resize', () => {
+        updateMobilePanelMaxHeight();
+        syncTogglePosition();
+        google.maps.event.trigger(map, 'resize');
+      });
+      window.addEventListener('orientationchange', () => {
+        updateMobilePanelMaxHeight();
+        syncTogglePosition();
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          google.maps.event.trigger(map, 'resize');
+        }));
+      });
 
       const panel = document.getElementById('left-panel');
-      let startY = 0, startH = 0, dragging = false;
-      panel.addEventListener('touchstart', e => {
+      const handle = document.getElementById('drag-handle');
+      const toggle = document.getElementById('panel-toggle');
+
+      // On first load on mobile, cap the panel at 50% of available screen
+      // so half the viewport shows the map immediately.
+      if (window.innerWidth <= 767) {
+        panel.classList.add('sheet-initial');
+        // Initialise --panel-h after styles settle so the toggle is correct.
+        requestAnimationFrame(() => requestAnimationFrame(syncTogglePosition));
+      }
+
+      let startY = 0, startH = 0, isDragging = false;
+      let lastY = 0, lastT = 0, velocity = 0; // px/ms, positive = dragging up
+
+      function onDragStart(clientY) {
         if (window.innerWidth > 767) return;
-        startY = e.touches[0].clientY; startH = panel.getBoundingClientRect().height; dragging = true;
-      }, { passive: true });
-      panel.addEventListener('touchmove', e => {
-        if (!dragging || window.innerWidth > 767) return;
-        const dy = startY - e.touches[0].clientY;
+        startY = clientY;
+        startH = panel.getBoundingClientRect().height;
+        lastY = clientY; lastT = Date.now(); velocity = 0;
+        isDragging = true;
+        panel.classList.add('dragging');
+        toggle.classList.add('dragging-toggle');
+      }
+
+      function onDragMove(clientY) {
+        if (!isDragging || window.innerWidth > 767) return;
+        panel.classList.remove('sheet-initial');
+        const now = Date.now(), dt = now - lastT;
+        if (dt > 0) velocity = (lastY - clientY) / dt;
+        lastY = clientY; lastT = now;
+
+        const dy = startY - clientY;
         const cap = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--mobile-panel-max')) || window.innerHeight * 0.80;
-        panel.style.maxHeight = Math.min(Math.max(startH + dy, 50), cap) + 'px';
-      }, { passive: true });
-      panel.addEventListener('touchend', () => {
-        if (window.innerWidth > 767) return;
-        dragging = false;
-        const h = panel.getBoundingClientRect().height, vh = window.innerHeight;
+        const min = 56; // drag handle height only
+        const newH = Math.min(Math.max(startH + dy, min), cap);
+        panel.style.maxHeight = newH + 'px';
+        document.documentElement.style.setProperty('--panel-h', `${newH}px`);
+      }
+
+      function onDragEnd() {
+        if (!isDragging || window.innerWidth > 767) return;
+        isDragging = false;
+        panel.classList.remove('dragging');
+        toggle.classList.remove('dragging-toggle');
+
+        const h = panel.getBoundingClientRect().height;
+        const vh = window.innerHeight;
+        const cap = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--mobile-panel-max')) || vh * 0.80;
+
+        // Velocity threshold: fast flick overrides position-based snap.
+        const FLICK = 0.4; // px/ms
+        let expanded;
+        if (Math.abs(velocity) > FLICK) {
+          expanded = velocity > 0; // flick up → expand, flick down → hide
+        } else {
+          expanded = h > vh * 0.35;
+        }
+
         panel.style.maxHeight = '';
-        panel.classList.toggle('sheet-expanded', h > vh * .40);
-      });
+
+        if (expanded) {
+          // Snap to full height — panel stays visible.
+          panel.classList.remove('panel-hidden');
+          panel.classList.add('sheet-expanded');
+          toggle.classList.remove('flipped');
+          panelOpen_ = true;
+          document.documentElement.style.setProperty('--panel-h', `${cap}px`);
+          setTimeout(syncTogglePosition, 350);
+        } else {
+          // Dragged to bottom → fully hide, show "Route details" button.
+          panel.classList.add('panel-hidden');
+          panel.classList.remove('sheet-expanded', 'sheet-initial');
+          toggle.classList.add('flipped');
+          panelOpen_ = false;
+          document.documentElement.style.setProperty('--panel-h', '0px');
+          setTimeout(() => {
+            google.maps.event.trigger(map, 'resize');
+            syncTogglePosition();
+          }, 350);
+        }
+      }
+
+      // Attach drag to the handle element only — avoids conflicts with
+      // scrolling the panel content below the handle.
+      handle.addEventListener('touchstart', e => onDragStart(e.touches[0].clientY), { passive: true });
+      handle.addEventListener('touchmove', e => onDragMove(e.touches[0].clientY), { passive: true });
+      handle.addEventListener('touchend', onDragEnd, { passive: true });
     });
 
     /* ══ OUTSIDE CLICK ══ */
