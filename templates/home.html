@@ -2167,9 +2167,11 @@
       display: flex;
       flex-direction: column;
       overflow-y: auto;
+      overflow-x: hidden;
       animation: slideUp .2s ease;
       scrollbar-width: none;
       -ms-overflow-style: none;
+      position: relative;
     }
 
     .pp-pic {
@@ -2954,6 +2956,152 @@
     .pp-btn:hover {
       background: var(--red-d)
     }
+
+    /* ── typical food panel (slides up inside pp-modal) ── */
+    .pp-food-cc {
+      cursor: pointer;
+      transition: background .15s, border-color .15s
+    }
+
+    .pp-food-cc:hover {
+      background: #fff3f3;
+      border-color: var(--red)
+    }
+
+    .pp-food-panel {
+      position: absolute;
+      inset: 0;
+      background: var(--white);
+      border-radius: var(--r-xl);
+      display: flex;
+      flex-direction: column;
+      transform: translateY(105%);
+      transition: transform .32s cubic-bezier(.4,0,.2,1);
+      z-index: 20;
+      overflow: hidden
+    }
+
+    .pp-food-panel.open {
+      transform: translateY(0)
+    }
+
+    .pp-food-hdr {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px 12px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0
+    }
+
+    .pp-food-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--black)
+    }
+
+    .pp-food-sub {
+      font-size: 12px;
+      color: var(--g400);
+      margin-top: 2px
+    }
+
+    .pp-food-x {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: var(--g100);
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+      color: var(--g600);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0
+    }
+
+    .pp-food-x:hover {
+      background: var(--g200)
+    }
+
+    .pp-food-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 20px 24px
+    }
+
+    .pp-food-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px
+    }
+
+    .pp-food-card {
+      border-radius: var(--r-md);
+      border: 1px solid var(--border);
+      overflow: hidden;
+      background: var(--white);
+      cursor: default
+    }
+
+    .pp-food-img {
+      width: 100%;
+      height: 110px;
+      object-fit: cover;
+      display: block
+    }
+
+    .pp-food-no-img {
+      width: 100%;
+      height: 110px;
+      background: var(--g100);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px
+    }
+
+    .pp-food-card-body {
+      padding: 8px 10px 10px
+    }
+
+    .pp-food-card-name {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--black);
+      line-height: 1.3
+    }
+
+    .pp-food-card-desc {
+      font-size: 10px;
+      color: var(--g400);
+      margin-top: 3px;
+      line-height: 1.4;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden
+    }
+
+    .pp-food-state {
+      text-align: center;
+      padding: 48px 20px;
+      color: var(--g400);
+      font-size: 13px
+    }
+
+    .pp-food-spinner {
+      width: 28px;
+      height: 28px;
+      border: 3px solid var(--g200);
+      border-top-color: var(--red);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      margin: 0 auto 12px
+    }
+
+    @keyframes spin { to { transform: rotate(360deg) } }
 
     /* ── country search overlay ── */
     .cs-overlay {
@@ -4156,7 +4304,7 @@
             <div class="pp-cv" id="pp-alt">520 m</div>
             <div class="pp-cn" id="pp-anote">Central valley</div>
           </div>
-          <div class="pp-cc">
+          <div class="pp-cc pp-food-cc" onclick="openFoodPanel()" title="See typical food">
             <div class="pp-ci" style="background:#fff7ed;"><svg viewBox="0 0 24 24" fill="none" stroke="#c2410c"
                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M7 2v7a2 2 0 0 0 4 0V2" />
@@ -4165,7 +4313,7 @@
                 <path d="M17 13v9" />
               </svg></div>
             <div class="pp-cl">Typical food</div>
-            <div class="pp-cn">Coming soon</div>
+            <div class="pp-cn">Tap to explore</div>
           </div>
           <div class="pp-cc">
             <div class="pp-ci" style="background:#eff6ff;"><svg viewBox="0 0 24 24" fill="none" stroke="#2563eb"
@@ -4217,6 +4365,20 @@
       <div class="pp-foot">
         <div class="pp-fn" id="pp-fn"></div><button class="pp-btn" onclick="closePP()">Got
           it</button>
+      </div>
+
+      <!-- ── Typical food panel (slides up over the popup body) ── -->
+      <div class="pp-food-panel" id="pp-food-panel">
+        <div class="pp-food-hdr">
+          <div>
+            <div class="pp-food-title">Typical food</div>
+            <div class="pp-food-sub" id="pp-food-sub"></div>
+          </div>
+          <button class="pp-food-x" onclick="closeFoodPanel()">✕</button>
+        </div>
+        <div class="pp-food-scroll">
+          <div class="pp-food-grid" id="pp-food-grid"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -4432,7 +4594,7 @@
 
     const map = new google.maps.Map(document.getElementById('map'), {
       mapId: '2cd47264004a9b29612b2d59',
-      center: { lat: 20, lng: 0 },
+      center: { lat: -15, lng: -60 },
       zoom: 3,
       disableDefaultUI: true,
       gestureHandling: 'greedy',
@@ -5121,7 +5283,50 @@
       ppRenderComments(d.comments || []);
       openModal('pp-modal');
     }
-    function closePP() { closeModal('pp-modal'); }
+    function closePP() {
+      closeFoodPanel();
+      closeModal('pp-modal');
+    }
+
+    function openFoodPanel() {
+      const placeName = document.getElementById('pp-name')?.textContent?.trim() || '';
+      if (!placeName) return;
+
+      document.getElementById('pp-food-sub').textContent = placeName;
+      document.getElementById('pp-food-grid').innerHTML =
+        '<div class="pp-food-state"><div class="pp-food-spinner"></div>Loading typical food…</div>';
+      document.getElementById('pp-food-panel').classList.add('open');
+
+      fetch(`/api/typical-food?place=${encodeURIComponent(placeName)}`)
+        .then(r => r.json())
+        .then(data => {
+          const foods = data.foods || [];
+          const grid = document.getElementById('pp-food-grid');
+          if (!foods.length) {
+            grid.innerHTML = '<div class="pp-food-state">No food information found for this place.</div>';
+            return;
+          }
+          grid.innerHTML = foods.map(f => `
+            <div class="pp-food-card">
+              ${f.image
+                ? `<img class="pp-food-img" src="${f.image}" alt="${f.name}" onerror="this.outerHTML='<div class=\\"pp-food-no-img\\">🍽️</div>'">`
+                : '<div class="pp-food-no-img">🍽️</div>'}
+              <div class="pp-food-card-body">
+                <div class="pp-food-card-name">${f.name}</div>
+                ${f.desc ? `<div class="pp-food-card-desc">${f.desc}</div>` : ''}
+              </div>
+            </div>
+          `).join('');
+        })
+        .catch(() => {
+          document.getElementById('pp-food-grid').innerHTML =
+            '<div class="pp-food-state">Unable to load food information.</div>';
+        });
+    }
+
+    function closeFoodPanel() {
+      document.getElementById('pp-food-panel')?.classList.remove('open');
+    }
 
     const PP_SOURCE_LABEL = { google: 'Google', tripadvisor: 'TripAdvisor', booking: 'Booking.com' };
 

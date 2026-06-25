@@ -552,6 +552,89 @@ def api_save_plan_full():
     return jsonify({"ok": True, "message": "Plan saved", "plan_id": plan_id}), 201
 
 
+# ── Typical food ────────────────────────────────────────────────────────────
+
+def _wiki_api(params, timeout=8):
+    """Call the Wikipedia MediaWiki API and return parsed JSON."""
+    base = "https://en.wikipedia.org/w/api.php"
+    qs = urllib.parse.urlencode({**params, "format": "json"})
+    req = urllib.request.Request(
+        f"{base}?{qs}",
+        headers={"User-Agent": "exploreMore/1.0 (travel planning app)"},
+    )
+    with urllib.request.urlopen(req, context=_SSL_CONTEXT, timeout=timeout) as resp:
+        return json.loads(resp.read())
+
+
+def _fetch_typical_food(place: str):
+    """Return up to 6 typical dishes for *place* using Wikipedia data."""
+    skip_words = {"flag", "logo", "map", "coat", "icon", "blank", "svg", "commons"}
+
+    # 1. Try the Wikipedia category "{place} cuisine" first
+    cat_data = _wiki_api({
+        "action": "query",
+        "list": "categorymembers",
+        "cmtitle": f"Category:{place} cuisine",
+        "cmlimit": 20,
+        "cmtype": "page",
+        "cmprop": "title",
+    })
+    members = cat_data.get("query", {}).get("categorymembers", [])
+
+    # 2. Fallback: search for "{place} traditional food"
+    if not members:
+        search = _wiki_api({
+            "action": "query",
+            "list": "search",
+            "srsearch": f"{place} traditional food dish cuisine",
+            "srlimit": 10,
+        })
+        members = [{"title": r["title"]} for r in search.get("query", {}).get("search", [])]
+
+    if not members:
+        return []
+
+    # 3. Batch-fetch thumbnails + extract for the first 8 candidates
+    titles = [m["title"] for m in members[:8]]
+    page_data = _wiki_api({
+        "action": "query",
+        "titles": "|".join(titles),
+        "prop": "pageimages|extracts",
+        "piprop": "thumbnail",
+        "pithumbsize": 400,
+        "exintro": True,
+        "explaintext": True,
+        "exsentences": 1,
+    })
+
+    foods = []
+    for p in page_data.get("query", {}).get("pages", {}).values():
+        if p.get("pageid", -1) == -1:
+            continue
+        name = p.get("title", "")
+        # Skip if the article name contains any skip words
+        if any(w in name.lower() for w in skip_words):
+            continue
+        image = p.get("thumbnail", {}).get("source", "")
+        extract = p.get("extract", "") or ""
+        desc = extract.split(".")[0].strip() if extract else ""
+        foods.append({"name": name, "image": image, "desc": desc})
+
+    return foods[:6]
+
+
+@app.route("/api/typical-food", methods=["GET"])
+def typical_food():
+    place = request.args.get("place", "").strip()
+    if not place:
+        return jsonify({"error": "place is required"}), 400
+    try:
+        foods = _fetch_typical_food(place)
+        return jsonify({"place": place, "foods": foods})
+    except Exception as e:
+        return jsonify({"error": str(e), "foods": []}), 500
+
+
 # ── Health check ────────────────────────────────────────────────────────────
 @app.route("/api/health", methods=["GET"])
 def health():
