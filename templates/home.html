@@ -612,7 +612,9 @@
       stroke-linejoin: round
     }
 
-      {% include "partials/_auth_styles.html" %}
+      {
+      % include "partials/_auth_styles.html" %
+    }
 
     /* ══════════ MAIN ══════════ */
     .main {
@@ -1899,43 +1901,6 @@
       color: var(--black)
     }
 
-    /* zoom */
-    .zoom-box {
-      position: absolute;
-      top: 14px;
-      right: 14px;
-      z-index: 10;
-      background: var(--white);
-      border: 1px solid var(--border);
-      border-radius: var(--r-sm);
-      box-shadow: var(--sh-sm);
-      overflow: hidden
-    }
-
-    .zoom-btn {
-      width: 32px;
-      height: 32px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      border: none;
-      background: var(--white);
-      font-size: 18px;
-      color: var(--g800);
-      font-weight: 300;
-      transition: background .15s;
-      font-family: var(--font)
-    }
-
-    .zoom-btn:first-child {
-      border-bottom: 1px solid var(--border)
-    }
-
-    .zoom-btn:hover {
-      background: var(--g50)
-    }
-
     /* wraps the add/remove buttons and the places range slider (bottom-right) */
     .places-controls {
       position: absolute;
@@ -3107,7 +3072,11 @@
       margin: 0 auto 12px
     }
 
-    @keyframes spin { to { transform: rotate(360deg) } }
+    @keyframes spin {
+      to {
+        transform: rotate(360deg)
+      }
+    }
 
     /* ── country search overlay ── */
     .cs-overlay {
@@ -3809,10 +3778,6 @@
         font-size: 8px
       }
 
-      .zoom-box {
-        display: none
-      }
-
       .stats-row {
         gap: 5px
       }
@@ -4105,10 +4070,6 @@
           <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
         </svg>
         <span>Save plan</span>
-      </div>
-      <div class="zoom-box">
-        <button class="zoom-btn" onclick="map.setZoom(map.getZoom()+1)">+</button>
-        <button class="zoom-btn" onclick="map.setZoom(map.getZoom()-1)">−</button>
       </div>
       <div class="places-controls" id="places-controls" style="display:none">
         <div class="places-actions-box" id="places-actions-box">
@@ -5129,7 +5090,6 @@
 
           if (onResult) onResult(route);
         } else {
-          console.warn(`${mode} directions failed (${status}), removing the path`);
           clearRoutePolylines();
           showToast(`No ${mode.toLowerCase()} route available for this distance`);
           if (onResult) onResult(null);
@@ -5315,8 +5275,8 @@
           grid.innerHTML = foods.map(f => `
             <div class="pp-food-card">
               ${f.image
-                ? `<img class="pp-food-img" src="${f.image}" alt="${f.name}" onerror="this.outerHTML='<div class=\\"pp-food-no-img\\">🍽️</div>'">`
-                : '<div class="pp-food-no-img">🍽️</div>'}
+              ? `<img class="pp-food-img" src="${f.image}" alt="${f.name}" onerror="this.outerHTML='<div class=\\"pp-food-no-img\\">🍽️</div>'">`
+              : '<div class="pp-food-no-img">🍽️</div>'}
               <div class="pp-food-card-body">
                 <div class="pp-food-card-name">${f.name}</div>
                 ${f.desc ? `<div class="pp-food-card-desc">${f.desc}</div>` : ''}
@@ -6867,7 +6827,7 @@
         // appears in the right position without waiting for the transition.
         requestAnimationFrame(() => requestAnimationFrame(() => {
           const h = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--mobile-panel-initial'))
-                    || Math.round(window.innerHeight * 0.50);
+            || Math.round(window.innerHeight * 0.50);
           document.documentElement.style.setProperty('--panel-h', `${h}px`);
         }));
       }
