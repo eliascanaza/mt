@@ -612,9 +612,7 @@
       stroke-linejoin: round
     }
 
-      {
-      % include "partials/_auth_styles.html" %
-    }
+      {% include "partials/_auth_styles.html" %}
 
     /* ══════════ MAIN ══════════ */
     .main {
@@ -3483,7 +3481,7 @@
       .panel-toggle {
         display: flex !important;
         position: absolute;
-        bottom: calc(var(--panel-h, var(--mobile-panel-max, 80vh)) + 12px);
+        bottom: calc(var(--panel-h, var(--mobile-panel-initial, 50vh)) + 6px);
         right: 16px;
         left: auto;
         top: auto;
@@ -3516,7 +3514,7 @@
 
       /* sits just above the "Route details" / "Hide details" pill, tracking it as it moves */
       .places-controls {
-        bottom: calc(var(--panel-h, var(--mobile-panel-max, 80vh)) + 12px + 56px);
+        bottom: calc(var(--panel-h, var(--mobile-panel-initial, 50vh)) + 6px + 56px);
         right: 16px;
         transition: bottom .32s cubic-bezier(.4, 0, .2, 1)
       }
@@ -6650,8 +6648,13 @@
       // so half the viewport shows the map immediately.
       if (window.innerWidth <= 767) {
         panel.classList.add('sheet-initial');
-        // Initialise --panel-h after styles settle so the toggle is correct.
-        requestAnimationFrame(() => requestAnimationFrame(syncTogglePosition));
+        // Set --panel-h immediately to the initial height so the toggle
+        // appears in the right position without waiting for the transition.
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          const h = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--mobile-panel-initial'))
+                    || Math.round(window.innerHeight * 0.50);
+          document.documentElement.style.setProperty('--panel-h', `${h}px`);
+        }));
       }
 
       let startY = 0, startH = 0, isDragging = false;
