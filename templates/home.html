@@ -5607,7 +5607,11 @@
     }
 
     /* ══ MODAL HELPERS ══ */
-    function openModal(id) { document.getElementById(id).classList.add('open'); document.body.style.overflow = 'hidden'; }
+    function openModal(id) {
+      if (id === 'pp-modal') closeFoodPanel();
+      document.getElementById(id).classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
     function closeModal(id) { document.getElementById(id).classList.remove('open'); document.body.style.overflow = ''; }
 
     /* ══ DROPDOWNS ══ */
