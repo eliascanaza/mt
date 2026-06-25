@@ -612,9 +612,7 @@
       stroke-linejoin: round
     }
 
-      {
-      % include "partials/_auth_styles.html" %
-    }
+    {% include "partials/_auth_styles.html" %}
 
     /* ══════════ MAIN ══════════ */
     .main {
@@ -3738,9 +3736,6 @@
         background: var(--red-d)
       }
 
-      /* Only when a real route exists (both from/to populated) — not just
-         whenever the panel happens to be hidden, e.g. mid-way through a
-         single-place explore search. */
       body.has-route .left.panel-hidden~.map-side .start-trip-btn {
         display: flex
       }
