@@ -25,11 +25,14 @@ import urllib.request
 from concurrent.futures import ThreadPoolExecutor
 import certifi
 from dotenv import load_dotenv
-from flask import Flask, jsonify, request, send_from_directory, render_template, session
+from flask import Flask, jsonify, redirect, request, send_from_directory, render_template, session
 from google.oauth2 import id_token as google_id_token
 from google.auth.transport import requests as google_auth_requests
 
-import htmlmin
+try:
+    import htmlmin as _htmlmin
+except ImportError:
+    _htmlmin = None
 import database as db
 
 # Python.org's macOS builds don't always ship a usable CA trust store for
@@ -48,9 +51,9 @@ app.secret_key = os.environ.get("SECRET_KEY", "dev-only-insecure-key-change-me")
 
 @app.after_request
 def _minify_response(response):
-    if not app.debug and response.content_type.startswith("text/html"):
+    if _htmlmin and not app.debug and response.content_type.startswith("text/html"):
         try:
-            response.data = htmlmin.minify(
+            response.data = _htmlmin.minify(
                 response.get_data(as_text=True),
                 remove_comments=True,
                 remove_empty_space=True,
@@ -62,24 +65,33 @@ def _minify_response(response):
     return response
 
 
+# ── Public config endpoints (keys served at runtime, not baked into HTML) ─
+@app.route("/api/mjs")
+def maps_js():
+    key = app.config["GOOGLE_MAPS_API_KEY"]
+    url = f"https://maps.googleapis.com/maps/api/js?key={key}&libraries=marker,places&v=weekly"
+    return redirect(url, code=302)
+
+
+@app.route("/api/config")
+def client_config():
+    return jsonify({"client_id": app.config["GOOGLE_CLIENT_ID"]})
+
+
 # ── HTML frontend ────────────────────────────────────────────────────────
 @app.route("/")
 def index():
-    return render_template("index.html", google_client_id=app.config["GOOGLE_CLIENT_ID"])
+    return render_template("index.html")
 
 
 @app.route("/profile")
 def profile():
-    return render_template("profile.html", google_client_id=app.config["GOOGLE_CLIENT_ID"])
+    return render_template("profile.html")
 
 
 @app.route("/home")
 def home():
-    return render_template(
-        "home.html",
-        google_maps_api_key=app.config["GOOGLE_MAPS_API_KEY"],
-        google_client_id=app.config["GOOGLE_CLIENT_ID"],
-    )
+    return render_template("home.html")
 
 
 @app.route("/info")

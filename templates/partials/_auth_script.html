@@ -7,7 +7,8 @@
    Optionally set `const LOGOUT_REDIRECT = '/';` before including if this
    page should navigate away after logging out; omit to update the UI in place. #}
 <script>
-  const GOOGLE_CLIENT_ID = {{ google_client_id | tojson }};
+  // Fetch client ID at script-parse time so it's ready before window.load.
+  const __authCfg = fetch('/api/config').then(r => r.json()).catch(() => ({}));
 
   function closeDropdown() {
     document.getElementById('u-drop')?.classList.remove('open');
@@ -57,15 +58,17 @@
     if (!document.getElementById('u-pill')?.contains(e.target)) closeDropdown();
   });
 
-  window.addEventListener('load', () => {
+  window.addEventListener('load', async () => {
     refreshAuthState();
-    if (!GOOGLE_CLIENT_ID || !window.google?.accounts?.id) {
+    const cfg = await __authCfg;
+    const clientId = cfg.client_id || '';
+    if (!clientId || !window.google?.accounts?.id) {
       const fallback = document.getElementById('si-fallback');
       if (fallback) fallback.style.display = 'block';
       return;
     }
     google.accounts.id.initialize({
-      client_id: GOOGLE_CLIENT_ID,
+      client_id: clientId,
       callback: handleGoogleCredential,
     });
     const signinContainer = document.getElementById('g_id_signin_container');
