@@ -567,7 +567,7 @@ def _wiki_api(params, timeout=8):
 
 
 def _fetch_typical_food(place: str):
-    """Return up to 6 typical dishes for *place* using Wikipedia data."""
+    """Return up to 10 typical dishes for *place* using Wikipedia data."""
     skip_words = {"flag", "logo", "map", "coat", "icon", "blank", "svg", "commons"}
 
     # 1. Try the Wikipedia category "{place} cuisine" first
@@ -575,7 +575,7 @@ def _fetch_typical_food(place: str):
         "action": "query",
         "list": "categorymembers",
         "cmtitle": f"Category:{place} cuisine",
-        "cmlimit": 20,
+        "cmlimit": 30,
         "cmtype": "page",
         "cmprop": "title",
     })
@@ -587,15 +587,15 @@ def _fetch_typical_food(place: str):
             "action": "query",
             "list": "search",
             "srsearch": f"{place} traditional food dish cuisine",
-            "srlimit": 10,
+            "srlimit": 15,
         })
         members = [{"title": r["title"]} for r in search.get("query", {}).get("search", [])]
 
     if not members:
         return []
 
-    # 3. Batch-fetch thumbnails + extract for the first 8 candidates
-    titles = [m["title"] for m in members[:8]]
+    # 3. Batch-fetch thumbnails for the first 10 candidates
+    titles = [m["title"] for m in members[:10]]
     page_data = _wiki_api({
         "action": "query",
         "titles": "|".join(titles),
@@ -620,7 +620,7 @@ def _fetch_typical_food(place: str):
         desc = extract.split(".")[0].strip() if extract else ""
         foods.append({"name": name, "image": image, "desc": desc})
 
-    return foods[:6]
+    return foods[:10]
 
 
 @app.route("/api/typical-food", methods=["GET"])
