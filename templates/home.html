@@ -3847,9 +3847,9 @@
   <nav class="nav">
     <a class="logo" href="/">
       <div class="logo-mark">
-        <svg viewBox="0 0 20 20">
-          <path
-            d="M10 1.5C6.41 1.5 3.5 4.41 3.5 8c0 4.9 6.5 10.5 6.5 10.5S16.5 12.9 16.5 8c0-3.59-2.91-6.5-6.5-6.5zm0 8.75a2.25 2.25 0 1 1 0-4.5 2.25 2.25 0 0 1 0 4.5z" />
+        <svg viewBox="0 0 24 24">
+          <path fill-rule="evenodd"
+            d="M12 2L22 21H2ZM12 5L20 21H4ZM4 21L9 12L11 21ZM13 21L15 12L20 21Z" />
         </svg>
       </div>
       <span class="logo-text">explore<strong>More</strong></span>
@@ -5546,21 +5546,31 @@
     }
 
     /* ══ TOP 10 ══ */
-    async function showCategoryTop10() {
+    async function showCategoryTop10(filterCat) {
       closeTop10();
       cleanMap();
 
       const rows = await fetchTop10({ type: 'category' });
-      const list = rows.map(adaptTop10Item);
+      let list = rows.map(adaptTop10Item);
+
+      if (filterCat) {
+        const f = filterCat.toLowerCase();
+        const filtered = list.filter(item => (item.t || '').toLowerCase() === f);
+        if (filtered.length) list = filtered;
+      }
+
       const coords = list.map(item => item.coord);
-
       plotRankingMarkers(list);
-
       if (coords.length) mapFitBounds(boundsOf(coords), 60);
 
+      const title = filterCat ? `Top ${filterCat} Destinations` : 'Top 10 by Category';
+      const sub = filterCat
+        ? `Best places for ${filterCat.toLowerCase()} travel worldwide`
+        : 'Best destinations for every traveller type';
+
       openRankingPanel(
-        'Top 10 by Category',
-        'Best destinations for every traveller type',
+        title,
+        sub,
         `<svg viewBox="0 0 24 24" style="width:22px;height:22px;" fill="none" stroke="#ea580c" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h7"/><circle cx="18" cy="18" r="3"/></svg>`,
         list
       );
@@ -6996,6 +7006,8 @@
     } else if (deepLinkParams.get('place')) {
       document.getElementById('from-input').value = deepLinkParams.get('place');
       doSearch();
+    } else if (deepLinkParams.get('category')) {
+      showCategoryTop10(deepLinkParams.get('category'));
     }
   </script>
 

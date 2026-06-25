@@ -157,8 +157,6 @@
       box-shadow: var(--sh-sm)
     }
 
-    {% include "partials/_auth_styles.html" %}
-
     .btn-cta {
       text-decoration: none;
       color: #fff;
@@ -692,6 +690,12 @@
       margin-bottom: 4px
     }
 
+    .dest-name .dest-via {
+      font-weight: 400;
+      font-size: 11px;
+      color: var(--g600)
+    }
+
     .dest-loc {
       font-size: 12px;
       color: var(--g600);
@@ -708,6 +712,235 @@
       stroke-width: 2;
       stroke-linecap: round;
       flex-shrink: 0
+    }
+
+    /* ── Trip Preview Modal ───────────────────────────── */
+    .tp-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .45);
+      z-index: 900;
+      align-items: center;
+      justify-content: center;
+      padding: 16px
+    }
+
+    .tp-overlay.open {
+      display: flex
+    }
+
+    .tp-modal {
+      background: #fff;
+      border-radius: 20px;
+      width: 540px;
+      max-width: 100%;
+      max-height: 90vh;
+      position: relative;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, .22);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden
+    }
+
+    .tp-close {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 2;
+      background: rgba(255, 255, 255, .88);
+      border: none;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--black);
+      line-height: 1;
+      backdrop-filter: blur(4px)
+    }
+
+    .tp-close:hover {
+      background: #fff
+    }
+
+    .tp-img {
+      width: 100%;
+      height: 260px;
+      object-fit: cover;
+      display: block;
+      flex-shrink: 0
+    }
+
+    .tp-body {
+      padding: 18px 20px 22px;
+      overflow-y: auto;
+      flex: 1
+    }
+
+    .tp-head {
+      margin-bottom: 12px
+    }
+
+    .tp-title {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--black);
+      margin-bottom: 3px
+    }
+
+    .tp-meta {
+      font-size: 12px;
+      color: var(--g600)
+    }
+
+    .tp-tags {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-bottom: 14px
+    }
+
+    .tp-tag {
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600
+    }
+
+    .tp-info {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 18px
+    }
+
+    .tp-info-item {
+      background: var(--g50);
+      border-radius: 10px;
+      padding: 10px 8px;
+      text-align: center
+    }
+
+    .tp-info-ic {
+      font-size: 17px;
+      margin-bottom: 4px
+    }
+
+    .tp-info-lbl {
+      font-size: 10px;
+      color: var(--g500);
+      text-transform: uppercase;
+      letter-spacing: .4px;
+      margin-bottom: 2px
+    }
+
+    .tp-info-val {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--black);
+      line-height: 1.3
+    }
+
+    .tp-sec-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--g500);
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      margin-bottom: 12px
+    }
+
+    .tp-places {
+      margin-bottom: 20px
+    }
+
+    .tp-stop {
+      display: flex;
+      gap: 14px;
+      align-items: stretch
+    }
+
+    .tp-node {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 16px;
+      flex-shrink: 0
+    }
+
+    .tp-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      border: 2px solid var(--g300);
+      background: #fff;
+      flex-shrink: 0;
+      margin-top: 3px
+    }
+
+    .tp-stop:first-child .tp-dot {
+      background: var(--black);
+      border-color: var(--black)
+    }
+
+    .tp-stop:last-child .tp-dot {
+      background: var(--red);
+      border-color: var(--red)
+    }
+
+    .tp-connector {
+      width: 2px;
+      flex: 1;
+      min-height: 14px;
+      background: var(--g200);
+      margin: 3px 0
+    }
+
+    .tp-stop:last-child .tp-connector {
+      display: none
+    }
+
+    .tp-stop-info {
+      padding-bottom: 18px;
+      flex: 1
+    }
+
+    .tp-stop:last-child .tp-stop-info {
+      padding-bottom: 0
+    }
+
+    .tp-stop-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--black);
+      line-height: 1.3
+    }
+
+    .tp-stop-label {
+      font-size: 11px;
+      color: var(--g500);
+      margin-top: 2px
+    }
+
+    .tp-btn {
+      display: block;
+      background: var(--red);
+      color: #fff;
+      text-align: center;
+      padding: 13px;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: opacity .15s
+    }
+
+    .tp-btn:hover {
+      opacity: .88
     }
 
     .featured-grid {
@@ -1252,6 +1485,7 @@
       }
     }
   </style>
+  <style>{% include "partials/_auth_styles.html" %}</style>
 </head>
 
 <body>
@@ -1260,9 +1494,8 @@
   <nav class="nav">
     <a class="logo" href="/">
       <div class="logo-mark">
-        <svg viewBox="0 0 20 20">
-          <path
-            d="M10 1.5C6.41 1.5 3.5 4.41 3.5 8c0 4.9 6.5 10.5 6.5 10.5S16.5 12.9 16.5 8c0-3.59-2.91-6.5-6.5-6.5zm0 8.75a2.25 2.25 0 1 1 0-4.5 2.25 2.25 0 0 1 0 4.5z" />
+        <svg viewBox="0 0 24 24">
+          <path fill-rule="evenodd" d="M12 2L22 21H2ZM12 5L20 21H4ZM4 21L9 12L11 21ZM13 21L15 12L20 21Z" />
         </svg>
       </div>
       <span class="logo-text">explore<strong>More</strong></span>
@@ -1360,7 +1593,7 @@
       </div>
 
       <div class="dest-grid">
-        <a class="dest-card" href="/home?from=Tokyo%2C%20Japan&to=Kyoto%2C%20Japan">
+        <a class="dest-card" href="#" onclick="openTripModal('tokyo-kyoto');return false;">
           <div class="dest-img">
             <div class="dest-img-half from" style="background-image:url('/assets/places/trips/tokyo.jpg')"></div>
             <div class="dest-img-half to" style="background-image:url('/assets/places/top/kyoto.jpg')"></div>
@@ -1375,7 +1608,8 @@
             <span class="dest-img-label to">Kyoto</span>
           </div>
           <div class="dest-body">
-            <div class="dest-name">Tokyo &rarr; (3 places) &rarr; Kyoto</div>
+            <div class="dest-name"><strong>Tokyo</strong> <span class="dest-via">&rarr; Hakone &rarr; Osaka
+                &rarr;</span> <strong>Kyoto</strong></div>
             <div class="dest-loc"><svg viewBox="0 0 24 24">
                 <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
                 <circle cx="12" cy="10" r="3" />
@@ -1383,7 +1617,7 @@
           </div>
         </a>
 
-        <a class="dest-card" href="/home?from=Athens%2C%20Greece&to=Santorini%2C%20Greece">
+        <a class="dest-card" href="#" onclick="openTripModal('athens-santorini');return false;">
           <div class="dest-img">
             <div class="dest-img-half from" style="background-image:url('/assets/places/trips/athens.jpg')"></div>
             <div class="dest-img-half to" style="background-image:url('/assets/places/top/santorini.jpg')"></div>
@@ -1398,7 +1632,9 @@
             <span class="dest-img-label to">Santorini</span>
           </div>
           <div class="dest-body">
-            <div class="dest-name">Athens &rarr; Santorini</div>
+            <div class="dest-name"><strong>Athens</strong> <span class="dest-via">&rarr; Mykonos &rarr;</span>
+              <strong>Santorini</strong>
+            </div>
             <div class="dest-loc"><svg viewBox="0 0 24 24">
                 <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
                 <circle cx="12" cy="10" r="3" />
@@ -1406,7 +1642,7 @@
           </div>
         </a>
 
-        <a class="dest-card" href="/home?from=Cusco%2C%20Peru&to=Ollantaytambo%2C%20Peru">
+        <a class="dest-card" href="#" onclick="openTripModal('cusco-ollantaytambo');return false;">
           <div class="dest-img">
             <div class="dest-img-half from" style="background-image:url('/assets/places/trips/cusco.jpg')"></div>
             <div class="dest-img-half to" style="background-image:url('/assets/places/top/machu-picchu.jpg')"></div>
@@ -1421,7 +1657,9 @@
             <span class="dest-img-label to">Machu Picchu</span>
           </div>
           <div class="dest-body">
-            <div class="dest-name">Cusco &rarr; Ollantaytambo</div>
+            <div class="dest-name"><strong>Cusco</strong> <span class="dest-via">&rarr; Pisac &rarr;</span>
+              <strong>Ollantaytambo</strong>
+            </div>
             <div class="dest-loc"><svg viewBox="0 0 24 24">
                 <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
                 <circle cx="12" cy="10" r="3" />
@@ -1429,7 +1667,7 @@
           </div>
         </a>
 
-        <a class="dest-card" href="/home?from=Cape%20Town%2C%20South%20Africa&to=Knysna%2C%20South%20Africa">
+        <a class="dest-card" href="#" onclick="openTripModal('capetown-knysna');return false;">
           <div class="dest-img">
             <div class="dest-img-half from" style="background-image:url('/assets/places/cape-town.jpg')"></div>
             <div class="dest-img-half to" style="background-image:url('/assets/places/trips/knysna.jpg')"></div>
@@ -1444,7 +1682,8 @@
             <span class="dest-img-label to">Knysna</span>
           </div>
           <div class="dest-body">
-            <div class="dest-name">Cape Town &rarr; Knysna</div>
+            <div class="dest-name"><strong>Cape Town</strong> <span class="dest-via">&rarr; Hermanus &rarr; Mossel Bay
+                &rarr;</span> <strong>Knysna</strong></div>
             <div class="dest-loc"><svg viewBox="0 0 24 24">
                 <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
                 <circle cx="12" cy="10" r="3" />
@@ -1452,7 +1691,7 @@
           </div>
         </a>
 
-        <a class="dest-card" href="/home?from=Rome%2C%20Italy&to=Amalfi%20Coast%2C%20Italy">
+        <a class="dest-card" href="#" onclick="openTripModal('rome-amalfi');return false;">
           <div class="dest-img">
             <div class="dest-img-half from" style="background-image:url('/assets/places/trips/rome.jpg')"></div>
             <div class="dest-img-half to" style="background-image:url('/assets/places/top/amalfi-coast.jpg')"></div>
@@ -1467,7 +1706,8 @@
             <span class="dest-img-label to">Amalfi Coast</span>
           </div>
           <div class="dest-body">
-            <div class="dest-name">Rome &rarr; Amalfi Coast</div>
+            <div class="dest-name"><strong>Rome</strong> <span class="dest-via">&rarr; Naples &rarr; Pompeii
+                &rarr;</span> <strong>Amalfi Coast</strong></div>
             <div class="dest-loc"><svg viewBox="0 0 24 24">
                 <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
                 <circle cx="12" cy="10" r="3" />
@@ -1475,7 +1715,7 @@
           </div>
         </a>
 
-        <a class="dest-card" href="/home?from=Canc%C3%BAn%2C%20Mexico&to=Chich%C3%A9n%20Itz%C3%A1%2C%20Mexico">
+        <a class="dest-card" href="#" onclick="openTripModal('cancun-chichen');return false;">
           <div class="dest-img">
             <div class="dest-img-half from" style="background-image:url('/assets/places/trips/cancun.jpg')"></div>
             <div class="dest-img-half to" style="background-image:url('/assets/places/top/chichen-itza.jpg')"></div>
@@ -1490,7 +1730,8 @@
             <span class="dest-img-label to">Chichén Itzá</span>
           </div>
           <div class="dest-body">
-            <div class="dest-name">Cancún &rarr; Chichén Itzá</div>
+            <div class="dest-name"><strong>Cancún</strong> <span class="dest-via">&rarr; Tulum &rarr; Valladolid
+                &rarr;</span> <strong>Chichén Itzá</strong></div>
             <div class="dest-loc"><svg viewBox="0 0 24 24">
                 <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
                 <circle cx="12" cy="10" r="3" />
@@ -1652,7 +1893,7 @@
         </div>
       </div>
       <div class="cat-grid">
-        <a class="cat-pill active" href="/">
+        <a class="cat-pill active" href="/home">
           <span class="cat-icon">
             <svg viewBox="0 0 24 24">
               <circle cx="12" cy="12" r="10" />
@@ -1662,7 +1903,7 @@
           </span>
           <span class="cat-label">All trips</span>
         </a>
-        <a class="cat-pill" href="/">
+        <a class="cat-pill" href="/home?category=Nature">
           <span class="cat-icon">
             <svg viewBox="0 0 24 24">
               <path d="M11 20a7 7 0 0 1-1.2-13.9C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z" />
@@ -1671,7 +1912,7 @@
           </span>
           <span class="cat-label">Nature</span>
         </a>
-        <a class="cat-pill" href="/">
+        <a class="cat-pill" href="/home?category=Culture">
           <span class="cat-icon">
             <svg viewBox="0 0 24 24">
               <rect x="3" y="3" width="18" height="18" rx="2" />
@@ -1681,7 +1922,7 @@
           </span>
           <span class="cat-label">Culture</span>
         </a>
-        <a class="cat-pill" href="/">
+        <a class="cat-pill" href="/home?category=Adventure">
           <span class="cat-icon">
             <svg viewBox="0 0 24 24">
               <polyline points="3 20 9 10 13 16 16 11 21 20" />
@@ -1689,7 +1930,7 @@
           </span>
           <span class="cat-label">Adventure</span>
         </a>
-        <a class="cat-pill" href="/">
+        <a class="cat-pill" href="/home?category=Beach">
           <span class="cat-icon">
             <svg viewBox="0 0 24 24">
               <path d="M12 12s8-1 8-7a8 8 0 0 0-16 0c0 6 8 7 8 7Z" />
@@ -1699,7 +1940,7 @@
           </span>
           <span class="cat-label">Beach</span>
         </a>
-        <a class="cat-pill" href="/">
+        <a class="cat-pill" href="/home?category=Gastronomy">
           <span class="cat-icon">
             <svg viewBox="0 0 24 24">
               <path d="M7 2v7a2 2 0 0 0 4 0V2" />
@@ -1710,7 +1951,7 @@
           </span>
           <span class="cat-label">Food</span>
         </a>
-        <a class="cat-pill" href="/">
+        <a class="cat-pill" href="/home?category=History">
           <span class="cat-icon">
             <svg viewBox="0 0 24 24">
               <path d="M3 8l9-5 9 5" />
@@ -1722,7 +1963,7 @@
           </span>
           <span class="cat-label">History</span>
         </a>
-        <a class="cat-pill" href="/">
+        <a class="cat-pill" href="/home?category=Wildlife">
           <span class="cat-icon">
             <svg viewBox="0 0 24 24">
               <circle cx="8" cy="7" r="1.8" />
@@ -1734,7 +1975,7 @@
           </span>
           <span class="cat-label">Wildlife</span>
         </a>
-        <a class="cat-pill" href="/">
+        <a class="cat-pill" href="/home?category=Scenic">
           <span class="cat-icon">
             <svg viewBox="0 0 24 24">
               <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
@@ -1742,7 +1983,7 @@
           </span>
           <span class="cat-label">Stargazing</span>
         </a>
-        <a class="cat-pill" href="/">
+        <a class="cat-pill" href="/home?category=Scenic">
           <span class="cat-icon">
             <svg viewBox="0 0 24 24">
               <path
@@ -1997,9 +2238,8 @@
     <div class="foot-top" style="max-width:1100px;margin:0 auto">
       <div class="foot-brand">
         <a class="logo" href="/" style="margin-bottom:10px;display:flex">
-          <div class="logo-mark"><svg viewBox="0 0 20 20">
-              <path
-                d="M10 1.5C6.41 1.5 3.5 4.41 3.5 8c0 4.9 6.5 10.5 6.5 10.5S16.5 12.9 16.5 8c0-3.59-2.91-6.5-6.5-6.5zm0 8.75a2.25 2.25 0 1 1 0-4.5 2.25 2.25 0 0 1 0 4.5z" />
+          <div class="logo-mark"><svg viewBox="0 0 24 24">
+              <path fill-rule="evenodd" d="M12 2L22 21H2ZM12 5L20 21H4ZM4 21L9 12L11 21ZM13 21L15 12L20 21Z" />
             </svg></div>
           <span class="logo-text">explore<strong>More</strong></span>
         </a>
@@ -2064,6 +2304,87 @@
       }
     }
 
+    const TRIP_DATA = {
+      'tokyo-kyoto': {
+        title: 'Tokyo → Kyoto', meta: 'Japan · 8h trip',
+        image: '/assets/places/top/kyoto.jpg',
+        tags: ['Culture', 'History', 'Food'],
+        bestTime: 'Mar – May, Oct – Nov', transport: 'Bullet Train', budget: '$$–$$$',
+        places: ['Tokyo', 'Hakone', 'Osaka', 'Kyoto'],
+        url: '/home?from=Tokyo%2C%20Japan&to=Kyoto%2C%20Japan'
+      },
+      'athens-santorini': {
+        title: 'Athens → Santorini', meta: 'Greece · 11h trip',
+        image: '/assets/places/top/santorini.jpg',
+        tags: ['Beach', 'Culture', 'History'],
+        bestTime: 'Jun – Sep', transport: 'Ferry or Flight', budget: '$$–$$$',
+        places: ['Athens', 'Mykonos', 'Santorini'],
+        url: '/home?from=Athens%2C%20Greece&to=Santorini%2C%20Greece'
+      },
+      'cusco-ollantaytambo': {
+        title: 'Cusco → Ollantaytambo', meta: 'Peru · 2h trip',
+        image: '/assets/places/top/machu-picchu.jpg',
+        tags: ['Adventure', 'History', 'Nature'],
+        bestTime: 'May – Sep', transport: 'Train or Bus', budget: '$–$$',
+        places: ['Cusco', 'Pisac', 'Ollantaytambo'],
+        url: '/home?from=Cusco%2C%20Peru&to=Ollantaytambo%2C%20Peru'
+      },
+      'capetown-knysna': {
+        title: 'Cape Town → Knysna', meta: 'South Africa · 8h trip',
+        image: '/assets/places/trips/knysna.jpg',
+        tags: ['Nature', 'Wildlife', 'Adventure'],
+        bestTime: 'Oct – Apr', transport: 'Self-drive', budget: '$$–$$$',
+        places: ['Cape Town', 'Hermanus', 'Mossel Bay', 'Knysna'],
+        url: '/home?from=Cape%20Town%2C%20South%20Africa&to=Knysna%2C%20South%20Africa'
+      },
+      'rome-amalfi': {
+        title: 'Rome → Amalfi Coast', meta: 'Italy · 5h trip',
+        image: '/assets/places/top/amalfi-coast.jpg',
+        tags: ['Culture', 'Beach', 'Food'],
+        bestTime: 'May – Oct', transport: 'Train + Ferry', budget: '$$$',
+        places: ['Rome', 'Naples', 'Pompeii', 'Amalfi Coast'],
+        url: '/home?from=Rome%2C%20Italy&to=Amalfi%20Coast%2C%20Italy'
+      },
+      'cancun-chichen': {
+        title: 'Cancún → Chichén Itzá', meta: 'Mexico · 3h trip',
+        image: '/assets/places/top/chichen-itza.jpg',
+        tags: ['History', 'Culture', 'Adventure'],
+        bestTime: 'Nov – Apr', transport: 'Bus or Car', budget: '$–$$',
+        places: ['Cancún', 'Tulum', 'Valladolid', 'Chichén Itzá'],
+        url: '/home?from=Canc%C3%BAn%2C%20Mexico&to=Chich%C3%A9n%20Itz%C3%A1%2C%20Mexico'
+      }
+    };
+    const TAG_COLORS = {
+      Culture: ['#eff6ff', '#1d4ed8'], History: ['#fef3c7', '#92400e'],
+      Food: ['#fff7ed', '#c2410c'], Nature: ['#f0fdf4', '#166534'],
+      Adventure: ['#e0f2fe', '#0369a1'], Beach: ['#ecfeff', '#0e7490'],
+      Wildlife: ['#faf5ff', '#7e22ce']
+    };
+    function openTripModal(key) {
+      const t = TRIP_DATA[key];
+      document.getElementById('tp-img').src = t.image;
+      document.getElementById('tp-img').alt = t.title;
+      document.getElementById('tp-title').textContent = t.title;
+      document.getElementById('tp-meta').textContent = t.meta;
+      document.getElementById('tp-btn').href = t.url;
+      document.getElementById('tp-info').innerHTML =
+        `<div class="tp-info-item"><div class="tp-info-lbl">Best time</div><div class="tp-info-val">${t.bestTime}</div></div>` +
+        `<div class="tp-info-item"><div class="tp-info-lbl">Transport</div><div class="tp-info-val">${t.transport}</div></div>` +
+        `<div class="tp-info-item"><div class="tp-info-lbl">Budget</div><div class="tp-info-val">${t.budget}</div></div>`;
+      const labels = ['Starting point', ...Array(t.places.length - 2).fill('Via stop'), 'Final destination'];
+      document.getElementById('tp-places').innerHTML = t.places.map((name, i) => `
+        <div class="tp-stop">
+          <div class="tp-node"><div class="tp-dot"></div><div class="tp-connector"></div></div>
+          <div class="tp-stop-info"><div class="tp-stop-name">${name}</div><div class="tp-stop-label">${labels[i]}</div></div>
+        </div>`).join('');
+      document.getElementById('tp-overlay').classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeTripModal() {
+      document.getElementById('tp-overlay').classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
     async function handleGoogleCredential(response) {
       try {
         const res = await fetch('/api/auth/google', {
@@ -2081,6 +2402,24 @@
     }
   </script>
   {% include "partials/_auth_script.html" %}
+
+  <!-- ── Trip Preview Modal ── -->
+  <div class="tp-overlay" id="tp-overlay" onclick="if(event.target===this)closeTripModal()">
+    <div class="tp-modal">
+      <button class="tp-close" onclick="closeTripModal()" aria-label="Close">&times;</button>
+      <img class="tp-img" id="tp-img" src="" alt="">
+      <div class="tp-body">
+        <div class="tp-head">
+          <div class="tp-title" id="tp-title"></div>
+          <div class="tp-meta" id="tp-meta"></div>
+        </div>
+        <div class="tp-info" id="tp-info"></div>
+        <div class="tp-sec-label">Places to visit</div>
+        <div class="tp-places" id="tp-places"></div>
+        <a class="tp-btn" id="tp-btn" href="#">Let's start</a>
+      </div>
+    </div>
+  </div>
 </body>
 
 </html>
