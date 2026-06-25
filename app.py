@@ -29,6 +29,7 @@ from flask import Flask, jsonify, request, send_from_directory, render_template,
 from google.oauth2 import id_token as google_id_token
 from google.auth.transport import requests as google_auth_requests
 
+import htmlmin
 import database as db
 
 # Python.org's macOS builds don't always ship a usable CA trust store for
@@ -43,6 +44,22 @@ app.config["JSON_SORT_KEYS"] = False
 app.config["GOOGLE_MAPS_API_KEY"] = os.environ.get("GOOGLE_MAPS_API_KEY", "")
 app.config["GOOGLE_CLIENT_ID"] = os.environ.get("GOOGLE_CLIENT_ID", "")
 app.secret_key = os.environ.get("SECRET_KEY", "dev-only-insecure-key-change-me")
+
+
+@app.after_request
+def _minify_response(response):
+    if not app.debug and response.content_type.startswith("text/html"):
+        try:
+            response.data = htmlmin.minify(
+                response.get_data(as_text=True),
+                remove_comments=True,
+                remove_empty_space=True,
+                minify_js=True,
+                minify_css=True,
+            ).encode("utf-8")
+        except Exception:
+            pass
+    return response
 
 
 # ── HTML frontend ────────────────────────────────────────────────────────
