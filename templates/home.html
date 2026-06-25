@@ -2969,20 +2969,18 @@
     }
 
     .pp-food-panel {
+      display: none;
       position: absolute;
       inset: 0;
       background: var(--white);
       border-radius: var(--r-xl);
-      display: flex;
       flex-direction: column;
-      transform: translateY(105%);
-      transition: transform .32s cubic-bezier(.4,0,.2,1);
       z-index: 20;
       overflow: hidden
     }
 
     .pp-food-panel.open {
-      transform: translateY(0)
+      display: flex
     }
 
     .pp-food-hdr {
