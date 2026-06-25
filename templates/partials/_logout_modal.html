@@ -1,8 +1,3 @@
-{# Logout confirmation dialog, triggered by confirmLogout() (see
-   partials/_user_nav.html and the Settings > Danger zone "Log out" button).
-   Override {% set lo_sub = "..." %} before including for page-specific
-   copy. Needs partials/_auth_styles.html (CSS) and partials/_auth_script.html
-   (JS: confirmLogout/closeLo/doLogout) on the including page. #}
 <div class="lo-bg" id="lo-modal" onclick="if(event.target===this)closeLo()">
   <div class="lo-dialog">
     <div class="lo-top">

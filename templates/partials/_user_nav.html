@@ -1,7 +1,3 @@
-{# User-profile pill + dropdown, shown instead of the "Sign in" button once
-   authenticated. Needs partials/_auth_styles.html (CSS) and
-   partials/_auth_script.html (JS: toggleDropdown/closeDropdown/confirmLogout)
-   on the including page. #}
 <button class="signin-pill" id="signin-pill" onclick="openSignIn()" style="display:none">Sign in</button>
 <div class="user-wrap" id="user-wrap" style="display:none">
   <div class="user-pill" id="u-pill" onclick="toggleDropdown()">
