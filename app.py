@@ -567,59 +567,125 @@ def _wiki_api(params, timeout=8):
 
 
 def _fetch_typical_food(place: str):
-    """Return up to 10 typical dishes for *place* using Wikipedia data."""
-    skip_words = {"flag", "logo", "map", "coat", "icon", "blank", "svg", "commons"}
+    """Return up to 10 typical dishes for *place* using Wikipedia data.
 
-    # 1. Try the Wikipedia category "{place} cuisine" first
-    cat_data = _wiki_api({
+    Strategy:
+      1. Find the canonical "{place} cuisine" Wikipedia article.
+      2. Get its section list and identify food/dish sections.
+      3. Pull wikilinks from those sections — these are actual dish names.
+      4. Batch-fetch thumbnails + one-sentence description for each dish.
+    """
+    # Section headings that indicate the content lists actual dishes
+    dish_section_keywords = {
+        "dish", "food", "snack", "dessert", "soup", "bread",
+        "beverage", "drink", "meat", "seafood", "sauce", "regional",
+        "coastal", "andes", "amazon", "typical", "main", "popular",
+        "street", "sweet", "traditional",
+    }
+
+    # 1. Find the canonical cuisine article name
+    search = _wiki_api({
         "action": "query",
-        "list": "categorymembers",
-        "cmtitle": f"Category:{place} cuisine",
-        "cmlimit": 30,
-        "cmtype": "page",
-        "cmprop": "title",
+        "list": "search",
+        "srsearch": f"{place} cuisine",
+        "srlimit": 1,
     })
-    members = cat_data.get("query", {}).get("categorymembers", [])
+    sr = search.get("query", {}).get("search", [])
+    cuisine_title = sr[0]["title"] if sr else f"{place} cuisine"
 
-    # 2. Fallback: search for "{place} traditional food"
-    if not members:
-        search = _wiki_api({
+    # 2. Get the article's section list
+    try:
+        sec_data = _wiki_api({
+            "action": "parse",
+            "page": cuisine_title,
+            "prop": "sections",
+        })
+    except Exception:
+        sec_data = {}
+
+    sections = sec_data.get("parse", {}).get("sections", [])
+    # Pick sections whose headings are food-related (first 20 sections)
+    food_sections = [
+        s["index"] for s in sections[:30]
+        if any(kw in s.get("line", "").lower() for kw in dish_section_keywords)
+    ]
+
+    # 3. Collect wikilinks from each relevant section
+    candidates: list[str] = []
+    seen: set[str] = set()
+    for idx in food_sections[:10]:
+        try:
+            link_data = _wiki_api({
+                "action": "parse",
+                "page": cuisine_title,
+                "prop": "links",
+                "section": idx,
+            })
+        except Exception:
+            continue
+        for lk in link_data.get("parse", {}).get("links", []):
+            title = lk.get("*", "")
+            if lk.get("ns") == 0 and title not in seen and title.lower() != cuisine_title.lower():
+                seen.add(title)
+                candidates.append(title)
+
+    # Fallback: search if section parsing yielded nothing
+    if not candidates:
+        fb = _wiki_api({
             "action": "query",
             "list": "search",
-            "srsearch": f"{place} traditional food dish cuisine",
-            "srlimit": 15,
+            "srsearch": f"{place} typical dish food",
+            "srlimit": 20,
         })
-        members = [{"title": r["title"]} for r in search.get("query", {}).get("search", [])]
+        candidates = [r["title"] for r in fb.get("query", {}).get("search", [])]
 
-    if not members:
+    if not candidates:
         return []
 
-    # 3. Batch-fetch thumbnails for the first 10 candidates
-    titles = [m["title"] for m in members[:10]]
+    # 4. Batch-fetch thumbnails + two-sentence extract for filtering
     page_data = _wiki_api({
         "action": "query",
-        "titles": "|".join(titles),
+        "titles": "|".join(candidates[:40]),
         "prop": "pageimages|extracts",
         "piprop": "thumbnail",
         "pithumbsize": 400,
         "exintro": True,
         "explaintext": True,
-        "exsentences": 1,
+        "exsentences": 2,
     })
+
+    # Words that appear in food/dish article openings but not in
+    # geography, animal, or people articles.
+    food_extract_signals = {
+        " dish", " drink", " beverage", " soup", " sauce", " stew",
+        " bread", " pastry", " dessert", " snack", " cake", " pudding",
+        " sandwich", " salad", " rice", " noodle", " dumpling",
+        " cheese", " sausage", " ham", " beef", " pork", " chicken",
+        " seafood", " shrimp", " fish dish", " wine", " beer", " spirit",
+        " porridge", " cereal", " pie", " tart", " biscuit", " cookie",
+        " jam", " broth", " stock", " marinade", " filling",
+        "is prepared", "is made from", "is cooked", "is served", "is eaten",
+        "is a traditional", "is a popular food", "is a type of food",
+        "is a fermented", "is a fried", "is a grilled", "is a baked",
+        "is a boiled", "is a smoked", "is a cured", "is a roasted",
+        "is a seasoning", "is a condiment", "is a spice",
+    }
 
     foods = []
     for p in page_data.get("query", {}).get("pages", {}).values():
         if p.get("pageid", -1) == -1:
             continue
-        name = p.get("title", "")
-        # Skip if the article name contains any skip words
-        if any(w in name.lower() for w in skip_words):
+        raw = (p.get("extract", "") or "").strip()
+        extract_lower = raw.lower()
+        # Keep only articles whose opening text explicitly describes food
+        if not any(sig in extract_lower for sig in food_extract_signals):
             continue
+        name = p.get("title", "")
         image = p.get("thumbnail", {}).get("source", "")
-        extract = p.get("extract", "") or ""
-        desc = extract.split(".")[0].strip() if extract else ""
+        desc = raw.split(".")[0].strip() if raw else ""
         foods.append({"name": name, "image": image, "desc": desc})
 
+    foods.sort(key=lambda f: 0 if f["image"] else 1)
     return foods[:10]
 
 
