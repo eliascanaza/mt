@@ -51,17 +51,23 @@ app.secret_key = os.environ.get("SECRET_KEY", "dev-only-insecure-key-change-me")
 
 @app.after_request
 def _minify_response(response):
-    if _htmlmin and not app.debug and response.content_type.startswith("text/html"):
+    if not _htmlmin or app.debug or not response.content_type.startswith("text/html"):
+        return response
+    html = response.get_data(as_text=True)
+    # Try full minification first; if rjsmin can't handle the JS (e.g. nested
+    # template literals), fall back to HTML+CSS only so something always ships.
+    for js_min in (True, False):
         try:
             response.data = _htmlmin.minify(
-                response.get_data(as_text=True),
+                html,
                 remove_comments=True,
                 remove_empty_space=True,
-                minify_js=True,
+                minify_js=js_min,
                 minify_css=True,
             ).encode("utf-8")
+            break
         except Exception:
-            pass
+            continue
     return response
 
 
