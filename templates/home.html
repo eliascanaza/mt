@@ -4530,8 +4530,13 @@
     // How many tourist stops to look for along the route — controlled by the
     // vertical range slider over the map. lastRoutePath caches the driven
     // path so dragging the slider re-searches Places without a new Directions call.
+    // _stopsPool grows incrementally as the slider adds stops; trimmed on removal.
     let placesCount = 5;
     let lastRoutePath = null;
+    let _stopsPool = [];
+    // Public mirror of _stopsPool — always reflects the full set of discovered
+    // places for the current route so other parts of the app can read it.
+    let STOP_PLACES = [];
 
     let selectedId = 1, panelOpen_ = true;
     let currentFrom = '', currentTo = '';
@@ -4654,10 +4659,34 @@
     const geocoder = new google.maps.Geocoder();
     const placesService = new google.maps.places.PlacesService(map);
 
+    // Types that are never valid tourist stops — filtered out before any result
+    // is considered, regardless of where the search came from.
+    const EXCLUDED_PLACE_TYPES = new Set([
+      'travel_agency', 'real_estate_agency', 'insurance_agency',
+      'lawyer', 'doctor', 'dentist', 'hospital', 'pharmacy', 'physiotherapist',
+      'hair_care', 'beauty_salon', 'spa', 'gym', 'clothing_store',
+      'supermarket', 'grocery_or_supermarket', 'convenience_store',
+      'gas_station', 'car_repair', 'car_dealer', 'car_rental', 'car_wash',
+      'bank', 'atm', 'finance', 'accounting',
+      'school', 'university', 'library',
+      'post_office', 'local_government_office', 'courthouse', 'embassy', 'city_hall',
+      'funeral_home', 'cemetery',
+      'moving_company', 'storage',
+    ]);
+
+    function isTouristPlace(r) {
+      if (!r.rating || r.rating < 3.5) return false;              // no rating or too low
+      if (!r.user_ratings_total || r.user_ratings_total < 10) return false; // too few reviews
+      const types = r.types || [];
+      if (types.some(function(t) { return EXCLUDED_PLACE_TYPES.has(t); })) return false;
+      return true;
+    }
+
     function nearbyTouristAttractions(location, radius = 25000) {
-      return new Promise(resolve => {
-        placesService.nearbySearch({ location, radius, type: 'tourist_attraction' }, (results, status) => {
-          resolve(status === google.maps.places.PlacesServiceStatus.OK ? results : []);
+      return new Promise(function(resolve) {
+        placesService.nearbySearch({ location, radius, type: 'tourist_attraction' }, function(results, status) {
+          if (status !== google.maps.places.PlacesServiceStatus.OK) { resolve([]); return; }
+          resolve(results.filter(isTouristPlace));
         });
       });
     }
@@ -4724,6 +4753,41 @@
       'linear-gradient(135deg,#b45309,#5c2c06)', 'linear-gradient(135deg,#065f46,#022c22)',
     ];
 
+    const STOPS_PLACES = [];
+
+    // Returns the index into `path` closest to `coord` ([lng,lat]).
+    function closestPathIdx(coord) {
+      var lng = coord[0], lat = coord[1];
+      var best = 0, bestD = Infinity;
+      for (var i = 0; i < lastRoutePath.length; i++) {
+        var d = Math.hypot(lastRoutePath[i].lat() - lat, lastRoutePath[i].lng() - lng);
+        if (d < bestD) { bestD = d; best = i; }
+      }
+      return best;
+    }
+
+    // Finds the midpoint of the largest uncovered segment of `path` given
+    // the stops already placed. Returns a google.maps.LatLng to search near.
+    function findGapMidpointOnPath(path, stops) {
+      if (!path || path.length < 2) return path && path[Math.floor(path.length / 2)];
+      var stopIndices = stops.map(function(s) { return closestPathIdx(s.coord); })
+        .sort(function(a, b) { return a - b; });
+      var bounds = [0].concat(stopIndices).concat([path.length - 1]);
+      var maxGap = 0, midIdx = Math.floor(path.length / 2);
+      for (var i = 0; i < bounds.length - 1; i++) {
+        var gap = bounds[i + 1] - bounds[i];
+        if (gap > maxGap) { maxGap = gap; midIdx = Math.floor((bounds[i] + bounds[i + 1]) / 2); }
+      }
+      return path[midIdx];
+    }
+
+    // Re-sorts _stopsPool by each stop's position along lastRoutePath so the
+    // timeline and distances stay in logical route order after incremental adds.
+    function sortPoolByRouteOrder() {
+      if (!lastRoutePath || _stopsPool.length < 2) return;
+      _stopsPool.sort(function(a, b) { return closestPathIdx(a.coord) - closestPathIdx(b.coord); });
+    }
+
     // Samples points evenly along the driven path and, for each, asks Google
     // Places for the best-rated tourist attraction nearby — giving stops that
     // are both real places and already ordered along the route.
@@ -4734,7 +4798,6 @@
       const sampleIdx = [...new Set(fractions.map(f => Math.min(path.length - 1, Math.round(f * (path.length - 1)))))];
 
       const seenIds = new Set();
-      const stops = [];
       let prevCoord = FROM.coord, prevName = currentFrom;
 
       for (const idx of sampleIdx) {
@@ -4749,8 +4812,8 @@
         const distKm = Math.round(haversineKm(prevCoord, coord));
 
         const cat = classifyPlace(best);
-        stops.push({
-          id: stops.length + 1,
+        STOPS_PLACES.push({
+          id: STOPS_PLACES.length + 1,
           emoji: PLACE_CAT_EMOJI[cat] || '📍',
           name: best.name,
           cat,
@@ -4761,14 +4824,14 @@
           alt: '—', altNote: 'Along the route', temp: '—',
           time: estimateDriveTime(distKm),
           distance: `${distKm} km`, distFrom: prevName,
-          bg: STOP_BGS[stops.length % STOP_BGS.length],
+          bg: STOP_BGS[STOPS_PLACES.length % STOP_BGS.length],
           coord,
           tags: (best.types || []).slice(0, 3).map(t => t.replace(/_/g, ' ')),
         });
         prevCoord = coord;
         prevName = best.name;
       }
-      return stops;
+      return STOPS_PLACES;
     }
 
     // (Re)builds the numbered map markers for the current STOPS list. While
@@ -4818,6 +4881,12 @@
     function removeStop(id) {
       const removed = STOPS.find(s => s.id === id);
       STOPS = recomputeStopSequence(STOPS.filter(s => s.id !== id));
+      _stopsPool = [...STOPS];
+      STOP_PLACES = [..._stopsPool];
+      placesCount = STOPS.length;
+      const _rInp = document.getElementById('places-range');
+      if (_rInp) _rInp.value = placesCount;
+      document.getElementById('places-range-value').textContent = placesCount;
       selectedId = STOPS[0]?.id ?? null;
       removeMode = false;
       document.getElementById('remove-place-btn').classList.remove('active');
@@ -4833,33 +4902,107 @@
       });
     }
 
-    // Vertical "places" slider over the map — in route mode it re-searches
-    // Places for the chosen number of stops along the already-known route;
-    // in explore mode (just one place searched) it trims the nearby-places
-    // list/markers down to the top N by fame. Debounced so a drag doesn't
-    // fire a Places call (or a full re-render) per pixel.
+    // Picks `count` items evenly spread from `arr`, reassigning sequential IDs.
+    // Used so the slider can instantly trim/expand the stop list from the cached
+    // pool without any additional Google Places API calls.
+    function pickFromPool(arr, count) {
+      if (!arr.length) return [];
+      if (count >= arr.length) return arr.map((s, i) => Object.assign({}, s, { id: i + 1 }));
+      if (count <= 1) return [Object.assign({}, arr[0], { id: 1 })];
+      var result = [];
+      for (var i = 0; i < count; i++) {
+        var idx = Math.round(i * (arr.length - 1) / (count - 1));
+        result.push(Object.assign({}, arr[idx], { id: i + 1 }));
+      }
+      return result;
+    }
+
+    // Vertical "places" slider over the map.
+    // Route mode — adding: finds a new tourist attraction in the largest uncovered
+    // gap on the driven path so every increment discovers a real nearby place.
+    // Removing: trims the pool and rebuilds the route instantly (no API call).
+    // Explore mode: trims/expands the nearby-places list by fame score.
+    // Debounced so a drag doesn't fire per pixel.
     let placesRangeDebounce;
     async function onPlacesRangeChange(val) {
-      placesCount = parseInt(val, 10);
-      document.getElementById('places-range-value').textContent = placesCount;
+      const newCount = parseInt(val, 10);
+      document.getElementById('places-range-value').textContent = newCount;
       clearTimeout(placesRangeDebounce);
       placesRangeDebounce = setTimeout(async () => {
         if (hasRoute) {
           if (!lastRoutePath) return;
-          STOPS = await findTouristStopsAlongRoute(lastRoutePath, placesCount);
+
+          if (newCount > _stopsPool.length) {
+            const need = newCount - _stopsPool.length;
+
+            // Use STOP_PLACES as the source of search anchors — search near
+            // each known place in parallel to find more attractions around them.
+            // Fall back to the route midpoint when STOP_PLACES is empty.
+            const seenNames = new Set(STOP_PLACES.map(function(s) { return s.name; }));
+            const searchPts = STOP_PLACES.length
+              ? STOP_PLACES.map(function(s) { return toLatLng(s.coord); })
+              : [lastRoutePath[Math.floor(lastRoutePath.length / 2)]].filter(Boolean);
+
+            const allResults = (await Promise.all(searchPts.map(function(pt) {
+              return nearbyTouristAttractions(pt);
+            }))).flat().sort(function(a, b) { return (b.rating || 0) - (a.rating || 0); });
+
+            // Deduplicate by place_id, skip places already in STOP_PLACES,
+            // and require geometry (isTouristPlace already ran inside nearbyTouristAttractions).
+            const seenIds = new Set();
+            const candidates = allResults.filter(function(r) {
+              if (!r.place_id || !r.geometry || seenIds.has(r.place_id) || seenNames.has(r.name)) return false;
+              seenIds.add(r.place_id);
+              return true;
+            });
+
+            for (var ci = 0; ci < Math.min(need, candidates.length); ci++) {
+              const best = candidates[ci];
+              seenNames.add(best.name);
+              const loc = best.geometry.location;
+              const coord = [loc.lng(), loc.lat()];
+              const cat = classifyPlace(best);
+              const prev = _stopsPool.length ? _stopsPool[_stopsPool.length - 1] : null;
+              const distKm = Math.round(haversineKm(prev ? prev.coord : FROM.coord, coord));
+              _stopsPool.push({
+                id: _stopsPool.length + 1,
+                emoji: PLACE_CAT_EMOJI[cat] || '📍', name: best.name, cat,
+                desc: best.vicinity || '',
+                rating: best.rating ? best.rating.toFixed(1) : '—',
+                reviews: (best.user_ratings_total || 0).toLocaleString(),
+                loc: best.vicinity || '', alt: '—', altNote: 'Along the route', temp: '—',
+                time: estimateDriveTime(distKm), distance: distKm + ' km',
+                distFrom: prev ? prev.name : currentFrom,
+                bg: STOP_BGS[_stopsPool.length % STOP_BGS.length],
+                coord,
+                tags: (best.types || []).slice(0, 3).map(function(t) { return t.replace(/_/g, ' '); }),
+              });
+            }
+            sortPoolByRouteOrder();
+            STOP_PLACES = [..._stopsPool];
+          }
+
+          // Never trim the pool — pick an evenly-spread subset for display so
+          // the pool can grow back up without re-searching.
+          placesCount = Math.min(newCount, _stopsPool.length);
+          const _sliderInp = document.getElementById('places-range');
+          if (_sliderInp) { _sliderInp.max = Math.max(10, _stopsPool.length); _sliderInp.value = placesCount; }
+          document.getElementById('places-range-value').textContent = placesCount;
+          STOPS = recomputeStopSequence(pickFromPool(_stopsPool, placesCount));
           selectedId = STOPS[0]?.id ?? null;
           rebuildStopMarkers(STOPS);
           renderStops(STOPS);
           requestRoute(currentTransportMode, {
             useStops: true,
-            onResult: routedThroughStops => {
+            onResult: function(routedThroughStops) {
               applyRouteStats(routedThroughStops);
-              mapFitBounds(boundsOf([FROM.coord, TO.coord, ...STOPS.map(s => s.coord)]), 80);
+              mapFitBounds(boundsOf([FROM.coord, TO.coord, ...STOPS.map(function(s) { return s.coord; })]), 80);
             },
           });
         } else {
-          const ranked = [...NEARBY_PLACES].sort((a, b) => nearbyFameScore(b) - nearbyFameScore(a));
-          renderNearbyList(ranked.slice(0, placesCount));
+          const ranked = [...NEARBY_PLACES].sort(function(a, b) { return nearbyFameScore(b) - nearbyFameScore(a); });
+          renderNearbyList(ranked.slice(0, newCount));
+          placesCount = newCount;
         }
       }, 400);
     }
@@ -4982,33 +5125,31 @@
     };
 
     // Category → marker image file inside /assets/img/icons/markers/general/.
-    // When a new image is added (e.g. cave.png), just update the value here.
+    // Available icons: beach, cenote, forest, generic-stop, lake, mountain.
     const GENERAL_MARKER_ICON = {
-      // Categories with a dedicated image
-      lake: 'lake',
-      beach: 'beach',
-      mountain: 'mountain',
-      forest: 'forest',
-      // Categories that reuse the closest existing image until their own is added
-      waterfall: 'lake',          // water feature  → lake
-      island: 'beach',         // coastal         → beach
-      cave: 'mountain',      // rocky/dark       → mountain
-      desert: 'mountain',      // arid/rocky       → mountain
-      // Cultural / built places and true unknowns use the generic pin
-      ancient: 'generic-stop',
-      town: 'generic-stop',
-      park: 'generic-stop',
+      beach:      'beach',
+      island:     'beach',        // coastal             → beach
+      lake:       'lake',
+      waterfall:  'lake',         // water feature        → lake
+      cenote:     'cenote',
+      cave:       'cenote',       // underground/dark     → cenote
+      mountain:   'mountain',
+      desert:     'mountain',     // arid/rocky           → mountain
+      forest:     'forest',
+      park:       'forest',       // nature/greenery      → forest
+      trek:       'forest',
+      trail:      'mountain',
+      // Cultural / built — no dedicated icon yet, use generic pin
+      ancient:    'generic-stop',
+      town:       'generic-stop',
       attraction: 'generic-stop',
-      // Legacy filter-tab keys
-      trek: 'forest',
-      trail: 'mountain',
-      city: 'generic-stop',
+      city:       'generic-stop',
     };
 
     // Emoji shown on the left-panel stop card, matched to the category.
     const PLACE_CAT_EMOJI = {
       lake: '🏞️', beach: '🏖️', mountain: '⛰️', forest: '🌲',
-      waterfall: '💦', island: '🏝️', cave: '🕳️', desert: '🏜️',
+      waterfall: '💦', island: '🏝️', cenote: '🏊', cave: '🕳️', desert: '🏜️',
       ancient: '🏛️', town: '🏘️', park: '🌿', attraction: '📍',
     };
 
@@ -5026,14 +5167,15 @@
       // word "beach" in a vicinity can be misleading (e.g. "Beach Road, …")
       if (types.has('beach') || /\b(beach|playa|strand|shore|seashore|seaside|reef|coral|baia|baie)\b/.test(text)) return 'beach';
       if (/\b(coast|bay|cove)\b/.test(name)) return 'beach';
-      if (/\b(lake|lagoon|laguna|loch|pond|reservoir|cenote|lagoa|hot spring|thermal spring|geyser|hot pool)\b/.test(text)) return 'lake';
+      if (/\b(cenote)\b/.test(text)) return 'cenote';
+      if (/\b(lake|lagoon|laguna|loch|pond|reservoir|lagoa|hot spring|thermal spring|geyser|hot pool)\b/.test(text)) return 'lake';
       if (/\b(river|río|rio|stream|creek|canal)\b/.test(name)) return 'lake';
       if (/\b(waterfall|falls|cascade|rapids|salto)\b/.test(text)) return 'waterfall';
       if (/\b(island|isle|islet|atoll|archipelago|isola)\b/.test(text)) return 'island';
 
       // Terrain
       if (/\b(mountain|mount|peak|summit|volcano|volc[aá]n|cerro|sierra|ridge|cliff|canyon|gorge|fjord|glacier|valley|glen|vale|ravine|mesa|plateau|col|pass|col·legi)\b/.test(text)) return 'mountain';
-      if (/\b(cave|cavern|grotto|tunnel|sinkhole|cenote)\b/.test(text)) return 'cave';
+      if (/\b(cave|cavern|grotto|tunnel|sinkhole)\b/.test(text)) return 'cave';
       if (/\b(desert|dune|dunes|sahara|badlands|steppe|wadi)\b/.test(text)) return 'desert';
       if (/\b(forest|jungle|woods|rainforest|selva|woodland|grove|mangrove|bosque)\b/.test(text)) return 'forest';
 
@@ -6250,6 +6392,13 @@
           coord: geo.coord, tags: [],
         };
         STOPS = recomputeStopSequence([...STOPS, newStop]);
+        _stopsPool = [...STOPS];
+        sortPoolByRouteOrder();
+        STOP_PLACES = [..._stopsPool];
+        placesCount = STOPS.length;
+        const _aInp = document.getElementById('places-range');
+        if (_aInp) { _aInp.max = Math.max(10, _stopsPool.length); _aInp.value = placesCount; }
+        document.getElementById('places-range-value').textContent = placesCount;
         selectedId = STOPS[STOPS.length - 1].id;
         rebuildStopMarkers(STOPS);
         renderStops(STOPS);
@@ -6524,9 +6673,17 @@
                 distance_km: Math.round(routeMeters / 1000),
               });
 
-              // Search Google Places for real tourist attractions along the driven path
-              STOPS = await findTouristStopsAlongRoute(lastRoutePath, placesCount);
+              // Search Google Places for up to 10 stops so the slider has a full
+              // pool from the start. STOPS shows the current placesCount subset;
+              // the slider is updated to the actual number found.
+              _stopsPool = await findTouristStopsAlongRoute(lastRoutePath, 10);
+              STOP_PLACES = [..._stopsPool];
+              placesCount = _stopsPool.length;
+              STOPS = recomputeStopSequence(pickFromPool(_stopsPool, placesCount));
               selectedId = STOPS[0]?.id ?? null;
+              const _rangeInp = document.getElementById('places-range');
+              if (_rangeInp) { _rangeInp.max = Math.max(10, _stopsPool.length); _rangeInp.value = placesCount; }
+              document.getElementById('places-range-value').textContent = placesCount;
               rebuildStopMarkers(STOPS);
               renderStops(STOPS);
               if (STOPS.length) showToast(`Found ${STOPS.length} tourist spot${STOPS.length > 1 ? 's' : ''} along the way`);
@@ -6545,6 +6702,8 @@
             } else {
               STOPS = [];
               lastRoutePath = null;
+              _stopsPool = [];
+              STOP_PLACES = [];
               rebuildStopMarkers([]);
               renderStops([]);
             }
@@ -6562,6 +6721,8 @@
         clearRoutePolylines();
         STOPS = [];
         lastRoutePath = null;
+        _stopsPool = [];
+        STOP_PLACES = [];
         rebuildStopMarkers([]);
         renderExploreMode(fromVal);
         loadSuggestedPlaces(FROM.coord, fromVal);
