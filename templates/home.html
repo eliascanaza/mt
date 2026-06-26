@@ -2170,6 +2170,46 @@
       inset: 0
     }
 
+    .pp-pic-credit {
+      position: absolute;
+      bottom: 8px;
+      right: 10px;
+      font-size: 10px;
+      color: rgba(255, 255, 255, .9);
+      background: rgba(0, 0, 0, .38);
+      padding: 2px 7px;
+      border-radius: 4px;
+      pointer-events: none;
+      z-index: 2;
+      max-width: 65%;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      backdrop-filter: blur(4px)
+    }
+
+    .pp-pic-loader {
+      display: none;
+      position: absolute;
+      inset: 0;
+      z-index: 4;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,.18);
+      backdrop-filter: blur(2px)
+    }
+    .pp-pic-loader.active { display: flex }
+    .pp-pic-loader::after {
+      content: '';
+      width: 36px;
+      height: 36px;
+      border: 3px solid rgba(255,255,255,.35);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: pp-spin .7s linear infinite
+    }
+    @keyframes pp-spin { to { transform: rotate(360deg) } }
+
     .pp-pic-img {
       position: absolute;
       inset: 0;
@@ -2932,27 +2972,26 @@
     }
 
     .pp-food-panel {
-      display: none;
-      position: absolute;
-      inset: 0;
-      background: var(--white);
-      border-radius: var(--r-xl);
-      flex-direction: column;
-      z-index: 20;
-      overflow: hidden
+      display: none
     }
 
     .pp-food-panel.open {
-      display: flex
+      display: block
+    }
+
+    .pp-body.food-open .pp-slbl,
+    .pp-body.food-open .pp-review,
+    .pp-body.food-open .pp-clist {
+      display: none
     }
 
     .pp-food-hdr {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 16px 20px 12px;
+      padding: 0 0 12px;
       border-bottom: 1px solid var(--border);
-      flex-shrink: 0
+      margin-bottom: 14px
     }
 
     .pp-food-title {
@@ -2987,9 +3026,7 @@
     }
 
     .pp-food-scroll {
-      flex: 1;
-      overflow-y: auto;
-      padding: 16px 20px 24px
+      padding: 0
     }
 
     .pp-food-grid {
@@ -4212,10 +4249,11 @@
           </svg>
         </button>
         <div class="pp-pic-dots" id="pp-pic-dots"></div>
+        <div class="pp-pic-loader" id="pp-pic-loader"></div>
         <button class="pp-x" onclick="closePP()">✕</button>
         <div class="pp-badge" id="pp-badge">Starting point</div>
       </div>
-      <div class="pp-body">
+      <div class="pp-body" id="pp-body">
         <div class="pp-name-row">
           <span class="pp-name" id="pp-name">Santiago, Chile</span>
           <span class="pp-dot"></span>
@@ -4310,6 +4348,21 @@
         </div>
         <div class="pp-div"></div>
         <div class="pp-slbl">AI recommendation based on travelers</div>
+
+        <!-- ── Typical food (inline, replaces section labels when open) ── -->
+        <div class="pp-food-panel" id="pp-food-panel">
+          <div class="pp-food-hdr">
+            <div>
+              <div class="pp-food-title">Typical food</div>
+              <div class="pp-food-sub" id="pp-food-sub"></div>
+            </div>
+            <button class="pp-food-x" onclick="closeFoodPanel()">✕</button>
+          </div>
+          <div class="pp-food-scroll">
+            <div class="pp-food-grid" id="pp-food-grid"></div>
+          </div>
+        </div>
+
         <div class="pp-review">
           <div class="pp-rq">"</div>
           <p class="pp-rt" id="pp-rtxt"></p>
@@ -4329,19 +4382,6 @@
           it</button>
       </div>
 
-      <!-- ── Typical food panel (slides up over the popup body) ── -->
-      <div class="pp-food-panel" id="pp-food-panel">
-        <div class="pp-food-hdr">
-          <div>
-            <div class="pp-food-title">Typical food</div>
-            <div class="pp-food-sub" id="pp-food-sub"></div>
-          </div>
-          <button class="pp-food-x" onclick="closeFoodPanel()">✕</button>
-        </div>
-        <div class="pp-food-scroll">
-          <div class="pp-food-grid" id="pp-food-grid"></div>
-        </div>
-      </div>
     </div>
   </div>
 
@@ -5177,6 +5217,20 @@
       }
     }
 
+    // Updates the open popup's detail fields with live data from /api/placeinformation.
+    // Guards against stale responses by checking that pp-name still matches.
+    async function loadPlaceInfoIntoPopup(name) {
+      const mt = await fetchMtPlace(name);
+      if (!mt) return;
+      if (document.getElementById('pp-name').textContent.trim() !== name) return;
+      if (mt.short_description) document.getElementById('pp-desc').textContent = mt.short_description;
+      if (mt.rating) document.getElementById('pp-rn').textContent = mt.rating.toFixed(1);
+      if (mt.temperature) resetTempCardFallback(mt.temperature);
+      if (mt.best_season) document.getElementById('pp-season').textContent = mt.best_season;
+      if (mt.altitude) document.getElementById('pp-alt').textContent = mt.altitude;
+      if (mt.total_reviews) document.getElementById('pp-rmeta').textContent = 'Based on ' + mt.total_reviews.toLocaleString() + ' traveler reviews';
+    }
+
     function openPlacePopupFromStop(id) {
       const s = STOPS.find(x => x.id === id);
       if (!s) return;
@@ -5191,7 +5245,7 @@
       document.getElementById('pp-snote').textContent = 'Check local calendar';
       document.getElementById('pp-alt').textContent = s.alt;
       document.getElementById('pp-anote').textContent = s.altNote;
-      document.getElementById('pp-rtxt').innerHTML = buildTravelerSummary({ name: s.name, rating: s.rating, reviews: s.reviews, cat: s.cat });
+      loadTravelerSummary(s.name, s.rating, s.cat, document.getElementById('pp-rtxt'));
       document.getElementById('pp-rname').textContent = 'AI Summary';
       document.getElementById('pp-rmeta').textContent = `Based on ${s.reviews} traveler reviews`;
       document.getElementById('pp-av').textContent = '✨';
@@ -5200,8 +5254,9 @@
       ppPhotos = [{ bg: s.bg, emoji: s.emoji }];
       ppPhotoIndex = 0;
       ppRenderCarousel();
-      loadRealPhotosIntoPopup(s.name, s.coord);
+      loadRealPhotosIntoPopup(s.name);
       loadClimateIntoPopup(s.coord);
+      loadPlaceInfoIntoPopup(s.name);
       const sources = ['google', 'tripadvisor', 'booking'];
       const comments = [0, 1, 2].map(i => {
         const r = MOCK_REVIEWS[(id - 1 + i) % MOCK_REVIEWS.length];
@@ -5227,10 +5282,7 @@
       document.getElementById('pp-alt').textContent = mt ? mt.altitude : d.alt;
       document.getElementById('pp-anote').textContent = d.anote;
       const popupCoord = type === 'from' ? FROM.coord : TO.coord;
-      document.getElementById('pp-rtxt').innerHTML = buildTravelerSummary({
-        name: d.name, rating: mt ? mt.rating.toFixed(1) : d.rn,
-        reviews: mt ? mt.total_reviews.toLocaleString() : d.rv, cat: 'city',
-      });
+      loadTravelerSummary(d.name, mt ? mt.rating.toFixed(1) : d.rn, 'city', document.getElementById('pp-rtxt'));
       document.getElementById('pp-rname').textContent = 'AI Summary';
       document.getElementById('pp-rmeta').textContent = `Based on ${mt ? mt.total_reviews.toLocaleString() + ' reviews' : d.rv}`;
       document.getElementById('pp-av').textContent = '✨';
@@ -5239,8 +5291,9 @@
       ppPhotos = d.photos && d.photos.length ? d.photos : [{ bg: d.bg, emoji: d.emoji }];
       ppPhotoIndex = 0;
       ppRenderCarousel();
-      loadRealPhotosIntoPopup(d.name, popupCoord);
+      loadRealPhotosIntoPopup(d.name);
       loadClimateIntoPopup(popupCoord);
+      if (!mt) loadPlaceInfoIntoPopup(d.name);
       ppRenderComments(d.comments || []);
       openModal('pp-modal');
     }
@@ -5257,6 +5310,10 @@
       document.getElementById('pp-food-grid').innerHTML =
         '<div class="pp-food-state"><div class="pp-food-spinner"></div>Loading typical food…</div>';
       document.getElementById('pp-food-panel').classList.add('open');
+      document.getElementById('pp-body').classList.add('food-open');
+      setTimeout(() => {
+        document.getElementById('pp-food-panel').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }, 10);
 
       fetch(`/api/typical-food?place=${encodeURIComponent(placeName)}`)
         .then(r => r.json())
@@ -5267,17 +5324,43 @@
             grid.innerHTML = '<div class="pp-food-state">No food information found for this place.</div>';
             return;
           }
-          grid.innerHTML = foods.map(f => `
-            <div class="pp-food-card">
-              ${f.image
-              ? `<img class="pp-food-img" src="${f.image}" alt="${f.name}" onerror="this.outerHTML='<div class=\\"pp-food-no-img\\">🍽️</div>'">`
-              : '<div class="pp-food-no-img">🍽️</div>'}
-              <div class="pp-food-card-body">
-                <div class="pp-food-card-name">${f.name}</div>
-                ${f.desc ? `<div class="pp-food-card-desc">${f.desc}</div>` : ''}
-              </div>
-            </div>
-          `).join('');
+          grid.innerHTML = '';
+          foods.forEach(function(f) {
+            var card = document.createElement('div');
+            card.className = 'pp-food-card';
+            if (f.image) {
+              var img = document.createElement('img');
+              img.className = 'pp-food-img';
+              img.src = f.image;
+              img.alt = f.name;
+              img.onerror = function() {
+                var fb = document.createElement('div');
+                fb.className = 'pp-food-no-img';
+                fb.textContent = '🍽️';
+                this.parentNode.replaceChild(fb, this);
+              };
+              card.appendChild(img);
+            } else {
+              var fb = document.createElement('div');
+              fb.className = 'pp-food-no-img';
+              fb.textContent = '🍽️';
+              card.appendChild(fb);
+            }
+            var body = document.createElement('div');
+            body.className = 'pp-food-card-body';
+            var nameEl = document.createElement('div');
+            nameEl.className = 'pp-food-card-name';
+            nameEl.textContent = f.name;
+            body.appendChild(nameEl);
+            if (f.description) {
+              var descEl = document.createElement('div');
+              descEl.className = 'pp-food-card-desc';
+              descEl.textContent = f.description;
+              body.appendChild(descEl);
+            }
+            card.appendChild(body);
+            grid.appendChild(card);
+          });
         })
         .catch(() => {
           document.getElementById('pp-food-grid').innerHTML =
@@ -5287,6 +5370,7 @@
 
     function closeFoodPanel() {
       document.getElementById('pp-food-panel')?.classList.remove('open');
+      document.getElementById('pp-body')?.classList.remove('food-open');
     }
 
     const PP_SOURCE_LABEL = { google: 'Google', tripadvisor: 'TripAdvisor', booking: 'Booking.com' };
@@ -5326,40 +5410,47 @@
 
     function ppSlideHTML(p) {
       if (p.url) {
-        return `<div class="pp-pic-slide" onclick="ppOpenFullscreen()"><img class="pp-pic-img" src="${p.url}" loading="lazy" alt="" /></div>`;
+        var credit = p.photographer
+          ? '<div class="pp-pic-credit">' + p.photographer + (p.source ? ' · ' + p.source : '') + '</div>'
+          : '';
+        return '<div class="pp-pic-slide" onclick="ppOpenFullscreen()">'
+          + '<img class="pp-pic-img" src="' + p.url + '" loading="lazy" alt="" />'
+          + credit
+          + '</div>';
       }
-      return `<div class="pp-pic-slide" onclick="ppOpenFullscreen()"><div class="pp-pic-bg" style="background:${p.bg}"></div><span class="pp-emoji">${p.emoji}</span></div>`;
+      return '<div class="pp-pic-slide" onclick="ppOpenFullscreen()">'
+        + '<div class="pp-pic-bg" style="background:' + p.bg + '"></div>'
+        + '<span class="pp-emoji">' + p.emoji + '</span>'
+        + '</div>';
     }
 
-    // Fetches up to 10 real photos for a place from Google Places (live network
-    // call) and swaps them into the gallery once the popup they belong to is
-    // still the one open — ppPhotoRequestSeq guards against a stale response
-    // from a popup the user already closed/replaced.
+    // Sequence guard — ensures a stale response from a quickly-closed popup
+    // doesn't overwrite photos for the popup the user has open now.
     let ppPhotoRequestSeq = 0;
 
-    function fetchPlacePhotos(name, coord) {
-      return new Promise(resolve => {
-        if (!name) { resolve([]); return; }
-        const request = { query: name, fields: ['photos'] };
-        if (coord) request.locationBias = new google.maps.Circle({ center: toLatLng(coord), radius: 10000 });
-        placesService.findPlaceFromQuery(request, (results, status) => {
-          if (status === google.maps.places.PlacesServiceStatus.OK && results?.[0]?.photos?.length) {
-            resolve(results[0].photos.slice(0, 10).map(p => p.getUrl({ maxWidth: 1000, maxHeight: 750 })));
-          } else {
-            resolve([]);
-          }
-        });
-      });
+    function ppStopPhotoLoader(seq) {
+      if (seq !== ppPhotoRequestSeq) return;
+      var loader = document.getElementById('pp-pic-loader');
+      if (loader) loader.classList.remove('active');
     }
 
-    async function loadRealPhotosIntoPopup(name, coord) {
+    async function loadRealPhotosIntoPopup(name) {
       const seq = ++ppPhotoRequestSeq;
-      const urls = await fetchPlacePhotos(name, coord);
-      if (seq !== ppPhotoRequestSeq) return; // a newer popup superseded this fetch
-      if (!urls.length) return; // keep the gradient/emoji placeholder already shown
-      ppPhotos = urls.map(url => ({ url }));
-      ppPhotoIndex = 0;
-      ppRenderCarousel();
+      var loader = document.getElementById('pp-pic-loader');
+      if (loader) loader.classList.add('active');
+      try {
+        const data = await fetch('/api/place-photos?name=' + encodeURIComponent(name)).then(function(r) { return r.json(); });
+        if (seq !== ppPhotoRequestSeq) return;
+        const photos = data.photos || [];
+        if (photos.length) {
+          ppPhotos = photos;
+          ppPhotoIndex = 0;
+          ppRenderCarousel();
+        }
+        ppStopPhotoLoader(seq);
+      } catch(e) {
+        ppStopPhotoLoader(seq);
+      }
     }
 
     // Live temperature range / best season / altitude (Open-Meteo, server-side)
@@ -5707,80 +5798,25 @@
       { rtxt: 'This place humbles you. Whatever stress you carried there dissolves in about ten minutes. Pure, raw, magnificent.', rname: 'Carlos Vega', rmeta: 'Buenos Aires · January 2024', av: 'CV', ac: '#065f46' },
     ];
 
-    // Templated "AI recommendation" block for the place popup — built from
-    // category-specific do/avoid advice plus the app's existing mock review
-    // voices, not a live AI call. Deterministic per place (seeded by name) so
-    // reopening the same popup shows the same write-up instead of reshuffling.
-    const TRAVELER_TODO_BY_CAT = {
-      trek: ['Lace up real hiking boots — trails here can be steep and rocky.', 'Start early to catch the best light and avoid afternoon wind.', 'Carry a refillable water bottle; services are limited on the trail.', 'Hire a local guide for anything resembling a multi-day route.'],
-      lake: ['Rent a kayak or paddleboard to get out on the water.', 'Pack a picnic — the shoreline has plenty of spots to relax.', 'Check the water temperature before swimming; it runs colder than it looks.', 'Visit early morning for the calmest water and best reflections.'],
-      waterfall: ['Visit in the morning before the tourist crowds arrive.', 'Wear shoes with grip — rocks near the base are almost always wet.', 'Bring a dry bag if you plan to get close to the spray.', 'A wide-angle lens (or phone panorama) does justice to the scale.'],
-      beach: ['Go early morning for calm water and empty sand.', 'Check the tide chart before planning water activities.', 'Apply reef-safe sunscreen if snorkeling or diving nearby.', 'Shade and fresh water can be scarce — bring both.'],
-      island: ['Check ferry schedules in advance; services can be infrequent.', 'Pack everything you need — island shops often have limited stock.', 'Rent a bike or scooter to explore beyond the main port town.', 'Book accommodation early; island options fill up fast in season.'],
-      mountain: ['Check weather and trail conditions before heading out.', 'Wear layers — temperatures shift fast once you gain elevation.', 'Carry an offline map; signal drops out in the backcountry.', 'Pace yourself if you are not acclimatized yet.'],
-      cave: ['Bring or rent a headlamp — phone torches drain fast underground.', 'Wear closed-toe shoes; cave floors are uneven and often wet.', 'Stick to marked paths; venturing off-trail can be dangerous.', 'Temperatures inside are usually cooler — bring a light layer.'],
-      desert: ['Carry far more water than you think you need.', 'Start desert walks before sunrise to beat the heat.', 'Tell someone your route and expected return time.', 'A wide-brimmed hat and long sleeves protect better than sunscreen alone.'],
-      forest: ['Stay on marked trails to protect both the ecosystem and yourself.', 'Check for ticks after walks through dense vegetation.', 'Pack a rain layer — forest microclimates can be unpredictable.', 'Keep noise low; wildlife is more visible when you move quietly.'],
-      park: ['Download an offline map of the park before you lose cell signal.', 'Arrive early — parking and popular viewpoints fill up quickly.', 'Pack out all your rubbish; leave-no-trace applies everywhere.', 'Ask the park ranger station for the current trail conditions.'],
-      ancient: ['Buy tickets and book time slots online to skip the queue.', 'Visit late afternoon for softer light and fewer crowds.', 'Hire a certified local guide — the stories behind the stones matter.', 'Photography rules vary by site; check before you pull the camera out.'],
-      town: ['Wander the old town on foot — most highlights are walkable.', 'Try the local specialty dish at a family-run restaurant.', 'Visit the main square or market for a feel of daily life.', 'Ask locals for their favorite under-the-radar spot.'],
-      trail: ['Check weather and trail conditions before heading out.', 'Wear layers — temperatures shift fast once you gain elevation.', 'Carry an offline map; signal drops out in the backcountry.', 'Pace yourself if you are not acclimatized yet.'],
-      city: ['Spend your first day just getting oriented in the historic center.', 'Use public transit or rideshares to skip the parking hassle.', 'Book popular restaurants a day ahead.', 'Ask your accommodation for a few local-only recommendations.'],
-      attraction: ['Arrive early to beat the tour groups.', 'Buy tickets online ahead of time if that option exists.', 'Set aside at least half a day to see it properly.', 'Pair the visit with a nearby café or viewpoint.'],
-    };
-    const TRAVELER_AVOID_POOL = [
-      'Avoid exchanging money at airport kiosks — rates are usually worse.',
-      'Don\'t leave bags or valuables visible in a parked car.',
-      'Avoid the midday crowds; early morning or late afternoon is calmer.',
-      'Skip unlicensed taxis — use a metered or app-based ride instead.',
-      'Don\'t skip travel insurance, especially around outdoor activities.',
-      'Avoid drinking tap water if locals don\'t — check first.',
-    ];
-    // Maps classifyPlace categories and legacy Top10-style tags to
-    // TRAVELER_TODO_BY_CAT keys. New lowercase categories that already exist
-    // as direct keys don't need entries here, but aliases cover the ones
-    // whose key is a redirect (e.g. 'Beach' capitalised from old filter tabs).
-    const TRAVELER_CAT_ALIASES = {
-      // Legacy capitalized Top10 / filter-tab tags
-      Nature: 'trek', Trekking: 'trek', Wildlife: 'trek', Stargazing: 'trek',
-      Mountains: 'mountain', Adventure: 'trail',
-      Beach: 'beach',
-      City: 'city', Culture: 'ancient', History: 'ancient', Gastronomy: 'town',
-      Art: 'town', Romantic: 'town', Wellness: 'town', 'Art & Food': 'town',
-      Science: 'ancient', Scenic: 'park',
-    };
-
-    function hashStr(s) {
-      let h = 0;
-      for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
-      return Math.abs(h);
-    }
-
-    function pickRotated(list, count, seed) {
-      const start = seed % list.length;
-      return Array.from({ length: Math.min(count, list.length) }, (_, i) => list[(start + i) % list.length]);
-    }
-
-    function buildTravelerSummary({ name, rating, reviews, cat }) {
-      const seed = hashStr(name || 'place');
-      const bucket = TRAVELER_TODO_BY_CAT[cat] ? cat : (TRAVELER_CAT_ALIASES[cat] || 'attraction');
-      const todo = pickRotated(TRAVELER_TODO_BY_CAT[bucket], 4, seed);
-      const avoid = pickRotated(TRAVELER_AVOID_POOL, 4, seed + 3);
-      const tips = pickRotated(MOCK_REVIEWS, 3, seed + 7).map(r => `"${r.rtxt}"`);
-      const ratingLabel = rating && rating !== '—' ? rating : '4.5+';
-      const reviewsLabel = reviews || 'many';
-
-      const summary = `Travelers rate ${name} ${ratingLabel}★ across ${reviewsLabel} reviews, consistently calling it one of the highlights of the area — well worth building real time into your plans rather than rushing through.`;
-      const section = (title, lines) =>
-        `<strong style="font-style:normal;display:block;margin:10px 0 4px;color:var(--black);">${title}</strong>` +
-        lines.map(l => `• ${l}`).join('<br>');
-
-      return [
-        summary,
-        section('What to do', todo),
-        section('What to avoid', avoid),
-        section('What other travelers say', tips),
-      ].join('<br><br>');
+    function loadTravelerSummary(name, rating, cat, targetEl) {
+      targetEl.innerHTML = '<span style="color:var(--g400);font-style:italic;font-size:13px">Loading summary…</span>';
+      var params = new URLSearchParams({ name: name || '', rating: rating || '', cat: cat || '' });
+      fetch('/api/traveler-summary?' + params)
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          var s = data.summary || {};
+          if (!s.summary) { targetEl.innerHTML = ''; return; }
+          function section(title, lines) {
+            return '<strong style="font-style:normal;display:block;margin:10px 0 4px;color:var(--black);">' + title + '</strong>'
+              + lines.map(function(l) { return '• ' + l; }).join('<br>');
+          }
+          var parts = [s.summary];
+          if (s.what_to_do && s.what_to_do.length) parts.push(section('What to do', s.what_to_do));
+          if (s.what_to_avoid && s.what_to_avoid.length) parts.push(section('What to avoid', s.what_to_avoid));
+          if (s.traveler_quotes && s.traveler_quotes.length) parts.push(section('What other travelers say', s.traveler_quotes.map(function(q) { return '“' + q + '”'; })));
+          targetEl.innerHTML = parts.join('<br><br>');
+        })
+        .catch(function() { targetEl.innerHTML = ''; });
     }
 
     function openRankingPanel(title, sub, iconHtml, list) {
@@ -5841,7 +5877,7 @@
       document.getElementById('pp-snote').textContent = 'Check local calendar';
       document.getElementById('pp-alt').textContent = '—';
       document.getElementById('pp-anote').textContent = item.t;
-      document.getElementById('pp-rtxt').innerHTML = buildTravelerSummary({ name: item.n, rating: item.r, reviews: fakeReviews, cat: item.t });
+      loadTravelerSummary(item.n, item.r, item.t, document.getElementById('pp-rtxt'));
       document.getElementById('pp-rname').textContent = 'AI Summary';
       document.getElementById('pp-rmeta').textContent = `Based on ${fakeReviews} traveler reviews`;
       document.getElementById('pp-av').textContent = '✨';
@@ -5850,8 +5886,9 @@
       ppPhotos = [{ bg, emoji }];
       ppPhotoIndex = 0;
       ppRenderCarousel();
-      loadRealPhotosIntoPopup(item.n, item.coord);
+      loadRealPhotosIntoPopup(item.n);
       loadClimateIntoPopup(item.coord);
+      loadPlaceInfoIntoPopup(item.n);
       const sources = ['google', 'tripadvisor', 'booking'];
       const comments = [0, 1, 2].map(i => {
         const r = MOCK_REVIEWS[(index + i) % MOCK_REVIEWS.length];
@@ -5875,7 +5912,7 @@
       document.getElementById('pp-snote').textContent = 'Check local calendar';
       document.getElementById('pp-alt').textContent = '—';
       document.getElementById('pp-anote').textContent = p.tag;
-      document.getElementById('pp-rtxt').innerHTML = buildTravelerSummary({ name: p.name, rating: p.rating, reviews: p.reviews, cat: p.cat });
+      loadTravelerSummary(p.name, p.rating, p.cat, document.getElementById('pp-rtxt'));
       document.getElementById('pp-rname').textContent = 'AI Summary';
       document.getElementById('pp-rmeta').textContent = `Based on ${p.reviews} traveler reviews`;
       document.getElementById('pp-av').textContent = '✨';
@@ -5884,8 +5921,9 @@
       ppPhotos = [{ bg, emoji: p.emoji }];
       ppPhotoIndex = 0;
       ppRenderCarousel();
-      loadRealPhotosIntoPopup(p.name, p.coord);
+      loadRealPhotosIntoPopup(p.name);
       loadClimateIntoPopup(p.coord);
+      loadPlaceInfoIntoPopup(p.name);
       const sources = ['google', 'tripadvisor', 'booking'];
       const comments = [0, 1, 2].map(i => {
         const r = MOCK_REVIEWS[(idx + i) % MOCK_REVIEWS.length];

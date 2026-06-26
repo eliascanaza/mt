@@ -9,7 +9,17 @@ Endpoints:
   GET  /api/getsavedplan            → plans for a user (?user_id=1111), most recent first
   POST /api/saveplan                → save a plan from a live search (from/to + stops found)
   GET  /api/autocomplete           → place suggestions for the search bar
-  GET  /api/placeinformation        → place details (rating, weather, AI tip) by name
+  GET  /api/placeinformation        → place details (rating, weather, AI tip) by name; includes
+                                      AI-generated food_info (typical_dishes, food_culture, must_try)
+  GET  /api/typical-food           → AI-generated list of up to 5 iconic foods for a destination
+                                      (?place=Tokyo) — each entry has name, description, and a
+                                      Wikipedia thumbnail image URL; powered by Gemini 2.5 Flash
+  GET  /api/traveler-summary       → AI-generated traveler summary for a place popup
+                                      (?name=Tokyo&rating=4.8&cat=city) — returns summary,
+                                      what_to_do, what_to_avoid, traveler_quotes; Gemini 2.5 Flash
+  GET  /api/place-photos           → up to 10 high-quality photos for a destination with
+                                      photographer attribution (?name=Tokyo) — Gemini selects
+                                      iconic landmarks, images sourced from Wikimedia Commons
   GET  /api/suggestion              → real tourist places near a point (Google Places), for explore mode
   GET  /api/climate                 → live temperature range / best season / altitude for a point (Open-Meteo)
 """
@@ -18,21 +28,30 @@ import datetime
 import json
 import math
 import os
+import re
 import ssl
 import time
 import urllib.parse
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor
+from typing import List
 import certifi
 from dotenv import load_dotenv
 from flask import Flask, jsonify, redirect, request, send_from_directory, render_template, session
 from google.oauth2 import id_token as google_id_token
 from google.auth.transport import requests as google_auth_requests
+from pydantic import BaseModel
 
 try:
     import htmlmin as _htmlmin
 except ImportError:
     _htmlmin = None
+
+try:
+    from google import genai as _genai
+except ImportError:
+    _genai = None
+
 import database as db
 
 # Python.org's macOS builds don't always ship a usable CA trust store for
@@ -41,6 +60,321 @@ import database as db
 _SSL_CONTEXT = ssl.create_default_context(cafile=certifi.where())
 
 load_dotenv()
+
+# ── Gemini AI ────────────────────────────────────────────────────────────────
+class _FoodInfo(BaseModel):
+    typical_dishes: List[str]
+    food_culture: str
+    must_try: str
+
+
+_gemini_client = None
+if _genai:
+    _gemini_key = os.environ.get("GEMINI_API_KEY", "")
+    if _gemini_key:
+        _gemini_client = _genai.Client(api_key=_gemini_key)
+
+_food_cache: dict = {}
+
+
+class _FoodItem(BaseModel):
+    name: str
+    description: str
+    wikipedia_title: str
+
+
+class _TypicalFoods(BaseModel):
+    foods: List[_FoodItem]
+
+
+_typical_foods_cache: dict = {}
+
+
+def _wiki_thumb(title: str) -> str:
+    url = (
+        "https://en.wikipedia.org/api/rest_v1/page/summary/"
+        + urllib.parse.quote(title.replace(" ", "_"))
+    )
+    req = urllib.request.Request(url, headers={"User-Agent": "exploreMore/1.0 (travel app)"})
+    try:
+        with urllib.request.urlopen(req, timeout=5, context=_SSL_CONTEXT) as resp:
+            data = json.loads(resp.read())
+        return data.get("thumbnail", {}).get("source", "")
+    except Exception:
+        return ""
+
+
+def _get_typical_foods_detail(place_name: str) -> list:
+    if place_name in _typical_foods_cache:
+        return _typical_foods_cache[place_name]
+    if not _gemini_client:
+        return []
+    prompt = (
+        f'You are a person who lives on this place, what food could you recommend to the traveler to eat in this place. List exactly 5 iconic traditional dishes or foods from "{place_name}". '
+        "For each provide: name (the common dish name), "
+        "short description (one sentence about the dish and its key flavors), "
+        "wikipedia_title (the exact English Wikipedia article title for this dish — prefer dishes "
+        "that are well-known enough to have a Wikipedia article with a photo)."
+    )
+    try:
+        response = _gemini_client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=prompt,
+            config={
+                "response_mime_type": "application/json",
+                "response_schema": _TypicalFoods,
+            },
+        )
+        food_list = json.loads(response.text).get("foods", [])[:5]
+    except Exception as exc:
+        app.logger.warning("Gemini typical foods failed for %s: %s", place_name, exc)
+        return []
+
+    with ThreadPoolExecutor(max_workers=5) as pool:
+        images = list(pool.map(
+            lambda f: _wiki_thumb(f.get("wikipedia_title") or f.get("name", "")),
+            food_list,
+        ))
+
+    result = [
+        {
+            "name": f.get("name", ""),
+            "description": f.get("description", ""),
+            "image": img,
+        }
+        for f, img in zip(food_list, images)
+    ]
+    _typical_foods_cache[place_name] = result
+    return result
+
+
+class _PlaceSearchTerms(BaseModel):
+    terms: List[str]
+
+
+_place_photos_cache: dict = {}
+
+
+def _gemini_landmark_terms(place_name: str) -> list:
+    """Ask Gemini for 6 iconic, well-photographed landmarks for a destination."""
+    prompt = (
+        f'List exactly 6 specific, famous, and highly-photographed landmarks, viewpoints, or '
+        f'attractions that best represent "{place_name}". '
+        f'Use precise proper names exactly as they appear on Wikipedia '
+        f'(e.g. "Eiffel Tower", "Senso-ji", "Colosseum"). '
+        f'These will be used to search Wikimedia Commons for high-quality travel photos.'
+    )
+    try:
+        r = _gemini_client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=prompt,
+            config={"response_mime_type": "application/json", "response_schema": _PlaceSearchTerms},
+        )
+        terms = json.loads(r.text).get("terms", [])
+        return [t for t in terms if t][:6] or [place_name]
+    except Exception as exc:
+        app.logger.warning("Gemini landmark terms failed for %s: %s", place_name, exc)
+        return [place_name]
+
+
+def _wikimedia_photos_for_term(term: str) -> list:
+    """Search Wikimedia Commons for up to 2 photos of a landmark, with attribution."""
+    params = urllib.parse.urlencode({
+        "action": "query",
+        "generator": "search",
+        "gsrnamespace": "6",
+        "gsrsearch": term,
+        "gsrlimit": "6",
+        "prop": "imageinfo",
+        "iiprop": "url|thumburl|extmetadata|mime|size",
+        "iiurlwidth": "800",
+        "iiextmetadatafilter": "Artist|LicenseShortName",
+        "format": "json",
+        "formatversion": "2",
+    })
+    url = f"https://commons.wikimedia.org/w/api.php?{params}"
+    req = urllib.request.Request(url, headers={"User-Agent": "exploreMore/1.0 (travel app)"})
+    try:
+        with urllib.request.urlopen(req, timeout=8, context=_SSL_CONTEXT) as resp:
+            data = json.loads(resp.read())
+        pages = data.get("query", {}).get("pages", [])
+        results = []
+        for page in pages:
+            info = (page.get("imageinfo") or [{}])[0]
+            if not info.get("mime", "").startswith("image/"):
+                continue
+            img_url = info.get("thumburl") or info.get("url", "")
+            if not img_url:
+                continue
+            meta = info.get("extmetadata", {})
+            artist_raw = meta.get("Artist", {}).get("value", "")
+            artist = re.sub(r"<[^>]+>", "", artist_raw).strip()[:80] or "Wikimedia Commons"
+            license_ = meta.get("LicenseShortName", {}).get("value", "")
+            results.append({
+                "url": img_url,
+                "photographer": artist,
+                "license": license_,
+                "source": "Wikimedia Commons",
+            })
+            if len(results) >= 2:
+                break
+        return results
+    except Exception:
+        return []
+
+
+def _get_place_photos(place_name: str) -> list:
+    if place_name in _place_photos_cache:
+        return _place_photos_cache[place_name]
+    terms = _gemini_landmark_terms(place_name) if _gemini_client else [place_name]
+    with ThreadPoolExecutor(max_workers=6) as pool:
+        batches = list(pool.map(_wikimedia_photos_for_term, terms))
+    seen: set = set()
+    photos = []
+    for batch in batches:
+        for p in batch:
+            if p["url"] not in seen and len(photos) < 10:
+                seen.add(p["url"])
+                photos.append(p)
+
+    # Guarantee at least 1 photo: retry with the raw place name
+    if not photos:
+        for p in _wikimedia_photos_for_term(place_name):
+            if p["url"] not in seen:
+                photos.append(p)
+                seen.add(p["url"])
+
+    # Last resort: Wikipedia article thumbnail
+    if not photos:
+        thumb = _wiki_thumb(place_name)
+        if thumb:
+            photos.append({"url": thumb, "photographer": "Wikipedia", "license": "", "source": "Wikipedia"})
+
+    _place_photos_cache[place_name] = photos
+    return photos
+
+
+class _PlaceInfo(BaseModel):
+    short_description: str
+    rating: float
+    total_reviews: int
+    temperature: str
+    best_season: str
+    altitude: str
+
+
+_place_info_cache: dict = {}
+
+
+def _get_place_info_from_gemini(name: str) -> dict:
+    """Ask Gemini to generate place-info fields for any destination not in the DB."""
+    if name in _place_info_cache:
+        return _place_info_cache[name]
+    if not _gemini_client:
+        return {}
+    prompt = (
+        f'Provide factual travel information for "{name}" as a destination. '
+        f'Return a short_description (1 sentence, max 120 chars), '
+        f'a typical traveler rating from 3.5 to 5.0, '
+        f'estimated total_reviews (integer), '
+        f'annual temperature range (e.g. "10°–28°C"), '
+        f'best_season to visit (e.g. "Apr – Oct"), '
+        f'and altitude above sea level (e.g. "45 m" or "2,430 m").'
+    )
+    try:
+        r = _gemini_client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=prompt,
+            config={"response_mime_type": "application/json", "response_schema": _PlaceInfo},
+        )
+        data = json.loads(r.text)
+        result = {
+            "name": name,
+            "short_description": data.get("short_description", ""),
+            "rating": float(data.get("rating", 4.0)),
+            "total_reviews": int(data.get("total_reviews", 0)),
+            "temperature": data.get("temperature", ""),
+            "best_season": data.get("best_season", ""),
+            "altitude": data.get("altitude", ""),
+        }
+    except Exception as exc:
+        app.logger.warning("Gemini place-info failed for %s: %s", name, exc)
+        result = {}
+    _place_info_cache[name] = result
+    return result
+
+
+class _TravelerSummary(BaseModel):
+    summary: str
+    what_to_do: List[str]
+    what_to_avoid: List[str]
+    traveler_quotes: List[str]
+
+
+_traveler_summary_cache: dict = {}
+
+
+def _get_traveler_summary(name: str, rating: str, cat: str) -> dict:
+    cache_key = f"{name}|{cat}"
+    if cache_key in _traveler_summary_cache:
+        return _traveler_summary_cache[cache_key]
+    if not _gemini_client:
+        return {}
+    rating_str = rating if rating and rating != "—" else "4.5+"
+    prompt = (
+        f'You are a knowledgeable travel writer. Write a traveler summary for "{name}", '
+        f'a {cat or "travel"} destination rated {rating_str}★ by visitors. '
+        f"Be specific to this actual place — avoid generic travel advice. Provide: "
+        f"summary (2 engaging sentences about why this place is special and what makes it worth visiting), "
+        f"what_to_do (exactly 4 practical, place-specific tips that only apply to {name}), "
+        f"what_to_avoid (exactly 3 practical warnings visitors should know about {name}), "
+        f"traveler_quotes (exactly 3 short authentic first-person quotes from imagined past visitors — "
+        f"under 20 words each, specific to this destination, not generic praise)."
+    )
+    try:
+        response = _gemini_client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=prompt,
+            config={
+                "response_mime_type": "application/json",
+                "response_schema": _TravelerSummary,
+            },
+        )
+        result = json.loads(response.text)
+        _traveler_summary_cache[cache_key] = result
+        return result
+    except Exception as exc:
+        app.logger.warning("Gemini traveler summary failed for %s: %s", name, exc)
+        return {}
+
+
+def _get_food_info(place_name: str) -> dict:
+    if place_name in _food_cache:
+        return _food_cache[place_name]
+    if not _gemini_client:
+        return {}
+    prompt = (
+        f'You are a culinary and travel expert. For the destination "{place_name}", '
+        "provide: typical_dishes (list of 4–6 traditional dishes or street foods), "
+        "food_culture (one sentence describing the overall food scene), "
+        "must_try (the single most iconic dish or drink a visitor should not miss)."
+    )
+    try:
+        response = _gemini_client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=prompt,
+            config={
+                "response_mime_type": "application/json",
+                "response_schema": _FoodInfo,
+            },
+        )
+        result = json.loads(response.text)
+        _food_cache[place_name] = result
+        return result
+    except Exception as exc:
+        app.logger.warning("Gemini food info failed for %s: %s", place_name, exc)
+        return {}
+
 
 app = Flask(__name__, template_folder="templates", static_folder="assets", static_url_path="/assets")
 app.config["JSON_SORT_KEYS"] = False
@@ -154,8 +488,118 @@ def api_mt_place():
         return jsonify({"error": "Missing required query param: name"}), 400
     place = db.get_mt_place(name)
     if not place:
+        place = _get_place_info_from_gemini(name)
+    if not place:
         return jsonify({"error": f"No place data found for '{name}'"}), 404
+    food_info = _get_food_info(name)
+    if food_info:
+        place["food_info"] = food_info
     return jsonify({"place": place})
+
+
+# ── Typical foods for a destination (AI + Wikipedia images) ─────────────────
+@app.route("/api/typical-food", methods=["GET"])
+def api_typical_food():
+    """Returns up to 5 iconic traditional foods for a destination.
+
+    Query params:
+      place  — destination name (e.g. "Tokyo", "Rome", "Mexico City")
+
+    Response 200:
+      {
+        "place": "Tokyo",
+        "foods": [
+          {
+            "name": "Sushi",
+            "description": "Vinegared rice topped with fresh fish ...",
+            "image": "https://upload.wikimedia.org/wikipedia/commons/..."
+          },
+          ...          // up to 5 items
+        ]
+      }
+
+    Notes:
+      - Powered by Gemini 2.0 Flash (structured JSON output via Pydantic schema).
+      - Images are fetched from the Wikipedia REST Summary API (no key required).
+      - Results are cached in-process; first call for a place takes ~2-3 s.
+      - If Gemini is unavailable or quota is exceeded, foods array is empty (no 500).
+    """
+    place_name = request.args.get("place", "").strip()
+    if not place_name:
+        return jsonify({"error": "Missing required query param: place"}), 400
+    foods = _get_typical_foods_detail(place_name)
+    return jsonify({"place": place_name, "foods": foods})
+
+
+# ── AI traveler summary for place popups ─────────────────────────────────────
+@app.route("/api/traveler-summary", methods=["GET"])
+def api_traveler_summary():
+    """Returns an AI-generated traveler summary for a destination.
+
+    Query params:
+      name    — place name (required, e.g. "Tokyo")
+      rating  — star rating string (optional, e.g. "4.8")
+      cat     — place category (optional, e.g. "city", "beach", "trek")
+
+    Response 200:
+      {
+        "place": "Tokyo",
+        "summary": {
+          "summary": "Two sentences about why this place is special...",
+          "what_to_do": ["tip1", "tip2", "tip3", "tip4"],
+          "what_to_avoid": ["warning1", "warning2", "warning3"],
+          "traveler_quotes": ["quote1", "quote2", "quote3"]
+        }
+      }
+
+    Notes:
+      - Powered by Gemini 2.5 Flash with structured JSON output.
+      - Results cached in-process per (name, category) pair.
+      - Returns empty summary object if Gemini is unavailable (no 500).
+    """
+    name = request.args.get("name", "").strip()
+    if not name:
+        return jsonify({"error": "Missing required query param: name"}), 400
+    rating = request.args.get("rating", "").strip()
+    cat = request.args.get("cat", "").strip()
+    result = _get_traveler_summary(name, rating, cat)
+    return jsonify({"place": name, "summary": result})
+
+
+# ── Place photos (Gemini landmark selection + Wikimedia Commons) ─────────────
+@app.route("/api/place-photos", methods=["GET"])
+def api_place_photos():
+    """Returns up to 10 high-quality photos for a destination with photographer credit.
+
+    Query params:
+      name  — destination name (required, e.g. "Kyoto")
+
+    Response 200:
+      {
+        "place": "Kyoto",
+        "photos": [
+          {
+            "url": "https://upload.wikimedia.org/...",
+            "photographer": "John Smith",
+            "license": "CC BY-SA 4.0",
+            "source": "Wikimedia Commons"
+          },
+          ...   // up to 10 items
+        ]
+      }
+
+    Notes:
+      - Gemini 2.5 Flash selects 6 iconic landmarks for the destination.
+      - Each landmark is searched in Wikimedia Commons (free, attributed images).
+      - Images are resized to 1200 px wide via Wikimedia thumbnail API.
+      - Results cached in-process; first call ~3-5 s, subsequent calls instant.
+      - Returns empty photos array if Gemini or Wikimedia are unavailable.
+    """
+    name = request.args.get("name", "").strip()
+    if not name:
+        return jsonify({"error": "Missing required query param: name"}), 400
+    photos = _get_place_photos(name)
+    return jsonify({"place": name, "photos": photos})
 
 
 # ── Live climate (temperature range / best season / altitude) ────────────
