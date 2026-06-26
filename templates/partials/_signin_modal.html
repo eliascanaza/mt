@@ -1,7 +1,7 @@
-<div class="si-overlay" id="si-overlay" {% if not si_close_action %} onclick="if(event.target===this)closeSignIn()" {%
-  endif %}>
+<div class="si-overlay" id="si-overlay">
   <div class="si-modal">
-    <button class="si-close" onclick="{{ si_close_action|default('closeSignIn()') }}"
+    <button class="si-close" id="si-close-btn"
+      data-action="close-sign-in"{% if si_close_href %} data-si-href="{{ si_close_href }}"{% endif %}
       aria-label="Close">&times;</button>
     <div class="logo-mark"
       style="background:var(--red);width:44px;height:44px;border-radius:9px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px">
