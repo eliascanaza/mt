@@ -6,7 +6,7 @@
 
    Optionally set `const LOGOUT_REDIRECT = '/';` before including if this
    page should navigate away after logging out; omit to update the UI in place. #}
-<script>
+<script nonce="{{ nonce }}">
   // Fetch client ID at script-parse time so it's ready before window.load.
   const __authCfg = fetch('/api/config').then(r => r.json()).catch(() => ({}));
 
@@ -55,6 +55,27 @@
   }
 
   document.addEventListener('click', (e) => {
+    /* Backdrop close for lo-modal and si-overlay */
+    if (e.target.id === 'lo-modal') { closeLo(); return; }
+    if (e.target.id === 'si-overlay') { closeSignIn(); return; }
+
+    /* data-action handlers for shared partials */
+    const el = e.target.closest('[data-action]');
+    if (el) {
+      const a = el.dataset.action;
+      if (a === 'open-sign-in')    { openSignIn();      return; }
+      if (a === 'toggle-dropdown') { typeof toggleDropdown === 'function' && toggleDropdown(); return; }
+      if (a === 'confirm-logout')  { confirmLogout();   return; }
+      if (a === 'close-lo')        { closeLo();         return; }
+      if (a === 'do-logout')       { doLogout();        return; }
+      if (a === 'close-sign-in') {
+        const href = el.dataset.siHref;
+        if (href) { window.location.href = href; } else { closeSignIn(); }
+        return;
+      }
+    }
+
+    /* Close dropdown when clicking outside the pill */
     if (!document.getElementById('u-pill')?.contains(e.target)) closeDropdown();
   });
 

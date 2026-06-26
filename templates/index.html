@@ -11,7 +11,7 @@
     href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap"
     rel="stylesheet">
   <script src="https://accounts.google.com/gsi/client" async defer></script>
-  <style>
+  <style nonce="{{ nonce }}">
     *,
     *::before,
     *::after {
@@ -1485,7 +1485,7 @@
       }
     }
   </style>
-  <style>{% include "partials/_auth_styles.html" %}</style>
+  <style nonce="{{ nonce }}">{% include "partials/_auth_styles.html" %}</style>
 </head>
 
 <body>
@@ -1593,7 +1593,7 @@
       </div>
 
       <div class="dest-grid">
-        <a class="dest-card" href="#" onclick="openTripModal('tokyo-kyoto');return false;">
+        <a class="dest-card" href="#" data-action="open-trip-modal" data-trip="tokyo-kyoto">
           <div class="dest-img">
             <div class="dest-img-half from" style="background-image:url('/assets/places/trips/tokyo.jpg')"></div>
             <div class="dest-img-half to" style="background-image:url('/assets/places/top/kyoto.jpg')"></div>
@@ -1617,7 +1617,7 @@
           </div>
         </a>
 
-        <a class="dest-card" href="#" onclick="openTripModal('athens-santorini');return false;">
+        <a class="dest-card" href="#" data-action="open-trip-modal" data-trip="athens-santorini">
           <div class="dest-img">
             <div class="dest-img-half from" style="background-image:url('/assets/places/trips/athens.jpg')"></div>
             <div class="dest-img-half to" style="background-image:url('/assets/places/top/santorini.jpg')"></div>
@@ -1642,7 +1642,7 @@
           </div>
         </a>
 
-        <a class="dest-card" href="#" onclick="openTripModal('cusco-ollantaytambo');return false;">
+        <a class="dest-card" href="#" data-action="open-trip-modal" data-trip="cusco-ollantaytambo">
           <div class="dest-img">
             <div class="dest-img-half from" style="background-image:url('/assets/places/trips/cusco.jpg')"></div>
             <div class="dest-img-half to" style="background-image:url('/assets/places/top/machu-picchu.jpg')"></div>
@@ -1667,7 +1667,7 @@
           </div>
         </a>
 
-        <a class="dest-card" href="#" onclick="openTripModal('capetown-knysna');return false;">
+        <a class="dest-card" href="#" data-action="open-trip-modal" data-trip="capetown-knysna">
           <div class="dest-img">
             <div class="dest-img-half from" style="background-image:url('/assets/places/cape-town.jpg')"></div>
             <div class="dest-img-half to" style="background-image:url('/assets/places/trips/knysna.jpg')"></div>
@@ -1691,7 +1691,7 @@
           </div>
         </a>
 
-        <a class="dest-card" href="#" onclick="openTripModal('rome-amalfi');return false;">
+        <a class="dest-card" href="#" data-action="open-trip-modal" data-trip="rome-amalfi">
           <div class="dest-img">
             <div class="dest-img-half from" style="background-image:url('/assets/places/trips/rome.jpg')"></div>
             <div class="dest-img-half to" style="background-image:url('/assets/places/top/amalfi-coast.jpg')"></div>
@@ -1715,7 +1715,7 @@
           </div>
         </a>
 
-        <a class="dest-card" href="#" onclick="openTripModal('cancun-chichen');return false;">
+        <a class="dest-card" href="#" data-action="open-trip-modal" data-trip="cancun-chichen">
           <div class="dest-img">
             <div class="dest-img-half from" style="background-image:url('/assets/places/trips/cancun.jpg')"></div>
             <div class="dest-img-half to" style="background-image:url('/assets/places/top/chichen-itza.jpg')"></div>
@@ -2225,7 +2225,7 @@
             </svg>
             Open the map
           </a>
-          <button class="hero-btn-ghost" onclick="openSignIn()">
+          <button class="hero-btn-ghost" data-action="open-sign-in">
             Sign in
           </button>
         </div>
@@ -2287,7 +2287,7 @@
   {% include "partials/_signin_modal.html" %}
   {% include "partials/_logout_modal.html" %}
 
-  <script>
+  <script nonce="{{ nonce }}">
     let CURRENT_USER = null;
 
     function toggleDropdown() {
@@ -2400,13 +2400,24 @@
         alert(`Couldn't sign in — ${err.message}`);
       }
     }
+
+    /* ── CSP-safe event delegation ── */
+    document.addEventListener('click', function(e) {
+      if (e.target.id === 'tp-overlay') { closeTripModal(); return; }
+      var el = e.target.closest('[data-action]');
+      if (!el) return;
+      var a = el.dataset.action;
+      if (a === 'open-trip-modal') { e.preventDefault(); openTripModal(el.dataset.trip); return; }
+      if (a === 'close-trip-modal') { closeTripModal(); return; }
+      if (a === 'open-sign-in')    { openSignIn();     return; }
+    });
   </script>
   {% include "partials/_auth_script.html" %}
 
   <!-- ── Trip Preview Modal ── -->
-  <div class="tp-overlay" id="tp-overlay" onclick="if(event.target===this)closeTripModal()">
+  <div class="tp-overlay" id="tp-overlay">
     <div class="tp-modal">
-      <button class="tp-close" onclick="closeTripModal()" aria-label="Close">&times;</button>
+      <button class="tp-close" id="tp-close-btn" data-action="close-trip-modal" aria-label="Close">&times;</button>
       <img class="tp-img" id="tp-img" src="" alt="">
       <div class="tp-body">
         <div class="tp-head">

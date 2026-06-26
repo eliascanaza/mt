@@ -29,6 +29,7 @@ import json
 import math
 import os
 import re
+import secrets
 import ssl
 import time
 import urllib.parse
@@ -37,7 +38,7 @@ from concurrent.futures import ThreadPoolExecutor
 from typing import List
 import certifi
 from dotenv import load_dotenv
-from flask import Flask, jsonify, redirect, request, send_from_directory, render_template, session
+from flask import Flask, g, jsonify, redirect, request, send_from_directory, render_template, session
 from google.oauth2 import id_token as google_id_token
 from google.auth.transport import requests as google_auth_requests
 from pydantic import BaseModel
@@ -383,6 +384,40 @@ app.config["GOOGLE_CLIENT_ID"] = os.environ.get("GOOGLE_CLIENT_ID", "")
 app.secret_key = os.environ.get("SECRET_KEY", "dev-only-insecure-key-change-me")
 
 
+@app.before_request
+def _set_csp_nonce():
+    g.csp_nonce = secrets.token_urlsafe(16)
+
+
+@app.context_processor
+def _inject_nonce():
+    return {"nonce": g.get("csp_nonce", "")}
+
+
+@app.after_request
+def _add_csp_header(response):
+    nonce = g.get("csp_nonce", "")
+    csp = (
+        f"default-src 'self'; "
+        f"script-src 'self' 'nonce-{nonce}' "
+        f"https://accounts.google.com https://maps.googleapis.com "
+        f"https://maps.gstatic.com; "
+        f"style-src 'self' 'unsafe-inline' "
+        f"https://fonts.googleapis.com https://accounts.google.com; "
+        f"font-src 'self' https://fonts.gstatic.com data:; "
+        f"img-src 'self' data: blob: "
+        f"https://*.googleapis.com https://*.gstatic.com https://*.google.com "
+        f"https://*.googleusercontent.com "
+        f"https://*.wikimedia.org https://*.wikipedia.org; "
+        f"connect-src 'self' https://maps.googleapis.com https://mapsresources-pa.googleapis.com "
+        f"https://accounts.google.com https://open-meteo.com; "
+        f"frame-src https://accounts.google.com; "
+        f"object-src 'none';"
+    )
+    response.headers["Content-Security-Policy"] = csp
+    return response
+
+
 @app.after_request
 def _minify_response(response):
     if not _htmlmin or app.debug or not response.content_type.startswith("text/html"):
@@ -436,7 +471,7 @@ def home():
 
 @app.route("/info")
 def info():
-    return send_from_directory("templates", "info.html")
+    return render_template("info.html")
 
 
 # ── Top 10 places (worldwide / by country / by category) ──────────────────

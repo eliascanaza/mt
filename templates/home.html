@@ -13,7 +13,7 @@
   <script
     src="/api/mjs"></script>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
-  <style>
+  <style nonce="{{ nonce }}">
     /* ── reset ── */
     *,
     *::before,
@@ -3901,18 +3901,16 @@
         <div class="sp-wrap">
           <span class="sp-label">From</span>
           <input class="sp-input" id="from-input" type="text" value="" placeholder="City or place…"
-            oninput="handleAC('from',this.value);updateClear('from',this.value)"
-            onfocus="handleAC('from',this.value);showClear('from')" onblur="setTimeout(()=>hideClear('from'),150)"
             autocomplete="off" />
         </div>
-        <button class="sp-clear" id="from-clear" onclick="clearInput('from')" tabindex="-1">
+        <button class="sp-clear" id="from-clear" data-action="clear-input" data-side="from" tabindex="-1">
           <svg viewBox="0 0 24 24">
             <path d="M18 6 6 18M6 6l12 12" />
           </svg>
         </button>
         <div class="ac-list" id="from-ac"></div>
       </div>
-      <div class="sp-swap" onclick="swapRoute()" title="Swap">
+      <div class="sp-swap" data-action="swap-route" title="Swap">
         <svg viewBox="0 0 24 24">
           <path d="M7 16V4m0 0L4 7m3-3l3 3M17 8v12m0 0l3-3m-3 3l-3-3" />
         </svg>
@@ -3925,18 +3923,16 @@
         <div class="sp-wrap">
           <span class="sp-label">To</span>
           <input class="sp-input" id="to-input" type="text" value="" placeholder="Destination…"
-            oninput="handleAC('to',this.value);updateClear('to',this.value)"
-            onfocus="handleAC('to',this.value);showClear('to')" onblur="setTimeout(()=>hideClear('to'),150)"
             autocomplete="off" />
         </div>
-        <button class="sp-clear" id="to-clear" onclick="clearInput('to')" tabindex="-1">
+        <button class="sp-clear" id="to-clear" data-action="clear-input" data-side="to" tabindex="-1">
           <svg viewBox="0 0 24 24">
             <path d="M18 6 6 18M6 6l12 12" />
           </svg>
         </button>
         <div class="ac-list" id="to-ac"></div>
       </div>
-      <button class="search-go" onclick="doSearch()">
+      <button class="search-go" data-action="do-search">
         <svg viewBox="0 0 24 24">
           <circle cx="11" cy="11" r="8" />
           <path d="m21 21-4.35-4.35" />
@@ -3947,7 +3943,7 @@
     <div class="nav-right">
       <!-- Top 10 -->
       <div class="top10-wrap">
-        <button class="top10-btn" id="t10-btn" onclick="toggleTop10()">
+        <button class="top10-btn" id="t10-btn" data-action="toggle-top10">
           <svg viewBox="0 0 24 24">
             <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
               stroke="currentColor" />
@@ -3962,7 +3958,7 @@
             <h4>Top 10 destinations</h4>
             <p>Curated lists by our travellers</p>
           </div>
-          <div class="t10-opt" onclick="showWorldwideOnMap()">
+          <div class="t10-opt" data-action="top10-worldwide">
             <div class="t10-icon" style="background:#eff6ff;"><svg viewBox="0 0 24 24" stroke="#1d6ff3">
                 <circle cx="12" cy="12" r="10" />
                 <line x1="2" y1="12" x2="22" y2="12" />
@@ -3973,7 +3969,7 @@
               <polyline points="9 18 15 12 9 6" />
             </svg>
           </div>
-          <div class="t10-opt" onclick="openCountrySearch()">
+          <div class="t10-opt" data-action="top10-country">
             <div class="t10-icon" style="background:#f0fff4;"><svg viewBox="0 0 24 24" stroke="#16a34a">
                 <path d="M3 11l19-9-9 19-2-8-8-2z" />
               </svg></div>
@@ -3982,7 +3978,7 @@
               <polyline points="9 18 15 12 9 6" />
             </svg>
           </div>
-          <div class="t10-opt" onclick="showCategoryTop10()">
+          <div class="t10-opt" data-action="top10-category">
             <div class="t10-icon" style="background:#fff7ed;"><svg viewBox="0 0 24 24" stroke="#ea580c">
                 <path d="M4 6h16M4 12h16M4 18h7" />
                 <circle cx="18" cy="18" r="3" />
@@ -4013,7 +4009,7 @@
       <!-- ranking panel — slides in over the route content -->
       <div class="ranking-panel" id="ranking-panel">
         <div class="rp-hdr">
-          <button class="rp-back" onclick="closeRankingPanel()" title="Back to route">
+          <button class="rp-back" data-action="close-ranking" title="Back to route">
             <svg viewBox="0 0 24 24">
               <polyline points="15 18 9 12 15 6" />
             </svg>
@@ -4029,7 +4025,7 @@
         </div>
       </div>
 
-      <button class="make-route-btn" id="make-route-btn" onclick="makeNearbyRoute()">✨ Make a route</button>
+      <button class="make-route-btn" id="make-route-btn" data-action="make-nearby-route">✨ Make a route</button>
 
       <div class="left-scroll">
         <div class="left-inner" id="left-inner">
@@ -4058,26 +4054,26 @@
 
     <!-- MAP -->
     <div class="map-side">
-      <div class="panel-toggle" id="panel-toggle" onclick="togglePanel()">
+      <div class="panel-toggle" id="panel-toggle" data-action="toggle-panel">
         <svg viewBox="0 0 24 24">
           <polyline points="15 18 9 12 15 6" />
         </svg>
       </div>
-      <button class="start-trip-btn" id="start-trip-btn" onclick="startTrip()">
+      <button class="start-trip-btn" id="start-trip-btn" data-action="start-trip">
         <span class="st-start">Start </span>
       </button>
       <div id="map"></div>
       <div class="transport-box" id="transport-box" style="display:none">
         <div class="transport-title">Travel by</div>
         <div class="transport-btns">
-          <div class="tbtn active" onclick="setTransport(this,'Car')"><svg viewBox="0 0 24 24">
+          <div class="tbtn active" data-action="set-transport" data-transport="Car"><svg viewBox="0 0 24 24">
               <path
                 d="M19 17h2v-4.83a2 2 0 0 0-.59-1.42L18 8.5A4 4 0 0 0 15.17 7H8.83A4 4 0 0 0 6 8.5l-2.41 2.25a2 2 0 0 0-.59 1.42V17h2" />
               <circle cx="7" cy="17" r="2" />
               <circle cx="17" cy="17" r="2" />
               <path d="M9 17h6" />
             </svg><span>Car</span></div>
-          <div class="tbtn" onclick="setTransport(this,'Walk')"><svg viewBox="0 0 24 24">
+          <div class="tbtn" data-action="set-transport" data-transport="Walk"><svg viewBox="0 0 24 24">
               <path
                 d="M4 16v-2.38C4 11.5 2.97 10.5 3 8c.03-2.72 1.49-6 4.5-6C9.37 2 10 3.8 10 5.5c0 3.11-2 5.66-2 8.68V16a2 2 0 1 1-4 0Z" />
               <path
@@ -4085,11 +4081,11 @@
               <path d="M16 17h4" />
               <path d="M4 13h4" />
             </svg><span>Walk</span></div>
-          <div class="tbtn" onclick="setTransport(this,'Plane')"><svg viewBox="0 0 24 24">
+          <div class="tbtn" data-action="set-transport" data-transport="Plane"><svg viewBox="0 0 24 24">
               <path
                 d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.3c.4-.2.6-.6.5-1.1z" />
             </svg><span>Plane</span></div>
-          <div class="tbtn" onclick="setTransport(this,'Train')"><svg viewBox="0 0 24 24">
+          <div class="tbtn" data-action="set-transport" data-transport="Train"><svg viewBox="0 0 24 24">
               <rect x="4" y="3" width="16" height="13" rx="4" />
               <path d="M4 9.5h16" />
               <path d="M9 21l-2-3M15 21l2-3" />
@@ -4097,7 +4093,7 @@
             </svg><span>Train</span></div>
         </div>
       </div>
-      <div class="save-btn" id="save-plan-btn" onclick="openSavePlan()" style="display:none">
+      <div class="save-btn" id="save-plan-btn" data-action="open-save-plan" style="display:none">
         <svg viewBox="0 0 24 24">
           <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
         </svg>
@@ -4106,7 +4102,7 @@
       <div class="places-controls" id="places-controls" style="display:none">
         <div class="places-actions-box" id="places-actions-box">
           <button class="places-action-btn" id="remove-place-btn" title="Remove a place from the route"
-            onclick="toggleRemoveMode()">
+            data-action="toggle-remove-mode">
             <svg viewBox="0 0 24 24">
               <polyline points="3 6 5 6 21 6" />
               <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
@@ -4115,7 +4111,7 @@
             </svg>
           </button>
           <button class="places-action-btn" id="add-place-btn" title="Add a place to the route"
-            onclick="openAddPlace()">
+            data-action="open-add-place">
             <svg viewBox="0 0 24 24">
               <line x1="12" y1="5" x2="12" y2="19" />
               <line x1="5" y1="12" x2="19" y2="12" />
@@ -4125,8 +4121,7 @@
         <div class="places-range-box" id="places-range-box" title="Places along the route">
           <div class="places-range-title">Places</div>
           <div class="places-range-track-wrap">
-            <input type="range" class="places-range-input" id="places-range" min="1" max="10" step="1" value="5"
-              oninput="onPlacesRangeChange(this.value)" />
+            <input type="range" class="places-range-input" id="places-range" min="1" max="10" step="1" value="5" />
           </div>
           <div class="places-range-value" id="places-range-value">5</div>
         </div>
@@ -4135,7 +4130,7 @@
   </div>
 
   <!-- ══ ADD PLACE OVERLAY ══ -->
-  <div class="cs-overlay" id="ap-overlay" onclick="if(event.target===this)closeAddPlace()">
+  <div class="cs-overlay" id="ap-overlay">
     <div class="cs-box">
       <div class="cs-hdr">
         <div class="cs-icon-wrap">
@@ -4148,7 +4143,7 @@
           <div class="cs-hdr-title" id="ap-hdr-title">Add a stop</div>
           <div class="cs-hdr-sub" id="ap-hdr-sub">Search a place to add to your route</div>
         </div>
-        <button class="cs-x" onclick="closeAddPlace()">✕</button>
+        <button class="cs-x" id="ap-close-btn" data-action="close-add-place">✕</button>
       </div>
       <div class="cs-input-row">
         <svg viewBox="0 0 24 24">
@@ -4156,8 +4151,8 @@
           <path d="m21 21-4.35-4.35" />
         </svg>
         <input class="cs-input" id="ap-input" type="text" placeholder="Search a city, town or landmark…"
-          oninput="handleAddPlaceAC(this.value)" autocomplete="off" />
-        <button class="cs-clear" id="ap-clear-btn" onclick="clearAddPlaceInput()" tabindex="-1">
+          autocomplete="off" />
+        <button class="cs-clear" id="ap-clear-btn" data-action="clear-add-place" tabindex="-1">
           <svg viewBox="0 0 24 24">
             <path d="M18 6 6 18M6 6l12 12" />
           </svg>
@@ -4168,7 +4163,7 @@
   </div>
 
   <!-- ══ COUNTRY SEARCH OVERLAY ══ -->
-  <div class="cs-overlay" id="cs-overlay" onclick="if(event.target===this)closeCountrySearch()">
+  <div class="cs-overlay" id="cs-overlay">
     <div class="cs-box">
       <div class="cs-hdr">
         <div class="cs-icon-wrap">
@@ -4182,7 +4177,7 @@
           <div class="cs-hdr-title">Top 10 by Country</div>
           <div class="cs-hdr-sub">Search a country to explore its best destinations</div>
         </div>
-        <button class="cs-x" onclick="closeCountrySearch()">✕</button>
+        <button class="cs-x" id="cs-close-btn" data-action="close-country-search">✕</button>
       </div>
       <div class="cs-input-row">
         <svg viewBox="0 0 24 24">
@@ -4190,8 +4185,8 @@
           <path d="m21 21-4.35-4.35" />
         </svg>
         <input class="cs-input" id="cs-input" type="text" placeholder="e.g. Japan, France, Chile…"
-          oninput="handleCountryAC(this.value)" autocomplete="off" />
-        <button class="cs-clear" id="cs-clear-btn" onclick="clearCountryInput()" tabindex="-1">
+          autocomplete="off" />
+        <button class="cs-clear" id="cs-clear-btn" data-action="clear-country" tabindex="-1">
           <svg viewBox="0 0 24 24">
             <path d="M18 6 6 18M6 6l12 12" />
           </svg>
@@ -4207,7 +4202,7 @@
   {% include "partials/_logout_modal.html" %}
 
   <!-- ══ SAVE PLAN ══ -->
-  <div class="lo-bg" id="sp-modal" onclick="if(event.target===this)closeSavePlan()">
+  <div class="lo-bg" id="sp-modal">
     <div class="lo-dialog">
       <div class="lo-top">
         <div class="lo-icon-wrap sp-icon-wrap">
@@ -4220,37 +4215,35 @@
       </div>
       <div class="sp-input-row">
         <label for="sp-name-input">Plan name</label>
-        <input id="sp-name-input" type="text" placeholder="e.g. Patagonia road trip" maxlength="60"
-          onkeydown="if(event.key==='Enter')confirmSavePlan()" />
+        <input id="sp-name-input" type="text" placeholder="e.g. Patagonia road trip" maxlength="60" />
       </div>
       <div class="lo-actions">
-        <button class="lo-cancel" onclick="closeSavePlan()">Cancel</button>
-        <button class="lo-confirm sp-confirm" onclick="confirmSavePlan()">Save</button>
+        <button class="lo-cancel" id="sp-cancel-btn" data-action="close-save-plan">Cancel</button>
+        <button class="lo-confirm sp-confirm" id="sp-confirm-btn" data-action="confirm-save-plan">Save</button>
       </div>
     </div>
   </div>
 
 
   <!-- ══ PLACE DETAIL POPUP ══ -->
-  <div class="pp-bg" id="pp-modal" onclick="if(event.target===this)closePP()">
+  <div class="pp-bg" id="pp-modal">
     <div class="pp-modal">
       <div class="pp-pic">
-        <div class="pp-pic-track" id="pp-pic-track" ontouchstart="ppSwipeStart(event)" ontouchmove="ppSwipeMove(event)"
-          ontouchend="ppSwipeEnd()"></div>
+        <div class="pp-pic-track" id="pp-pic-track"></div>
         <div class="pp-pic-ov"></div>
-        <button class="pp-pic-arrow prev" id="pp-pic-prev" onclick="ppPrevImage(event)" aria-label="Previous photo">
+        <button class="pp-pic-arrow prev" id="pp-pic-prev" data-action="pp-prev" aria-label="Previous photo">
           <svg viewBox="0 0 24 24">
             <path d="M15 18l-6-6 6-6" />
           </svg>
         </button>
-        <button class="pp-pic-arrow next" id="pp-pic-next" onclick="ppNextImage(event)" aria-label="Next photo">
+        <button class="pp-pic-arrow next" id="pp-pic-next" data-action="pp-next" aria-label="Next photo">
           <svg viewBox="0 0 24 24">
             <path d="M9 18l6-6-6-6" />
           </svg>
         </button>
         <div class="pp-pic-dots" id="pp-pic-dots"></div>
         <div class="pp-pic-loader" id="pp-pic-loader"></div>
-        <button class="pp-x" onclick="closePP()">✕</button>
+        <button class="pp-x" id="pp-close-btn" data-action="close-pp">✕</button>
         <div class="pp-badge" id="pp-badge">Starting point</div>
       </div>
       <div class="pp-body" id="pp-body">
@@ -4273,6 +4266,16 @@
         <div class="pp-div"></div>
         <div class="pp-slbl">Take in consideration:</div>
         <div class="pp-climate">
+          <div class="pp-cc">
+            <div class="pp-ci" style="background:#fef9c3;"><svg viewBox="0 0 24 24" fill="none" stroke="#ca8a04"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 18h6" />
+                <path d="M10 22h4" />
+                <path d="M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z" />
+              </svg></div>
+            <div class="pp-cl">Suggestions</div>
+            <div class="pp-cn">Coming soon</div>
+          </div>
           <div class="pp-cc pp-temp-card" id="pp-temp-card">
             <div class="pp-ci pp-weather-icon" id="pp-weather-icon" style="background:rgba(255,255,255,.25);">🌡️</div>
             <div class="pp-cl" id="pp-temp-label">Temperature</div>
@@ -4304,7 +4307,7 @@
             <div class="pp-cv" id="pp-alt">520 m</div>
             <div class="pp-cn" id="pp-anote">Central valley</div>
           </div>
-          <div class="pp-cc pp-food-cc" onclick="openFoodPanel()" title="See typical food">
+          <div class="pp-cc pp-food-cc" data-action="open-food-panel" title="See typical food">
             <div class="pp-ci" style="background:#fff7ed;"><svg viewBox="0 0 24 24" fill="none" stroke="#c2410c"
                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M7 2v7a2 2 0 0 0 4 0V2" />
@@ -4323,16 +4326,6 @@
                 <path d="M9 22V14h6v8" />
               </svg></div>
             <div class="pp-cl">Stay</div>
-            <div class="pp-cn">Coming soon</div>
-          </div>
-          <div class="pp-cc">
-            <div class="pp-ci" style="background:#fef9c3;"><svg viewBox="0 0 24 24" fill="none" stroke="#ca8a04"
-                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M9 18h6" />
-                <path d="M10 22h4" />
-                <path d="M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z" />
-              </svg></div>
-            <div class="pp-cl">Suggestions</div>
             <div class="pp-cn">Coming soon</div>
           </div>
           <div class="pp-cc">
@@ -4356,7 +4349,7 @@
               <div class="pp-food-title">Typical food</div>
               <div class="pp-food-sub" id="pp-food-sub"></div>
             </div>
-            <button class="pp-food-x" onclick="closeFoodPanel()">✕</button>
+            <button class="pp-food-x" id="pp-food-close-btn" data-action="close-food-panel">✕</button>
           </div>
           <div class="pp-food-scroll">
             <div class="pp-food-grid" id="pp-food-grid"></div>
@@ -4372,13 +4365,13 @@
               <div class="pp-rname" id="pp-rname">AI Summary</div>
               <div class="pp-rmeta" id="pp-rmeta">Based on 2,140 traveler reviews</div>
             </div>
-            <button class="pp-view-all" id="pp-view-all" onclick="ppToggleComments()">View all reviews</button>
+            <button class="pp-view-all" id="pp-view-all" data-action="pp-toggle-comments">View all reviews</button>
           </div>
         </div>
         <div class="pp-clist" id="pp-clist"></div>
       </div>
       <div class="pp-foot">
-        <div class="pp-fn" id="pp-fn"></div><button class="pp-btn" onclick="closePP()">Got
+        <div class="pp-fn" id="pp-fn"></div><button class="pp-btn" id="pp-got-it-btn" data-action="close-pp">Got
           it</button>
       </div>
 
@@ -4386,17 +4379,17 @@
   </div>
 
   <!-- ══ PLACE PHOTO FULLSCREEN VIEWER ══ -->
-  <div class="pp-fs-bg" id="pp-fs-modal" onclick="if(event.target===this)closePPFullscreen()">
-    <button class="pp-fs-x" onclick="closePPFullscreen()">✕</button>
-    <button class="pp-fs-arrow prev" id="pp-fs-prev" onclick="ppFsPrev()" aria-label="Previous photo">
+  <div class="pp-fs-bg" id="pp-fs-modal">
+    <button class="pp-fs-x" id="pp-fs-close-btn" data-action="close-fullscreen">✕</button>
+    <button class="pp-fs-arrow prev" id="pp-fs-prev" data-action="pp-fs-prev" aria-label="Previous photo">
       <svg viewBox="0 0 24 24">
         <path d="M15 18l-6-6 6-6" />
       </svg>
     </button>
-    <div class="pp-fs-slide" id="pp-fs-img" ontouchstart="ppFsSwipeStart(event)" ontouchend="ppFsSwipeEnd(event)">
+    <div class="pp-fs-slide" id="pp-fs-img">
       <span class="pp-fs-emoji" id="pp-fs-emoji">🏙️</span>
     </div>
-    <button class="pp-fs-arrow next" id="pp-fs-next" onclick="ppFsNext()" aria-label="Next photo">
+    <button class="pp-fs-arrow next" id="pp-fs-next" data-action="pp-fs-next" aria-label="Next photo">
       <svg viewBox="0 0 24 24">
         <path d="M9 18l6-6-6-6" />
       </svg>
@@ -4405,22 +4398,22 @@
   </div>
 
   <!-- ══ MAPS CHOICE MODAL ══ -->
-  <div class="mc-bg" id="mc-modal" onclick="if(event.target===this)closeModal('mc-modal')">
+  <div class="mc-bg" id="mc-modal">
     <div class="mc-modal">
       <div class="mc-title">Open directions in</div>
-      <button class="mc-opt" onclick="confirmStartTrip('google')">
+      <button class="mc-opt" data-action="confirm-start-trip" data-app="google">
         <span class="mc-opt-icon" style="background:#1a73e8">🗺️</span>
         <span class="mc-opt-label">Google Maps</span>
       </button>
-      <button class="mc-opt" onclick="confirmStartTrip('apple')">
+      <button class="mc-opt" data-action="confirm-start-trip" data-app="apple">
         <span class="mc-opt-icon" style="background:#000">🧭</span>
         <span class="mc-opt-label">Apple Maps</span>
       </button>
-      <button class="mc-cancel" onclick="closeModal('mc-modal')">Cancel</button>
+      <button class="mc-cancel" id="mc-cancel-btn" data-action="close-mc">Cancel</button>
     </div>
   </div>
 
-  <script>
+  <script nonce="{{ nonce }}">
     /* ══ DATA ══ */
     const FROM = { name: 'Santiago, Chile', coord: [-70.6693, -33.4489] };
     const TO = { name: 'Puerto Natales, Chile', coord: [-72.5083, -51.7319] };
@@ -5307,13 +5300,13 @@
       <div class="tl-drive">
         <div class="tl-drive-pill">${SVG_CAR} ${s.time} drive</div>
       </div>
-      <div class="tl-stop${s.id === selectedId ? ' active' : ''}" data-id="${s.id}" onclick="selectStop(${s.id})">
+      <div class="tl-stop${s.id === selectedId ? ' active' : ''}" data-id="${s.id}" data-action="select-stop">
         <div class="tl-num">${s.id}</div>
         <div class="tl-card">
           <div class="tl-emoji">${s.emoji}</div>
           <div class="tl-body">
             <div class="tl-name-row">
-              <div class="tl-name"><span class="rp-name-link" onclick="event.stopPropagation();openPlacePopupFromStop(${s.id})">${s.name}</span></div>
+              <div class="tl-name"><span class="rp-name-link" data-action="popup-stop" data-id="${s.id}">${s.name}</span></div>
               <div class="tl-duration">${SVG_CLOCK} ${estimateVisitDuration(s.cat)}</div>
             </div>
             <div class="tl-meta">
@@ -5555,12 +5548,12 @@
         var credit = p.photographer
           ? '<div class="pp-pic-credit">' + p.photographer + (p.source ? ' · ' + p.source : '') + '</div>'
           : '';
-        return '<div class="pp-pic-slide" onclick="ppOpenFullscreen()">'
+        return '<div class="pp-pic-slide" data-action="open-fullscreen">'
           + '<img class="pp-pic-img" src="' + p.url + '" loading="lazy" alt="" />'
           + credit
           + '</div>';
       }
-      return '<div class="pp-pic-slide" onclick="ppOpenFullscreen()">'
+      return '<div class="pp-pic-slide" data-action="open-fullscreen">'
         + '<div class="pp-pic-bg" style="background:' + p.bg + '"></div>'
         + '<span class="pp-emoji">' + p.emoji + '</span>'
         + '</div>';
@@ -5663,7 +5656,7 @@
     function ppRenderCarousel() {
       document.getElementById('pp-pic-track').innerHTML = ppPhotos.map(ppSlideHTML).join('');
       document.getElementById('pp-pic-dots').innerHTML = ppPhotos.map((_, i) =>
-        `<span class="pp-pic-dot${i === 0 ? ' active' : ''}" onclick="event.stopPropagation();ppGoToImage(${i})"></span>`
+        `<span class="pp-pic-dot${i === 0 ? ' active' : ''}" data-action="go-to-image" data-idx="${i}"></span>`
       ).join('');
       const multi = ppPhotos.length > 1;
       document.getElementById('pp-pic-prev').style.display = multi ? 'flex' : 'none';
@@ -5894,7 +5887,7 @@
         : name;
 
       container.innerHTML = `<div class="cs-results-hdr">${q.trim() ? 'Results' : 'Most visited'}</div>` +
-        matches.map(d => `<div class="cs-item" onclick="selectCountry('${d.country.replace(/'/g, "\\'")}')">
+        matches.map(d => `<div class="cs-item" data-action="select-country" data-val="${d.country.replace(/"/g, '&quot;')}">
             <div class="cs-flag">${d.flag}</div>
             <div class="cs-info">
               <div class="cs-name">${hl(d.country)}</div>
@@ -5976,11 +5969,11 @@
         const rClass = rank <= 3 ? `r${rank}` : 'rn';
         const rowClass = rank <= 3 ? rowTint[i] : '';
         const badge = rank <= 3 ? medals[i] : `#${rank}`;
-        return `<div class="rp-item ${rowClass}" onclick="flyToMarker(${i})">
+        return `<div class="rp-item ${rowClass}" data-action="fly-to-marker" data-idx="${i}">
           <div class="rp-rank ${rClass}">${badge}</div>
           <div class="rp-body">
             <div class="rp-name">
-              <span class="rp-name-link" onclick="event.stopPropagation();openPlacePopupFromRanking(${i})">${item.n}</span>
+              <span class="rp-name-link" data-action="popup-ranking" data-idx="${i}">${item.n}</span>
             </div>
             <div class="rp-desc">${item.d}</div>
             <div class="rp-meta">
@@ -6297,7 +6290,7 @@
         listEl.innerHTML = `<div class="ac-header">Suggestions</div>` +
           places.map(p => {
             const hl = p.name.replace(new RegExp(`(${esc})`, 'gi'), '<span class="ac-match">$1</span>');
-            return `<div class="ac-item" onclick="selectAC('${side}','${p.name.replace(/'/g, "\\'")}')">
+            return `<div class="ac-item" data-action="select-ac" data-side="${side}" data-val="${p.name.replace(/"/g, '&quot;')}">
           <div class="ac-info"><div class="ac-name">${hl}</div><div class="ac-sub">${p.subtitle}</div></div>
         </div>`;
           }).join('');
@@ -6359,7 +6352,7 @@
         results.innerHTML = `<div class="cs-results-hdr">Suggestions</div>` +
           places.map(p => {
             const hl = p.name.replace(new RegExp(`(${esc})`, 'gi'), '<span class="cs-match">$1</span>');
-            return `<div class="cs-item" onclick="selectAddPlace('${p.name.replace(/'/g, "\\'")}')">
+            return `<div class="cs-item" data-action="select-add-place" data-val="${p.name.replace(/"/g, '&quot;')}">
           <div class="cs-info"><div class="cs-name">${hl}</div><div class="cs-sub">${p.subtitle}</div></div>
         </div>`;
           }).join('');
@@ -6562,7 +6555,7 @@
       const list = document.getElementById('sugg-routes-list');
       if (!list) return;
       list.innerHTML = SUGGESTED_ROUTES.map(r => `
-        <div class="sugg-route-card" onclick="selectSuggestedRoute('${r.from.replace(/'/g, "\\'")}','${r.to.replace(/'/g, "\\'")}')">
+        <div class="sugg-route-card" data-action="select-sugg-route" data-from="${r.from.replace(/"/g, '&quot;')}" data-to="${r.to.replace(/"/g, '&quot;')}">
           <div class="sugg-route-path">
             <span>${r.from}</span>
             <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
@@ -6762,7 +6755,7 @@
       document.getElementById('left-inner').innerHTML = `
         <div class="place-dot-row">
           <div class="p-dot green"></div>
-          <div class="place-name" onclick="openPlacePopup('from')">${fromVal}</div>
+          <div class="place-name" data-action="open-place-popup" data-side="from">${fromVal}</div>
         </div>
         <div class="star-row">
           ${mt ? ppStarsHtml(mt.rating) : `<div class="stars">${SVG_STAR_FULL}${SVG_STAR_FULL}${SVG_STAR_FULL}${SVG_STAR_FULL}${SVG_STAR_HALF}</div>`}
@@ -6771,11 +6764,11 @@
         <p class="place-desc">${mt ? mt.short_description : d.desc}</p>
         <div class="hr"></div>
         <div class="filter-row">
-          <div class="ftab on" onclick="filterNearby(this,'all')">All</div>
-          <div class="ftab" onclick="filterNearby(this,'trek')"><svg viewBox="0 0 24 24"><path d="M3 17l4-8 5 6 3-3 4 5"/></svg>Trekking</div>
-          <div class="ftab" onclick="filterNearby(this,'lake')"><svg viewBox="0 0 24 24"><path d="M2 12s3-6 10-6 10 6 10 6-3 6-10 6-10-6-10-6z"/></svg>Lakes</div>
-          <div class="ftab" onclick="filterNearby(this,'town')"><svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>Towns</div>
-          <div class="ftab" onclick="filterNearby(this,'trail')"><svg viewBox="0 0 24 24"><path d="M3 12h18M3 6h18M3 18h18"/></svg>Trails</div>
+          <div class="ftab on" data-action="filter-nearby" data-cat="all">All</div>
+          <div class="ftab" data-action="filter-nearby" data-cat="trek"><svg viewBox="0 0 24 24"><path d="M3 17l4-8 5 6 3-3 4 5"/></svg>Trekking</div>
+          <div class="ftab" data-action="filter-nearby" data-cat="lake"><svg viewBox="0 0 24 24"><path d="M2 12s3-6 10-6 10 6 10 6-3 6-10 6-10-6-10-6z"/></svg>Lakes</div>
+          <div class="ftab" data-action="filter-nearby" data-cat="town"><svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>Towns</div>
+          <div class="ftab" data-action="filter-nearby" data-cat="trail"><svg viewBox="0 0 24 24"><path d="M3 12h18M3 6h18M3 18h18"/></svg>Trails</div>
         </div>
         <div id="nearby-list" style="padding-bottom:56px"><p style="font-size:13px;color:var(--g600);padding:20px 0;text-align:center;">Finding tourist places nearby…</p></div>`;
 
@@ -6814,10 +6807,10 @@
         const rClass = rank <= 3 ? `r${rank}` : 'rn';
         const rowClass = rank <= 3 ? rowTint[i] : '';
         return `
-        <div class="rp-item ${rowClass}" onclick="flyToNearby(${i})">
+        <div class="rp-item ${rowClass}" data-action="fly-to-nearby" data-idx="${i}">
           <div class="rp-rank ${rClass}">${rank}</div>
           <div class="rp-body">
-            <div class="tl-name"><span class="rp-name-link" onclick="event.stopPropagation();openPlacePopupFromNearbyIdx(${i})">${p.name}</span></div>
+            <div class="tl-name"><span class="rp-name-link" data-action="popup-nearby" data-idx="${i}">${p.name}</span></div>
             <div class="tl-meta" style="margin-bottom:4px;">
               <div class="tl-rating">${SVG_STAR} ${p.rating}</div>
               <span class="tl-pipe">|</span>
@@ -6928,7 +6921,7 @@
       document.getElementById('left-inner').innerHTML = `
         <div class="place-dot-row">
           <div class="p-dot green"></div>
-          <div class="place-name" onclick="openPlacePopup('from')">${fromVal}</div>
+          <div class="place-name" data-action="open-place-popup" data-side="from">${fromVal}</div>
         </div>
         <div class="star-row">
           ${fmt ? ppStarsHtml(fmt.rating) : `<div class="stars">${SVG_STAR_FULL}${SVG_STAR_FULL}${SVG_STAR_FULL}${SVG_STAR_FULL}${SVG_STAR_HALF}</div>`}
@@ -6943,7 +6936,7 @@
         </div>
         <div class="place-dot-row">
           <div class="p-dot red"></div>
-          <div class="place-name" onclick="openPlacePopup('to')">${toVal}</div>
+          <div class="place-name" data-action="open-place-popup" data-side="to">${toVal}</div>
         </div>
         <div class="star-row">
           ${tmt ? ppStarsHtml(tmt.rating) : `<div class="stars">${SVG_STAR_FULL}${SVG_STAR_FULL}${SVG_STAR_FULL}${SVG_STAR_FULL}${SVG_STAR_FULL}</div>`}
@@ -6956,7 +6949,7 @@
           <div class="stat-box"><div class="stat-lbl">Distance</div><div class="stat-val" id="route-distance">—</div><div class="stat-note">total route</div></div>
           <div class="stat-box"><div class="stat-lbl" id="route-duration-label">${TRANSPORT_TIME_LABEL[currentTransportMode] || 'Driving time'}</div><div class="stat-val" id="route-duration">—</div><div class="stat-note">non-stop est.</div></div>
         </div>
-        <div class="flights-cta" id="flights-cta" style="display:none" onclick="openGoogleFlights()">
+        <div class="flights-cta" id="flights-cta" style="display:none" data-action="open-flights">
           <div class="fc-icon">✈️<span class="fc-icon-badge">$</span></div>
           <div class="fc-body">
             <div class="fc-title">Compare flight prices</div>
@@ -7208,11 +7201,102 @@
     } else if (deepLinkParams.get('category')) {
       showCategoryTop10(deepLinkParams.get('category'));
     }
+
+    /* ── CSP-safe event delegation (replaces all inline onclick/on* attrs) ── */
+    document.addEventListener('click', function(e) {
+      /* Backdrop "click outside to close" — must check exact target (not closest) */
+      var tid = e.target.id;
+      if (tid === 'ap-overlay')  { closeAddPlace();          return; }
+      if (tid === 'cs-overlay')  { closeCountrySearch();     return; }
+      if (tid === 'sp-modal')    { closeSavePlan();          return; }
+      if (tid === 'pp-modal')    { closePP();                return; }
+      if (tid === 'pp-fs-modal') { closePPFullscreen();      return; }
+      if (tid === 'mc-modal')    { closeModal('mc-modal');   return; }
+
+      var el = e.target.closest('[data-action]');
+      if (!el) return;
+      var a = el.dataset.action;
+
+      if (a === 'swap-route')           { swapRoute();                                    return; }
+      if (a === 'do-search')            { doSearch();                                     return; }
+      if (a === 'toggle-top10')         { toggleTop10();                                  return; }
+      if (a === 'top10-worldwide')      { showWorldwideOnMap();                           return; }
+      if (a === 'top10-country')        { openCountrySearch();                            return; }
+      if (a === 'top10-category')       { showCategoryTop10();                            return; }
+      if (a === 'close-ranking')        { closeRankingPanel();                            return; }
+      if (a === 'make-nearby-route')    { makeNearbyRoute();                              return; }
+      if (a === 'toggle-panel')         { togglePanel();                                  return; }
+      if (a === 'start-trip')           { startTrip();                                    return; }
+      if (a === 'set-transport')        { setTransport(el, el.dataset.transport);         return; }
+      if (a === 'open-save-plan')       { openSavePlan();                                 return; }
+      if (a === 'toggle-remove-mode')   { toggleRemoveMode();                             return; }
+      if (a === 'open-add-place')       { openAddPlace();                                 return; }
+      if (a === 'close-add-place')      { closeAddPlace();                                return; }
+      if (a === 'clear-add-place')      { clearAddPlaceInput();                           return; }
+      if (a === 'close-country-search') { closeCountrySearch();                           return; }
+      if (a === 'clear-country')        { clearCountryInput();                            return; }
+      if (a === 'close-save-plan')      { closeSavePlan();                                return; }
+      if (a === 'confirm-save-plan')    { confirmSavePlan();                              return; }
+      if (a === 'clear-input')          { clearInput(el.dataset.side);                    return; }
+      if (a === 'pp-prev')              { ppPrevImage(e);                                 return; }
+      if (a === 'pp-next')              { ppNextImage(e);                                 return; }
+      if (a === 'close-pp')             { closePP();                                      return; }
+      if (a === 'open-food-panel')      { openFoodPanel();                                return; }
+      if (a === 'close-food-panel')     { closeFoodPanel();                               return; }
+      if (a === 'pp-toggle-comments')   { ppToggleComments();                             return; }
+      if (a === 'close-fullscreen')     { closePPFullscreen();                            return; }
+      if (a === 'pp-fs-prev')           { ppFsPrev();                                     return; }
+      if (a === 'pp-fs-next')           { ppFsNext();                                     return; }
+      if (a === 'confirm-start-trip')   { confirmStartTrip(el.dataset.app);              return; }
+      if (a === 'close-mc')             { closeModal('mc-modal');                         return; }
+      if (a === 'select-stop')          { selectStop(+el.dataset.id);                    return; }
+      if (a === 'popup-stop')           { e.stopPropagation(); openPlacePopupFromStop(+el.dataset.id);       return; }
+      if (a === 'open-fullscreen')      { ppOpenFullscreen();                             return; }
+      if (a === 'go-to-image')          { e.stopPropagation(); ppGoToImage(+el.dataset.idx);                 return; }
+      if (a === 'select-country')       { selectCountry(el.dataset.val);                 return; }
+      if (a === 'fly-to-marker')        { flyToMarker(+el.dataset.idx);                  return; }
+      if (a === 'popup-ranking')        { e.stopPropagation(); openPlacePopupFromRanking(+el.dataset.idx);   return; }
+      if (a === 'select-ac')            { selectAC(el.dataset.side, el.dataset.val);     return; }
+      if (a === 'select-add-place')     { selectAddPlace(el.dataset.val);                return; }
+      if (a === 'select-sugg-route')    { selectSuggestedRoute(el.dataset.from, el.dataset.to); return; }
+      if (a === 'open-place-popup')     { openPlacePopup(el.dataset.side);               return; }
+      if (a === 'filter-nearby')        { filterNearby(el, el.dataset.cat);              return; }
+      if (a === 'fly-to-nearby')        { flyToNearby(+el.dataset.idx);                  return; }
+      if (a === 'popup-nearby')         { e.stopPropagation(); openPlacePopupFromNearbyIdx(+el.dataset.idx); return; }
+      if (a === 'open-flights')         { openGoogleFlights();                            return; }
+    });
+
+    /* ── Non-click event wiring (input / focus / blur / keydown / touch) ── */
+    (function() {
+      var fromInp = document.getElementById('from-input');
+      fromInp.addEventListener('input',  function() { handleAC('from', this.value); updateClear('from', this.value); });
+      fromInp.addEventListener('focus',  function() { handleAC('from', this.value); showClear('from'); });
+      fromInp.addEventListener('blur',   function() { setTimeout(function() { hideClear('from'); }, 150); });
+
+      var toInp = document.getElementById('to-input');
+      toInp.addEventListener('input',  function() { handleAC('to', this.value); updateClear('to', this.value); });
+      toInp.addEventListener('focus',  function() { handleAC('to', this.value); showClear('to'); });
+      toInp.addEventListener('blur',   function() { setTimeout(function() { hideClear('to'); }, 150); });
+
+      document.getElementById('places-range').addEventListener('input', function() { onPlacesRangeChange(this.value); });
+      document.getElementById('ap-input').addEventListener('input',     function() { handleAddPlaceAC(this.value); });
+      document.getElementById('cs-input').addEventListener('input',     function() { handleCountryAC(this.value); });
+      document.getElementById('sp-name-input').addEventListener('keydown', function(e) { if (e.key === 'Enter') confirmSavePlan(); });
+
+      var ppTrack = document.getElementById('pp-pic-track');
+      ppTrack.addEventListener('touchstart', ppSwipeStart);
+      ppTrack.addEventListener('touchmove',  ppSwipeMove);
+      ppTrack.addEventListener('touchend',   ppSwipeEnd);
+
+      var fsImg = document.getElementById('pp-fs-img');
+      fsImg.addEventListener('touchstart', ppFsSwipeStart);
+      fsImg.addEventListener('touchend',   ppFsSwipeEnd);
+    }());
   </script>
 
   {% include "partials/_signin_modal.html" %}
 
-  <script>
+  <script nonce="{{ nonce }}">
     const LOGOUT_REDIRECT = '/';
 
     let CURRENT_USER = null;

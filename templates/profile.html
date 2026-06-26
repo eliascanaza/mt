@@ -11,7 +11,7 @@
     href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap"
     rel="stylesheet">
   <script src="https://accounts.google.com/gsi/client" async defer></script>
-  <style>
+  <style nonce="{{ nonce }}">
     *,
     *::before,
     *::after {
@@ -1025,27 +1025,27 @@
 
     <!-- TABS -->
     <div class="tabs-bar">
-      <button class="tab-btn active" data-tab="profile" onclick="switchTab('profile')">
+      <button class="tab-btn active" data-tab="profile" data-action="switch-tab">
         <svg viewBox="0 0 24 24">
           <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
           <circle cx="12" cy="7" r="4" />
         </svg>
         Profile
       </button>
-      <button class="tab-btn" data-tab="plans" onclick="switchTab('plans')">
+      <button class="tab-btn" data-tab="plans" data-action="switch-tab">
         <svg viewBox="0 0 24 24">
           <path d="M9 11l3 3L22 4" />
           <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
         </svg>
         My Plans
       </button>
-      <button class="tab-btn" data-tab="history" onclick="switchTab('history')">
+      <button class="tab-btn" data-tab="history" data-action="switch-tab">
         <svg viewBox="0 0 24 24">
           <path d="M12 8v4l3 3m6-3a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" />
         </svg>
         History
       </button>
-      <button class="tab-btn" data-tab="settings" onclick="switchTab('settings')">
+      <button class="tab-btn" data-tab="settings" data-action="switch-tab">
         <svg viewBox="0 0 24 24">
           <circle cx="12" cy="12" r="3" />
           <path
@@ -1110,8 +1110,8 @@
           </div>
         </div>
         <div class="form-footer">
-          <button class="btn btn-secondary" onclick="discardInfoForm()">Discard</button>
-          <button class="btn btn-primary" onclick="saveInfoForm()">
+          <button class="btn btn-secondary" data-action="discard-info-form">Discard</button>
+          <button class="btn btn-primary" data-action="save-info-form">
             <svg viewBox="0 0 24 24">
               <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
               <polyline points="17 21 17 13 7 13 7 21" />
@@ -1170,7 +1170,7 @@
           </div>
         </div>
         <div class="form-footer">
-          <button class="btn btn-primary" onclick="saveTravelPrefsForm()">
+          <button class="btn btn-primary" data-action="save-travel-prefs">
             <svg viewBox="0 0 24 24">
               <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
               <polyline points="17 21 17 13 7 13 7 21" />
@@ -1291,7 +1291,7 @@
           </div>
         </div>
         <div class="form-footer">
-          <button class="btn btn-primary" onclick="saveAppSettingsForm()">Save preferences</button>
+          <button class="btn btn-primary" data-action="save-app-settings">Save preferences</button>
         </div>
       </div>
 
@@ -1310,7 +1310,7 @@
               <div class="toggle-desc">Top destinations and curated route ideas every Friday</div>
             </div>
             <label class="toggle"><input type="checkbox" id="notif-weekly_digest"
-                onchange="saveToggle('notifications','weekly_digest',this.checked)">
+                data-toggle-section="notifications" data-toggle-key="weekly_digest">
               <div class="toggle-track"></div>
             </label>
           </div>
@@ -1320,7 +1320,7 @@
               <div class="toggle-desc">Alerts before your planned departure dates</div>
             </div>
             <label class="toggle"><input type="checkbox" id="notif-trip_reminders"
-                onchange="saveToggle('notifications','trip_reminders',this.checked)">
+                data-toggle-section="notifications" data-toggle-key="trip_reminders">
               <div class="toggle-track"></div>
             </label>
           </div>
@@ -1330,7 +1330,7 @@
               <div class="toggle-desc">Notify me when new stops are added along my saved routes</div>
             </div>
             <label class="toggle"><input type="checkbox" id="notif-new_destinations"
-                onchange="saveToggle('notifications','new_destinations',this.checked)">
+                data-toggle-section="notifications" data-toggle-key="new_destinations">
               <div class="toggle-track"></div>
             </label>
           </div>
@@ -1340,7 +1340,7 @@
               <div class="toggle-desc">Email me when someone replies to my reviews</div>
             </div>
             <label class="toggle"><input type="checkbox" id="notif-review_replies"
-                onchange="saveToggle('notifications','review_replies',this.checked)">
+                data-toggle-section="notifications" data-toggle-key="review_replies">
               <div class="toggle-track"></div>
             </label>
           </div>
@@ -1350,7 +1350,7 @@
               <div class="toggle-desc">Partner deals, discounts and seasonal campaigns</div>
             </div>
             <label class="toggle"><input type="checkbox" id="notif-promotional_offers"
-                onchange="saveToggle('notifications','promotional_offers',this.checked)">
+                data-toggle-section="notifications" data-toggle-key="promotional_offers">
               <div class="toggle-track"></div>
             </label>
           </div>
@@ -1372,7 +1372,7 @@
               <div class="toggle-desc">Other users can see your profile page and stats</div>
             </div>
             <label class="toggle"><input type="checkbox" id="privacy-public_profile"
-                onchange="saveToggle('privacy','public_profile',this.checked)">
+                data-toggle-section="privacy" data-toggle-key="public_profile">
               <div class="toggle-track"></div>
             </label>
           </div>
@@ -1382,7 +1382,7 @@
               <div class="toggle-desc">Let others see the trips and destinations you've completed</div>
             </div>
             <label class="toggle"><input type="checkbox" id="privacy-share_trip_history"
-                onchange="saveToggle('privacy','share_trip_history',this.checked)">
+                data-toggle-section="privacy" data-toggle-key="share_trip_history">
               <div class="toggle-track"></div>
             </label>
           </div>
@@ -1392,7 +1392,7 @@
               <div class="toggle-desc">Display a heatmap of your explored locations publicly</div>
             </div>
             <label class="toggle"><input type="checkbox" id="privacy-show_visited_places"
-                onchange="saveToggle('privacy','show_visited_places',this.checked)">
+                data-toggle-section="privacy" data-toggle-key="show_visited_places">
               <div class="toggle-track"></div>
             </label>
           </div>
@@ -1402,7 +1402,7 @@
               <div class="toggle-desc">Use your history to improve destination suggestions</div>
             </div>
             <label class="toggle"><input type="checkbox" id="privacy-allow_data_for_recommendations"
-                onchange="saveToggle('privacy','allow_data_for_recommendations',this.checked)">
+                data-toggle-section="privacy" data-toggle-key="allow_data_for_recommendations">
               <div class="toggle-track"></div>
             </label>
           </div>
@@ -1424,7 +1424,7 @@
           </p>
         </div>
         <div class="form-footer" style="justify-content:space-between">
-          <button class="btn btn-secondary" onclick="showToast('Data export requested. Check your email.')">
+          <button class="btn btn-secondary" data-action="export-data">
             <svg viewBox="0 0 24 24">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
               <polyline points="7 10 12 15 17 10" />
@@ -1449,7 +1449,7 @@
               <div class="danger-row-info">Log out of all devices</div>
               <div class="danger-row-desc">Revoke all active sessions except this one</div>
             </div>
-            <button class="btn btn-secondary" style="color:#b91c1c;border-color:#fca5a5" onclick="confirmLogout()">Log
+            <button class="btn btn-secondary" style="color:#b91c1c;border-color:#fca5a5" data-action="confirm-logout">Log
               out everywhere</button>
           </div>
           <div class="danger-row">
@@ -1457,8 +1457,7 @@
               <div class="danger-row-info">Delete account</div>
               <div class="danger-row-desc">Permanently remove your account, plans and all data</div>
             </div>
-            <button class="btn btn-danger"
-              onclick="if(confirm('Are you sure? This cannot be undone.'))showToast('Account deletion requested.')">Delete
+            <button class="btn btn-danger" data-action="delete-account">Delete
               account</button>
           </div>
         </div>
@@ -1476,7 +1475,7 @@
     white-space:nowrap;animation:fadeIn .2s ease;
   "></div>
 
-  <style>
+  <style nonce="{{ nonce }}">
     @keyframes fadeIn {
       from {
         opacity: 0;
@@ -1490,7 +1489,7 @@
     }
   </style>
 
-  <script>
+  <script nonce="{{ nonce }}">
     function switchTab(name) {
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
       document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === `tab-${name}`));
@@ -1540,7 +1539,7 @@
       const title = (plan.title || (hasRoute ? `${shortName(plan.from_name)} trip` : 'Saved plan')).replace(/</g, '&lt;');
       const fromTo = (hasRoute ? `${shortName(plan.from_name)} → ${shortName(plan.to_name)}` : title).replace(/'/g, "\\'");
       return `
-        <div class="plan-card" onclick="showToast('Opening: ${fromTo}')">
+        <div class="plan-card" data-action="open-plan" data-from-to="${fromTo.replace(/"/g, '&quot;')}">
           <div class="plan-card-top">
             <div class="plan-card-title">${title}</div>
             <div class="plan-meta">
@@ -1779,6 +1778,28 @@
     function saveToggle(section, key, value) {
       saveProfileSection(section, { [key]: value }, 'Saved!');
     }
+
+    /* ── CSP-safe event delegation ── */
+    document.addEventListener('click', function(e) {
+      var el = e.target.closest('[data-action]');
+      if (!el) return;
+      var a = el.dataset.action;
+      if (a === 'switch-tab')      { switchTab(el.dataset.tab);                                                    return; }
+      if (a === 'discard-info-form') { discardInfoForm();                                                          return; }
+      if (a === 'save-info-form')  { saveInfoForm();                                                               return; }
+      if (a === 'save-travel-prefs') { saveTravelPrefsForm();                                                      return; }
+      if (a === 'save-app-settings') { saveAppSettingsForm();                                                      return; }
+      if (a === 'export-data')     { showToast('Data export requested. Check your email.');                        return; }
+      if (a === 'confirm-logout')  { confirmLogout();                                                              return; }
+      if (a === 'delete-account')  { if (confirm('Are you sure? This cannot be undone.')) showToast('Account deletion requested.'); return; }
+      if (a === 'open-plan')       { showToast('Opening: ' + el.dataset.fromTo);                                   return; }
+    });
+
+    /* ── Toggle checkboxes via change delegation ── */
+    document.addEventListener('change', function(e) {
+      var inp = e.target.closest('[data-toggle-section]');
+      if (inp) saveToggle(inp.dataset.toggleSection, inp.dataset.toggleKey, inp.checked);
+    });
   </script>
   {% include "partials/_auth_script.html" %}
 
@@ -1789,7 +1810,7 @@
   <!-- ══ SIGN IN ══ -->
   {% set si_title = "Sign in to view your profile" %}
   {% set si_sub = "Sign in with Google to see your saved plans, trip history, and account details." %}
-  {% set si_close_action = "window.location.href='/'" %}
+  {% set si_close_href = "/" %}
   {% include "partials/_signin_modal.html" %}
 </body>
 

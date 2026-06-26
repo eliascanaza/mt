@@ -1,4 +1,4 @@
-<div class="lo-bg" id="lo-modal" onclick="if(event.target===this)closeLo()">
+<div class="lo-bg" id="lo-modal">
   <div class="lo-dialog">
     <div class="lo-top">
       <div class="lo-icon-wrap">
@@ -12,8 +12,8 @@
       <div class="lo-sub">{{ lo_sub|default("You'll be signed out of exploreMore on this device.") }}</div>
     </div>
     <div class="lo-actions">
-      <button class="lo-cancel" onclick="closeLo()">Stay</button>
-      <button class="lo-confirm" onclick="doLogout()">Log out</button>
+      <button class="lo-cancel" data-action="close-lo">Stay</button>
+      <button class="lo-confirm" data-action="do-logout">Log out</button>
     </div>
   </div>
 </div>
