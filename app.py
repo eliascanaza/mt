@@ -19,7 +19,8 @@ Endpoints:
                                       what_to_do, what_to_avoid, traveler_quotes; Gemini 2.5 Flash
   GET  /api/place-photos           → up to 10 high-quality photos for a destination with
                                       photographer attribution (?name=Tokyo) — Gemini selects
-                                      iconic landmarks, images sourced from Wikimedia Commons
+                                      iconic landmarks, images sourced from Unsplash (falls back
+                                      to Wikimedia Commons when UNSPLASH_ACCESS_KEY is not set)
   GET  /api/suggestion              → real tourist places near a point (Google Places), for explore mode
   GET  /api/climate                 → live temperature range / best season / altitude for a point (Open-Meteo)
 """
@@ -131,11 +132,14 @@ def _get_typical_foods_detail(place_name: str) -> list:
         app.logger.warning("Gemini typical foods failed for %s: %s", place_name, exc)
         return []
 
+    def _food_image(f):
+        photos = _unsplash_photos_for_term(f.get("name", ""))
+        if photos:
+            return photos[0]["url"]
+        return _wiki_thumb(f.get("wikipedia_title") or f.get("name", ""))
+
     with ThreadPoolExecutor(max_workers=5) as pool:
-        images = list(pool.map(
-            lambda f: _wiki_thumb(f.get("wikipedia_title") or f.get("name", "")),
-            food_list,
-        ))
+        images = list(pool.map(_food_image, food_list))
 
     result = [
         {
@@ -176,6 +180,45 @@ def _gemini_landmark_terms(place_name: str) -> list:
     except Exception as exc:
         app.logger.warning("Gemini landmark terms failed for %s: %s", place_name, exc)
         return [place_name]
+
+
+_UNSPLASH_KEY = os.environ.get("UNSPLASH_ACCESS_KEY", "")
+
+
+def _unsplash_photos_for_term(term: str) -> list:
+    """Search Unsplash for up to 2 free photos of a landmark."""
+    if not _UNSPLASH_KEY:
+        return []
+    params = urllib.parse.urlencode({
+        "query": term,
+        "per_page": 5,
+        "order_by": "relevant",
+        "content_filter": "high",
+        "client_id": _UNSPLASH_KEY,
+    })
+    url = f"https://api.unsplash.com/search/photos?{params}"
+    req = urllib.request.Request(url, headers={"Accept-Version": "v1"})
+    try:
+        with urllib.request.urlopen(req, timeout=8, context=_SSL_CONTEXT) as resp:
+            data = json.loads(resp.read())
+        results = []
+        for item in data.get("results", []):
+            img_url = item.get("urls", {}).get("regular", "")
+            if not img_url:
+                continue
+            user = item.get("user", {})
+            photographer = user.get("name", "Unsplash")
+            results.append({
+                "url": img_url,
+                "photographer": photographer,
+                "license": "Unsplash License",
+                "source": "Unsplash",
+            })
+            if len(results) >= 2:
+                break
+        return results
+    except Exception:
+        return []
 
 
 def _wikimedia_photos_for_term(term: str) -> list:
@@ -224,12 +267,16 @@ def _wikimedia_photos_for_term(term: str) -> list:
         return []
 
 
+def _photos_for_term(term: str) -> list:
+    return _unsplash_photos_for_term(term)
+
+
 def _get_place_photos(place_name: str) -> list:
     if place_name in _place_photos_cache:
         return _place_photos_cache[place_name]
     terms = _gemini_landmark_terms(place_name) if _gemini_client else [place_name]
     with ThreadPoolExecutor(max_workers=6) as pool:
-        batches = list(pool.map(_wikimedia_photos_for_term, terms))
+        batches = list(pool.map(_photos_for_term, terms))
     seen: set = set()
     photos = []
     for batch in batches:
@@ -240,16 +287,10 @@ def _get_place_photos(place_name: str) -> list:
 
     # Guarantee at least 1 photo: retry with the raw place name
     if not photos:
-        for p in _wikimedia_photos_for_term(place_name):
+        for p in _photos_for_term(place_name):
             if p["url"] not in seen:
                 photos.append(p)
                 seen.add(p["url"])
-
-    # Last resort: Wikipedia article thumbnail
-    if not photos:
-        thumb = _wiki_thumb(place_name)
-        if thumb:
-            photos.append({"url": thumb, "photographer": "Wikipedia", "license": "", "source": "Wikipedia"})
 
     _place_photos_cache[place_name] = photos
     return photos
@@ -408,9 +449,10 @@ def _add_csp_header(response):
         f"img-src 'self' data: blob: "
         f"https://*.googleapis.com https://*.gstatic.com https://*.google.com "
         f"https://*.googleusercontent.com "
-        f"https://*.wikimedia.org https://*.wikipedia.org; "
+        f"https://*.wikimedia.org https://*.wikipedia.org "
+        f"https://images.unsplash.com; "
         f"connect-src 'self' https://maps.googleapis.com https://mapsresources-pa.googleapis.com "
-        f"https://accounts.google.com https://open-meteo.com; "
+        f"https://accounts.google.com https://open-meteo.com https://api.unsplash.com; "
         f"frame-src https://accounts.google.com; "
         f"object-src 'none';"
     )

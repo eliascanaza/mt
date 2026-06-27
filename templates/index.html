@@ -696,6 +696,13 @@
       color: var(--g600)
     }
 
+    .dest-foot {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px
+    }
+
     .dest-loc {
       font-size: 12px;
       color: var(--g600);
@@ -711,6 +718,24 @@
       fill: none;
       stroke-width: 2;
       stroke-linecap: round;
+      flex-shrink: 0
+    }
+
+    .dest-likes {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #e11d48;
+      flex-shrink: 0
+    }
+
+    .dest-likes svg {
+      width: 13px;
+      height: 13px;
+      fill: #e11d48;
+      stroke: none;
       flex-shrink: 0
     }
 
@@ -1610,10 +1635,10 @@
           <div class="dest-body">
             <div class="dest-name"><strong>Tokyo</strong> <span class="dest-via">&rarr; Hakone &rarr; Osaka
                 &rarr;</span> <strong>Kyoto</strong></div>
-            <div class="dest-loc"><svg viewBox="0 0 24 24">
-                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                <circle cx="12" cy="10" r="3" />
-              </svg>Japan</div>
+            <div class="dest-foot">
+              <div class="dest-loc"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>Japan</div>
+              <div class="dest-likes"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>3.2M</div>
+            </div>
           </div>
         </a>
 
@@ -1635,10 +1660,10 @@
             <div class="dest-name"><strong>Athens</strong> <span class="dest-via">&rarr; Mykonos &rarr;</span>
               <strong>Santorini</strong>
             </div>
-            <div class="dest-loc"><svg viewBox="0 0 24 24">
-                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                <circle cx="12" cy="10" r="3" />
-              </svg>Greece</div>
+            <div class="dest-foot">
+              <div class="dest-loc"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>Greece</div>
+              <div class="dest-likes"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>2.7M</div>
+            </div>
           </div>
         </a>
 
@@ -1660,10 +1685,10 @@
             <div class="dest-name"><strong>Cusco</strong> <span class="dest-via">&rarr; Pisac &rarr;</span>
               <strong>Ollantaytambo</strong>
             </div>
-            <div class="dest-loc"><svg viewBox="0 0 24 24">
-                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                <circle cx="12" cy="10" r="3" />
-              </svg>Peru</div>
+            <div class="dest-foot">
+              <div class="dest-loc"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>Peru</div>
+              <div class="dest-likes"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>1.4M</div>
+            </div>
           </div>
         </a>
 
@@ -1684,10 +1709,10 @@
           <div class="dest-body">
             <div class="dest-name"><strong>Cape Town</strong> <span class="dest-via">&rarr; Hermanus &rarr; Mossel Bay
                 &rarr;</span> <strong>Knysna</strong></div>
-            <div class="dest-loc"><svg viewBox="0 0 24 24">
-                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                <circle cx="12" cy="10" r="3" />
-              </svg>South Africa</div>
+            <div class="dest-foot">
+              <div class="dest-loc"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>South Africa</div>
+              <div class="dest-likes"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>4.1M</div>
+            </div>
           </div>
         </a>
 
@@ -1708,10 +1733,10 @@
           <div class="dest-body">
             <div class="dest-name"><strong>Rome</strong> <span class="dest-via">&rarr; Naples &rarr; Pompeii
                 &rarr;</span> <strong>Amalfi Coast</strong></div>
-            <div class="dest-loc"><svg viewBox="0 0 24 24">
-                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                <circle cx="12" cy="10" r="3" />
-              </svg>Italy</div>
+            <div class="dest-foot">
+              <div class="dest-loc"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>Italy</div>
+              <div class="dest-likes"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>5.8M</div>
+            </div>
           </div>
         </a>
 
@@ -1732,10 +1757,10 @@
           <div class="dest-body">
             <div class="dest-name"><strong>Cancún</strong> <span class="dest-via">&rarr; Tulum &rarr; Valladolid
                 &rarr;</span> <strong>Chichén Itzá</strong></div>
-            <div class="dest-loc"><svg viewBox="0 0 24 24">
-                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                <circle cx="12" cy="10" r="3" />
-              </svg>Mexico</div>
+            <div class="dest-foot">
+              <div class="dest-loc"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>Mexico</div>
+              <div class="dest-likes"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>2.3M</div>
+            </div>
           </div>
         </a>
 
@@ -2311,7 +2336,7 @@
         tags: ['Culture', 'History', 'Food'],
         bestTime: 'Mar – May, Oct – Nov', transport: 'Bullet Train', budget: '$$–$$$',
         places: ['Tokyo', 'Hakone', 'Osaka', 'Kyoto'],
-        url: '/home?from=Tokyo%2C%20Japan&to=Kyoto%2C%20Japan'
+        url: '/home?from=Tokyo%2C%20Japan&to=Kyoto%2C%20Japan&via=Hakone%2C%20Japan%7COsaka%2C%20Japan&plan=tokyo-kyoto'
       },
       'athens-santorini': {
         title: 'Athens → Santorini', meta: 'Greece · 11h trip',
@@ -2319,7 +2344,7 @@
         tags: ['Beach', 'Culture', 'History'],
         bestTime: 'Jun – Sep', transport: 'Ferry or Flight', budget: '$$–$$$',
         places: ['Athens', 'Mykonos', 'Santorini'],
-        url: '/home?from=Athens%2C%20Greece&to=Santorini%2C%20Greece'
+        url: '/home?from=Athens%2C%20Greece&to=Santorini%2C%20Greece&via=Mykonos%2C%20Greece&plan=athens-santorini'
       },
       'cusco-ollantaytambo': {
         title: 'Cusco → Ollantaytambo', meta: 'Peru · 2h trip',
@@ -2327,7 +2352,7 @@
         tags: ['Adventure', 'History', 'Nature'],
         bestTime: 'May – Sep', transport: 'Train or Bus', budget: '$–$$',
         places: ['Cusco', 'Pisac', 'Ollantaytambo'],
-        url: '/home?from=Cusco%2C%20Peru&to=Ollantaytambo%2C%20Peru'
+        url: '/home?from=Cusco%2C%20Peru&to=Ollantaytambo%2C%20Peru&via=Pisac%2C%20Peru&plan=cusco-ollantaytambo'
       },
       'capetown-knysna': {
         title: 'Cape Town → Knysna', meta: 'South Africa · 8h trip',
@@ -2335,7 +2360,7 @@
         tags: ['Nature', 'Wildlife', 'Adventure'],
         bestTime: 'Oct – Apr', transport: 'Self-drive', budget: '$$–$$$',
         places: ['Cape Town', 'Hermanus', 'Mossel Bay', 'Knysna'],
-        url: '/home?from=Cape%20Town%2C%20South%20Africa&to=Knysna%2C%20South%20Africa'
+        url: '/home?from=Cape%20Town%2C%20South%20Africa&to=Knysna%2C%20South%20Africa&via=Hermanus%2C%20South%20Africa%7CMossel%20Bay%2C%20South%20Africa&plan=capetown-knysna'
       },
       'rome-amalfi': {
         title: 'Rome → Amalfi Coast', meta: 'Italy · 5h trip',
@@ -2343,7 +2368,7 @@
         tags: ['Culture', 'Beach', 'Food'],
         bestTime: 'May – Oct', transport: 'Train + Ferry', budget: '$$$',
         places: ['Rome', 'Naples', 'Pompeii', 'Amalfi Coast'],
-        url: '/home?from=Rome%2C%20Italy&to=Amalfi%20Coast%2C%20Italy'
+        url: '/home?from=Rome%2C%20Italy&to=Amalfi%20Coast%2C%20Italy&via=Naples%2C%20Italy%7CPompeii%2C%20Italy&plan=rome-amalfi'
       },
       'cancun-chichen': {
         title: 'Cancún → Chichén Itzá', meta: 'Mexico · 3h trip',
@@ -2351,7 +2376,7 @@
         tags: ['History', 'Culture', 'Adventure'],
         bestTime: 'Nov – Apr', transport: 'Bus or Car', budget: '$–$$',
         places: ['Cancún', 'Tulum', 'Valladolid', 'Chichén Itzá'],
-        url: '/home?from=Canc%C3%BAn%2C%20Mexico&to=Chich%C3%A9n%20Itz%C3%A1%2C%20Mexico'
+        url: '/home?from=Canc%C3%BAn%2C%20Mexico&to=Chich%C3%A9n%20Itz%C3%A1%2C%20Mexico&via=Tulum%2C%20Mexico%7CValladolid%2C%20Mexico&plan=cancun-chichen'
       }
     };
     const TAG_COLORS = {
