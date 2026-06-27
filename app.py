@@ -854,18 +854,50 @@ def _estimate_drive_time(km):
     return f"{h} h" + (f" {m} min" if m else "") if h else f"{m} min"
 
 
-# Buckets a Google Place into the same trek/lake/town/trail filter tabs the
-# explore-mode UI already has, from its name and Google "types".
+# Buckets a Google Place into a category + emoji, matching the JS classifyPlace
+# logic used on the front end so icons are consistent between explore mode and
+# route-stops mode.
 def _categorize_place(name, types):
-    name_l = name.lower()
-    types = types or []
-    if any(k in name_l for k in ("lake", "laguna", "lago", "lagoon")):
+    name_l = (name or "").lower()
+    types_set = set(types or [])
+
+    if "beach" in types_set or any(k in name_l for k in ("beach", "playa", "strand", "shore", "seashore")):
+        return "beach", "Beach", "🏖️"
+    if any(k in name_l for k in ("cenote",)):
+        return "cenote", "Cenote", "🏊"
+    if any(k in name_l for k in ("lake", "lagoon", "laguna", "lago", "loch", "hot spring", "geyser", "thermal")):
         return "lake", "Lake", "🏞️"
-    if "park" in types or "hiking_area" in types or any(k in name_l for k in ("trail", "sendero", "trek")):
-        return "trek", "Nature", "🏔️"
-    if "natural_feature" in types or "mountain" in name_l:
-        return "trail", "Adventure", "⛰️"
-    return "town", "Culture", "🎭"
+    if any(k in name_l for k in ("waterfall", "falls", "cascade", "salto")):
+        return "waterfall", "Waterfall", "💦"
+    if any(k in name_l for k in ("island", "isle", "islet", "atoll")):
+        return "island", "Island", "🏝️"
+    if any(k in name_l for k in ("mountain", "mount", "peak", "summit", "volcano", "canyon", "gorge", "fjord", "glacier", "ridge", "cliff", "cerro", "sierra")):
+        return "mountain", "Mountain", "⛰️"
+    if any(k in name_l for k in ("cave", "cavern", "grotto")):
+        return "cave", "Cave", "🕳️"
+    if any(k in name_l for k in ("desert", "dune", "sahara")):
+        return "desert", "Desert", "🏜️"
+    if any(k in name_l for k in ("forest", "jungle", "rainforest", "woodland", "bosque")):
+        return "forest", "Forest", "🌲"
+    if any(k in name_l for k in ("ruin", "ruins", "ancient", "temple", "pyramid", "castle", "fortress", "cathedral", "monastery", "shrine", "palace", "monument", "memorial", "archaeological", "acropolis", "colosseum", "basilica")):
+        return "ancient", "Historical", "🏛️"
+    if any(k in name_l for k in ("town", "village", "plaza", "square", "market", "old town", "historic", "medina", "bazaar")):
+        return "town", "Town", "🏘️"
+    if any(k in name_l for k in ("park", "garden", "reserve", "sanctuary", "wildlife", "botanical")):
+        return "park", "Nature", "🌿"
+    if "museum" in types_set or "art_gallery" in types_set:
+        return "ancient", "Museum", "🏛️"
+    if types_set & {"church", "mosque", "synagogue", "hindu_temple", "place_of_worship"}:
+        return "ancient", "Historic", "🏛️"
+    if types_set & {"zoo", "aquarium"}:
+        return "park", "Wildlife", "🌿"
+    if types_set & {"amusement_park", "stadium"}:
+        return "attraction", "Attraction", "📍"
+    if types_set & {"park", "natural_feature", "campground"}:
+        return "forest", "Nature", "🌲"
+    if types_set & {"locality", "neighborhood"}:
+        return "town", "Town", "🏘️"
+    return "attraction", "Attraction", "📍"
 
 
 # Business types Nearby Search turns up that aren't tourist destinations —
@@ -988,6 +1020,167 @@ def api_suggestion():
         "results": results,
         "count": len(results),
     })
+
+
+# ── Tourist stops along a driven route ───────────────────────────────────
+@app.route("/api/route-stops", methods=["POST"])
+def api_route_stops():
+    """Find tourist places along a driven route.
+
+    When the caller provides via stops (the places already on the route), the
+    endpoint searches near each of those anchors — giving results that are
+    geographically tied to the cities/towns the trip actually passes through.
+    When via is empty (initial route load) it falls back to evenly sampling
+    the polyline path.
+
+    POST body (JSON):
+      from       – {name, lat, lng}   origin place
+      to         – {name, lat, lng}   destination place
+      via        – [{name, lat, lng}] intermediate stops already on the route
+      path       – [{lat, lng}, …]    overview_path fallback (used when via=[])
+      max_stops  – int, default 10, capped at 15
+    """
+    data = request.get_json(silent=True) or {}
+    max_stops = min(int(data.get("max_stops", 10)), 15)
+
+    from_data = data.get("from") or {}
+    to_data   = data.get("to")   or {}
+    via_list  = data.get("via")  or []
+    path      = data.get("path") or []
+
+    try:
+        from_lat  = float(from_data.get("lat") or (path[0]["lat"] if path else 0))
+        from_lng  = float(from_data.get("lng") or (path[0]["lng"] if path else 0))
+    except (TypeError, KeyError, IndexError, ValueError):
+        from_lat, from_lng = 0.0, 0.0
+    from_name = (from_data.get("name") or "").strip()
+
+    api_key = app.config.get("GOOGLE_MAPS_API_KEY", "")
+    if not api_key:
+        return jsonify({"error": "Server is missing GOOGLE_MAPS_API_KEY"}), 500
+
+    # ── Build search centers ───────────────────────────────────────────────────
+    # When FROM/TO/VIA are provided, we sample points in the GAPS between the
+    # known anchors (FROM → via[0], via[0] → via[1], …, via[n] → TO).  This
+    # finds tourist places the user hasn't chosen yet rather than near cities
+    # already on the itinerary.  Fallback: evenly sample the raw path polyline.
+    anchor_names: set = {n.lower() for n in [
+        from_data.get("name", ""), to_data.get("name", ""),
+        *[v.get("name", "") for v in via_list],
+    ] if n}
+
+    def _sample_between_anchors():
+        """Interpolate search centers in the gaps between consecutive anchors."""
+        seq = []
+        for d in [from_data, *via_list, to_data]:
+            try:
+                seq.append((float(d["lat"]), float(d["lng"])))
+            except (TypeError, KeyError, ValueError):
+                pass
+        if len(seq) < 2:
+            return []
+        num_segs = len(seq) - 1
+        pts_per_seg = max(1, math.ceil(max_stops / num_segs))
+        centers = []
+        for i in range(num_segs):
+            a_lat, a_lng = seq[i]
+            b_lat, b_lng = seq[i + 1]
+            for j in range(pts_per_seg):
+                f = (j + 1) / (pts_per_seg + 1)
+                centers.append((
+                    a_lat + f * (b_lat - a_lat),
+                    a_lng + f * (b_lng - a_lng),
+                ))
+        return centers
+
+    def _sample_along_path():
+        if len(path) < 2:
+            return []
+        fractions = [(i + 1) / (max_stops + 1) for i in range(max_stops)]
+        seen: dict = {}
+        indices = []
+        for f in fractions:
+            idx = min(len(path) - 1, round(f * (len(path) - 1)))
+            if idx not in seen:
+                seen[idx] = True
+                indices.append(idx)
+        result = []
+        for idx in indices:
+            pt = path[idx]
+            try:
+                result.append((float(pt["lat"]), float(pt["lng"])))
+            except (TypeError, KeyError, ValueError):
+                continue
+        return result
+
+    # Use anchor-gap sampling when we have at least FROM + TO; fall back to path.
+    if from_data.get("lat") and to_data.get("lat"):
+        search_centers = _sample_between_anchors()
+    else:
+        search_centers = _sample_along_path()
+
+    if not search_centers:
+        return jsonify({"stops": []})
+
+    # ── Search near each center, pick best non-duplicate tourist stop ─────────
+    seen_ids: set = set()
+    stops = []
+    prev_lat, prev_lng = from_lat, from_lng
+    prev_name = from_name or "Origin"
+
+    for a_lat, a_lng in search_centers:
+        try:
+            places = _fetch_places_nearby(a_lat, a_lng, 25000, api_key, max_pages=1)
+        except Exception:
+            continue
+
+        places = [p for p in places if _is_worth_suggesting(p)]
+        # Skip places whose name matches an anchor (e.g. skip "Kyoto Tower" if
+        # Kyoto is already FROM/TO/VIA — those are already on the route)
+        places = [p for p in places if p.get("name", "").lower() not in anchor_names]
+        places.sort(key=lambda p: -(p.get("rating") or 0))
+
+        best = next(
+            (p for p in places if p.get("place_id") and p["place_id"] not in seen_ids),
+            None,
+        )
+        if not best:
+            continue
+
+        seen_ids.add(best["place_id"])
+        loc = (best.get("geometry") or {}).get("location") or {}
+        b_lat, b_lng = loc.get("lat"), loc.get("lng")
+        if b_lat is None or b_lng is None:
+            continue
+
+        dist_km = round(_haversine_km(prev_lat, prev_lng, b_lat, b_lng))
+        cat, tag, emoji = _categorize_place(best.get("name", ""), best.get("types"))
+        rating = best.get("rating")
+
+        stops.append({
+            "id": len(stops) + 1,
+            "emoji": emoji,
+            "name": best.get("name", "Unnamed place"),
+            "cat": cat,
+            "tag": tag,
+            "desc": best.get("vicinity") or "",
+            "rating": f"{rating:.1f}" if rating else "—",
+            "reviews": f"{best.get('user_ratings_total', 0):,}",
+            "loc": best.get("vicinity") or "",
+            "alt": "—",
+            "altNote": "Along the route",
+            "temp": "—",
+            "time": _estimate_drive_time(dist_km),
+            "distance": f"{dist_km} km",
+            "distFrom": prev_name,
+            "coord": [b_lng, b_lat],
+            "tags": [t.replace("_", " ") for t in (best.get("types") or [])[:3]],
+        })
+
+        prev_lat, prev_lng = b_lat, b_lng
+        prev_name = best.get("name", "")
+
+    return jsonify({"stops": stops})
 
 
 # ── Fetch saved plans (for the "My Plans" tab, most recently saved first) ──

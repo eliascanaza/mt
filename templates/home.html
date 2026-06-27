@@ -669,7 +669,7 @@
       flex-direction: column;
       align-items: center;
       text-align: center;
-      padding: 60px 16px;
+      padding: 15px 16px;
       color: var(--g600)
     }
 
@@ -3646,6 +3646,24 @@
       }
     }
 
+    .toast-loading {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      background: var(--green);
+      pointer-events: none
+    }
+
+    .toast-loading-spin {
+      width: 13px;
+      height: 13px;
+      border: 2px solid rgba(255,255,255,.35);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      flex-shrink: 0
+    }
+
     /* ══════════ RESPONSIVE ══════════ */
     @media(max-width:1024px) {
       .nav {
@@ -3727,7 +3745,7 @@
       }
 
       .top10-btn {
-        padding: 6px 10px;
+        padding: 10px 20px;
         font-size: 11px;
         gap: 4px
       }
@@ -4261,11 +4279,15 @@
             </p>
           </div>
 
-          <div class="to-divider"><span class="to-label">OR</span></div>
+          <div class="to-divider">
+            <span class="to-label">
+              <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+              OR
+            </span>
+          </div>
 
           <!-- one-click trip ideas — same empty state, gone the moment a real search runs -->
           <div class="sugg-routes" id="sugg-routes">
-            <div class="sugg-routes-title">Recommended</div>
             <div class="sugg-routes-list" id="sugg-routes-list"></div>
           </div>
 
@@ -4864,26 +4886,50 @@
     const geocoder = new google.maps.Geocoder();
     const placesService = new google.maps.places.PlacesService(map);
 
-    // Types that are never valid tourist stops — filtered out before any result
-    // is considered, regardless of where the search came from.
+    // Service / non-destination types — any place carrying one of these is excluded.
     const EXCLUDED_PLACE_TYPES = new Set([
-      'travel_agency', 'real_estate_agency', 'insurance_agency',
-      'lawyer', 'doctor', 'dentist', 'hospital', 'pharmacy', 'physiotherapist',
-      'hair_care', 'beauty_salon', 'spa', 'gym', 'clothing_store',
-      'supermarket', 'grocery_or_supermarket', 'convenience_store',
+      // travel & tour services
+      'travel_agency', 'tour_operator',
+      // real estate / finance / legal
+      'real_estate_agency', 'insurance_agency', 'lawyer', 'finance', 'accounting', 'bank', 'atm',
+      // health
+      'doctor', 'dentist', 'hospital', 'pharmacy', 'physiotherapist', 'health',
+      // personal care
+      'hair_care', 'beauty_salon', 'spa', 'gym',
+      // retail & food service
+      'clothing_store', 'supermarket', 'grocery_or_supermarket', 'convenience_store',
+      'department_store', 'shopping_mall', 'store', 'furniture_store', 'home_goods_store',
+      'electronics_store', 'hardware_store', 'book_store', 'shoe_store', 'jewelry_store',
+      'restaurant', 'food', 'bar', 'cafe', 'bakery', 'meal_takeaway', 'meal_delivery',
+      'night_club', 'liquor_store',
+      // transport & automotive
       'gas_station', 'car_repair', 'car_dealer', 'car_rental', 'car_wash',
-      'bank', 'atm', 'finance', 'accounting',
+      'transit_station', 'bus_station', 'train_station', 'subway_station', 'airport',
+      // lodging
+      'lodging',
+      // education & government
       'school', 'university', 'library',
       'post_office', 'local_government_office', 'courthouse', 'embassy', 'city_hall',
-      'funeral_home', 'cemetery',
-      'moving_company', 'storage',
+      'police', 'fire_station',
+      // misc services
+      'funeral_home', 'cemetery', 'moving_company', 'storage', 'laundry',
+    ]);
+
+    // At least one of these types must be present for a place to count as a
+    // genuine tourist destination (physical landmark, nature, culture, etc.).
+    const TOURIST_PLACE_TYPES = new Set([
+      'tourist_attraction', 'natural_feature', 'park', 'museum', 'art_gallery',
+      'amusement_park', 'zoo', 'aquarium', 'stadium', 'place_of_worship',
+      'church', 'mosque', 'synagogue', 'hindu_temple', 'campground',
+      'rv_park', 'bowling_alley', 'movie_theater',
     ]);
 
     function isTouristPlace(r) {
-      if (!r.rating || r.rating < 3.5) return false;              // no rating or too low
-      if (!r.user_ratings_total || r.user_ratings_total < 10) return false; // too few reviews
+      if (!r.rating || r.rating < 3.5) return false;
+      if (!r.user_ratings_total || r.user_ratings_total < 10) return false;
       const types = r.types || [];
-      if (types.some(function(t) { return EXCLUDED_PLACE_TYPES.has(t); })) return false;
+      if (types.some(t => EXCLUDED_PLACE_TYPES.has(t))) return false;
+      if (!types.some(t => TOURIST_PLACE_TYPES.has(t))) return false;
       return true;
     }
 
@@ -4993,50 +5039,42 @@
       _stopsPool.sort(function(a, b) { return closestPathIdx(a.coord) - closestPathIdx(b.coord); });
     }
 
-    // Samples points evenly along the driven path and, for each, asks Google
-    // Places for the best-rated tourist attraction nearby — giving stops that
-    // are both real places and already ordered along the route.
+    // Asks the backend to sample the driven path and find the best tourist
+    // attraction per segment — deduplication, filtering, and Places API calls
+    // all happen server-side via /api/route-stops.
     async function findTouristStopsAlongRoute(path, maxStops = 5) {
       if (!path || path.length < 2) return [];
 
-      const fractions = Array.from({ length: maxStops }, (_, i) => (i + 1) / (maxStops + 1));
-      const sampleIdx = [...new Set(fractions.map(f => Math.min(path.length - 1, Math.round(f * (path.length - 1)))))];
+      // Thin path to ≤150 points so the request body stays small
+      const thin = Math.max(1, Math.ceil(path.length / 150));
+      const thinPath = path
+        .filter((_, i) => i % thin === 0)
+        .map(pt => ({ lat: pt.lat(), lng: pt.lng() }));
 
-      const seenIds = new Set();
-      let prevCoord = FROM.coord, prevName = currentFrom;
-
-      for (const idx of sampleIdx) {
-        const pt = path[idx];
-        const results = [...await nearbyTouristAttractions(pt)].sort((a, b) => (b.rating || 0) - (a.rating || 0));
-        const best = results.find(r => r.place_id && !seenIds.has(r.place_id));
-        if (!best) continue;
-        seenIds.add(best.place_id);
-
-        const loc = best.geometry.location;
-        const coord = [loc.lng(), loc.lat()];
-        const distKm = Math.round(haversineKm(prevCoord, coord));
-
-        const cat = classifyPlace(best);
-        STOPS_PLACES.push({
-          id: STOPS_PLACES.length + 1,
-          emoji: PLACE_CAT_EMOJI[cat] || '📍',
-          name: best.name,
-          cat,
-          desc: best.vicinity || '',
-          rating: best.rating ? best.rating.toFixed(1) : '—',
-          reviews: (best.user_ratings_total || 0).toLocaleString(),
-          loc: best.vicinity || '',
-          alt: '—', altNote: 'Along the route', temp: '—',
-          time: estimateDriveTime(distKm),
-          distance: `${distKm} km`, distFrom: prevName,
-          bg: STOP_BGS[STOPS_PLACES.length % STOP_BGS.length],
-          coord,
-          tags: (best.types || []).slice(0, 3).map(t => t.replace(/_/g, ' ')),
+      let data;
+      try {
+        const res = await fetch('/api/route-stops', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            path: thinPath,
+            max_stops: maxStops,
+            from: { name: FROM.name || currentFrom, lat: FROM.coord[1], lng: FROM.coord[0] },
+            to:   { name: TO.name  || currentTo,   lat: TO.coord[1],   lng: TO.coord[0]   },
+            via:  STOPS.map(s => ({ name: s.name, lat: s.coord[1], lng: s.coord[0] })),
+          }),
         });
-        prevCoord = coord;
-        prevName = best.name;
+        data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'route-stops failed');
+      } catch (err) {
+        showToast('Could not load stops along the route');
+        return [];
       }
-      return STOPS_PLACES;
+
+      return (data.stops || []).map((s, i) => ({
+        ...s,
+        bg: STOP_BGS[i % STOP_BGS.length],
+      }));
     }
 
     // (Re)builds the numbered map markers for the current STOPS list. While
@@ -5138,51 +5176,45 @@
           if (!lastRoutePath) return;
 
           if (newCount > _stopsPool.length) {
-            const need = newCount - _stopsPool.length;
-
-            // Use STOP_PLACES as the source of search anchors — search near
-            // each known place in parallel to find more attractions around them.
-            // Fall back to the route midpoint when STOP_PLACES is empty.
-            const seenNames = new Set(STOP_PLACES.map(function(s) { return s.name; }));
-            const searchPts = STOP_PLACES.length
-              ? STOP_PLACES.map(function(s) { return toLatLng(s.coord); })
-              : [lastRoutePath[Math.floor(lastRoutePath.length / 2)]].filter(Boolean);
-
-            const allResults = (await Promise.all(searchPts.map(function(pt) {
-              return nearbyTouristAttractions(pt);
-            }))).flat().sort(function(a, b) { return (b.rating || 0) - (a.rating || 0); });
-
-            // Deduplicate by place_id, skip places already in STOP_PLACES,
-            // and require geometry (isTouristPlace already ran inside nearbyTouristAttractions).
-            const seenIds = new Set();
-            const candidates = allResults.filter(function(r) {
-              if (!r.place_id || !r.geometry || seenIds.has(r.place_id) || seenNames.has(r.name)) return false;
-              seenIds.add(r.place_id);
-              return true;
-            });
-
-            for (var ci = 0; ci < Math.min(need, candidates.length); ci++) {
-              const best = candidates[ci];
-              seenNames.add(best.name);
-              const loc = best.geometry.location;
-              const coord = [loc.lng(), loc.lat()];
-              const cat = classifyPlace(best);
-              const prev = _stopsPool.length ? _stopsPool[_stopsPool.length - 1] : null;
-              const distKm = Math.round(haversineKm(prev ? prev.coord : FROM.coord, coord));
-              _stopsPool.push({
-                id: _stopsPool.length + 1,
-                emoji: PLACE_CAT_EMOJI[cat] || '📍', name: best.name, cat,
-                desc: best.vicinity || '',
-                rating: best.rating ? best.rating.toFixed(1) : '—',
-                reviews: (best.user_ratings_total || 0).toLocaleString(),
-                loc: best.vicinity || '', alt: '—', altNote: 'Along the route', temp: '—',
-                time: estimateDriveTime(distKm), distance: distKm + ' km',
-                distFrom: prev ? prev.name : currentFrom,
-                bg: STOP_BGS[_stopsPool.length % STOP_BGS.length],
-                coord,
-                tags: (best.types || []).slice(0, 3).map(function(t) { return t.replace(/_/g, ' '); }),
+            // Ask the backend for up to 15 stops along the full route so the
+            // pool can satisfy several future slider increments without another
+            // network call. Merge any places not already in the pool.
+            showLoadingToast('Finding more places…');
+            const thin = Math.max(1, Math.ceil(lastRoutePath.length / 150));
+            const thinPath = lastRoutePath
+              .filter((_, i) => i % thin === 0)
+              .map(pt => ({ lat: pt.lat(), lng: pt.lng() }));
+            let routeData;
+            try {
+              const res = await fetch('/api/route-stops', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  path: thinPath,
+                  max_stops: 15,
+                  from: { name: FROM.name || currentFrom, lat: FROM.coord[1], lng: FROM.coord[0] },
+                  to:   { name: TO.name  || currentTo,   lat: TO.coord[1],   lng: TO.coord[0]   },
+                  via:  STOPS.map(s => ({ name: s.name, lat: s.coord[1], lng: s.coord[0] })),
+                }),
               });
+              routeData = await res.json();
+              if (!res.ok) throw new Error(routeData.error || 'route-stops failed');
+            } catch (err) {
+              hideLoadingToast();
+              showToast('Could not load more places');
+              return;
             }
+            hideLoadingToast();
+
+            const seenNames = new Set(_stopsPool.map(s => s.name));
+            const newFromServer = (routeData.stops || []).filter(s => !seenNames.has(s.name));
+            newFromServer.forEach((s, i) => {
+              _stopsPool.push({
+                ...s,
+                id: _stopsPool.length + 1,
+                bg: STOP_BGS[_stopsPool.length % STOP_BGS.length],
+              });
+            });
             sortPoolByRouteOrder();
             STOP_PLACES = [..._stopsPool];
           }
@@ -5634,6 +5666,7 @@
         return { name: r.rname, av: r.av, ac: r.ac, rating: i % 2 ? 4.5 : 5, source: sources[i], text: r.rtxt };
       });
       ppRenderComments(comments);
+      setPpButton('Got it', 'close-pp');
       openModal('pp-modal');
     }
 
@@ -5667,6 +5700,7 @@
       loadClimateIntoPopup(popupCoord);
       if (!mt) loadPlaceInfoIntoPopup(d.name);
       ppRenderComments(d.comments || []);
+      setPpButton('Got it', 'close-pp');
       openModal('pp-modal');
     }
     function closePP() {
@@ -6250,6 +6284,14 @@
       setTimeout(() => google.maps.event.trigger(map, 'resize'), 340);
     }
 
+    function setPpButton(label, action, place) {
+      const btn = document.getElementById('pp-got-it-btn');
+      if (!btn) return;
+      btn.textContent = label;
+      btn.dataset.action = action;
+      if (place) btn.dataset.place = place; else delete btn.dataset.place;
+    }
+
     function openPlacePopupFromRanking(index) {
       const item = currentRankingList[index];
       if (!item) return;
@@ -6286,6 +6328,7 @@
         return { name: r.rname, av: r.av, ac: r.ac, rating: i % 2 ? 4.5 : 5, source: sources[i], text: r.rtxt };
       });
       ppRenderComments(comments);
+      setPpButton('Let\'s Explore!', 'pp-start-exploring', item.n);
       openModal('pp-modal');
     }
 
@@ -6322,6 +6365,7 @@
         return { name: r.rname, av: r.av, ac: r.ac, rating: i % 2 ? 4.5 : 5, source: sources[i], text: r.rtxt };
       });
       ppRenderComments(comments);
+      setPpButton('Got it', 'close-pp');
       openModal('pp-modal');
     }
 
@@ -6819,7 +6863,16 @@
         ? `https://maps.apple.com/?saddr=${origin}&daddr=${[...stopCoords, destination].join('+to:')}&dirflg=d`
         : `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&waypoints=${stopCoords.join('|')}&travelmode=driving`;
 
-      window.open(url, '_blank');
+      // Use programmatic <a> click instead of window.open so mobile browsers
+      // (iOS Safari popup blocker) don't swallow the navigation, and so iOS
+      // can intercept the maps.apple.com URL and deep-link to the native app.
+      const a = document.createElement('a');
+      a.href = url;
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
     }
 
     /* ══ SUGGESTED ROUTES (empty-state shortcuts) ══ */
@@ -6871,8 +6924,6 @@
       const fromVal = document.getElementById('from-input').value.trim();
       const toVal = document.getElementById('to-input').value.trim();
       if (!fromVal) { showToast('Please enter a starting location'); return; }
-
-      showToast(toVal ? `Finding route: ${fromVal} → ${toVal}` : `Exploring around ${fromVal}`);
 
       let fromGeo, toGeo;
       try {
@@ -7070,9 +7121,7 @@
         </div>
         <div id="nearby-list" style="padding-bottom:56px"><p style="font-size:13px;color:var(--g600);padding:20px 0;text-align:center;">Finding tourist places nearby…</p></div>`;
 
-      if (window.innerWidth > 767) {
-        document.getElementById('make-route-btn').classList.add('show');
-      }
+      document.getElementById('make-route-btn').classList.remove('show');
       plotNearbyOnMap([]);
     }
 
@@ -7161,12 +7210,14 @@
     async function loadSuggestedPlaces(fromCoord, fromName) {
       const seq = ++suggestionRequestSeq;
       const [lng, lat] = fromCoord;
+      showLoadingToast('Searching places…');
       let data;
       try {
         const res = await fetch(`/api/suggestion?lat=${lat}&lng=${lng}&name=${encodeURIComponent(fromName)}`);
         data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Could not load nearby places');
       } catch (err) {
+        hideLoadingToast();
         if (seq !== suggestionRequestSeq) return; // a newer search superseded this one
         NEARBY_PLACES = [];
         renderNearbyList(NEARBY_PLACES);
@@ -7174,11 +7225,12 @@
         showToast(err.message || 'Could not load nearby places');
         return;
       }
+      hideLoadingToast();
       if (seq !== suggestionRequestSeq) return;
       NEARBY_PLACES = data.results || [];
       renderNearbyList(NEARBY_PLACES);
       showExplorePlacesRange(NEARBY_PLACES.length);
-      if (window.innerWidth <= 767 && NEARBY_PLACES.length) {
+      if (NEARBY_PLACES.length) {
         document.getElementById('make-route-btn').classList.add('show');
       }
     }
@@ -7206,11 +7258,19 @@
           showToast('No route available through these places');
           return;
         }
-        // Route loaded — hide Make a route, reveal Start on mobile
+        // Route loaded — update state so Start Trip can open Maps correctly
         if (btn) { btn.classList.remove('show'); }
+        const route = result.routes[0];
+        // Rebuild STOPS in Directions' optimized order so the Maps URL includes them
+        const orderedPlaces = route.waypoint_order.map(i => places[i]);
+        STOPS = orderedPlaces.map((p, idx) => ({ ...p, id: idx + 1 }));
+        // Circular route returns to FROM — set TO so confirmStartTrip can build the URL
+        TO.coord = FROM.coord;
+        TO.name = FROM.name;
+        hasRoute = true;
+        document.body.classList.add('has-route');
         const startBtn = document.getElementById('start-trip-btn');
         if (startBtn) { startBtn.style.display = 'flex'; }
-        const route = result.routes[0];
         drawRoutePath(route.overview_path);
         const { distanceText, durationText } = routeTotals(route);
         showToast(`Suggested route: ${distanceText} · ${durationText} round trip`);
@@ -7435,6 +7495,20 @@
       _tt = setTimeout(() => t && t.remove(), 2800);
     }
 
+    function showLoadingToast(msg) {
+      hideLoadingToast();
+      const t = document.createElement('div');
+      t.className = 'toast toast-loading';
+      t.id = 'loading-toast';
+      t.innerHTML = `<span class="toast-loading-spin"></span>${msg}`;
+      document.body.appendChild(t);
+    }
+
+    function hideLoadingToast() {
+      const t = document.getElementById('loading-toast');
+      if (t) t.remove();
+    }
+
     function openSavePlan() {
       if (!CURRENT_USER) {
         pendingSaveAfterSignIn = true;
@@ -7560,6 +7634,7 @@
       document.getElementById('plb-dismiss').addEventListener('click', () => el.remove());
 
       document.getElementById('plb-btn').addEventListener('click', function() {
+        if (!CURRENT_USER) { openSignIn(); return; }
         if (this.classList.contains('liked')) return;
         total += 1;
         const newExtra = extra + 1;
@@ -7616,6 +7691,16 @@
       if (a === 'pp-prev')              { ppPrevImage(e);                                 return; }
       if (a === 'pp-next')              { ppNextImage(e);                                 return; }
       if (a === 'close-pp')             { closePP();                                      return; }
+      if (a === 'pp-start-exploring')   {
+        const place = el.dataset.place || '';
+        closePP();
+        if (place) {
+          document.getElementById('from-input').value = place;
+          document.getElementById('to-input').value = '';
+          doSearch();
+        }
+        return;
+      }
       if (a === 'open-food-panel')      { openFoodPanel();                                return; }
       if (a === 'close-food-panel')     { closeFoodPanel();                               return; }
       if (a === 'pp-switch-tab')        { ppSwitchTab(el.dataset.tab);                   return; }

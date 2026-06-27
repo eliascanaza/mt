@@ -723,6 +723,93 @@
       margin-top: 6px;
     }
 
+    /* ── Plan action popup ── */
+    .pa-overlay {
+      position: fixed; inset: 0; z-index: 800;
+      background: rgba(0,0,0,.45);
+      display: flex; align-items: flex-end; justify-content: center;
+      opacity: 0; pointer-events: none; transition: opacity .2s
+    }
+
+    .pa-overlay.open {
+      opacity: 1; pointer-events: auto
+    }
+
+    .pa-modal {
+      background: var(--white);
+      border-radius: 20px 20px 0 0;
+      width: 100%; max-width: 480px;
+      padding: 8px 20px 32px;
+      transform: translateY(100%);
+      transition: transform .3s cubic-bezier(.32,1,.64,1)
+    }
+
+    .pa-overlay.open .pa-modal {
+      transform: translateY(0)
+    }
+
+    .pa-handle {
+      width: 36px; height: 4px; border-radius: 99px;
+      background: var(--g300); margin: 10px auto 20px
+    }
+
+    .pa-plan-title {
+      font-size: 16px; font-weight: 800; color: var(--black);
+      margin-bottom: 4px
+    }
+
+    .pa-plan-route {
+      font-size: 12px; color: var(--g500);
+      display: flex; align-items: center; gap: 6px;
+      flex-wrap: wrap; margin-bottom: 20px
+    }
+
+    .pa-plan-route svg {
+      width: 11px; height: 11px; flex-shrink: 0;
+      stroke: var(--g400); fill: none; stroke-width: 2; stroke-linecap: round
+    }
+
+    .pa-actions {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 10px
+    }
+
+    .pa-btn {
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 10px;
+      padding: 18px 12px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--r-lg);
+      background: var(--g50);
+      cursor: pointer; font-family: var(--font);
+      transition: background .15s, border-color .15s, transform .15s
+    }
+
+    .pa-btn:hover { background: var(--white); border-color: var(--g300); transform: translateY(-2px) }
+    .pa-btn:active { transform: scale(.97) }
+
+    .pa-btn-icon {
+      width: 44px; height: 44px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center
+    }
+
+    .pa-btn-icon svg {
+      width: 22px; height: 22px;
+      fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round
+    }
+
+    .pa-btn.share .pa-btn-icon { background: #eff6ff }
+    .pa-btn.share .pa-btn-icon svg { stroke: #1d4ed8 }
+    .pa-btn.open-map .pa-btn-icon { background: #f0fdf4 }
+    .pa-btn.open-map .pa-btn-icon svg { stroke: #15803d }
+
+    .pa-btn-label {
+      font-size: 13px; font-weight: 700; color: var(--black)
+    }
+
+    .pa-btn-sub {
+      font-size: 11px; color: var(--g500); text-align: center; margin-top: -4px
+    }
+
     /* ── HISTORY ── */
     .hist-stats {
       display: grid;
@@ -1537,9 +1624,15 @@
       const distance = plan.distance_km ? `${Number(plan.distance_km).toLocaleString()} km` : '—';
       const hasRoute = plan.from_name && plan.to_name;
       const title = (plan.title || (hasRoute ? `${shortName(plan.from_name)} trip` : 'Saved plan')).replace(/</g, '&lt;');
-      const fromTo = (hasRoute ? `${shortName(plan.from_name)} → ${shortName(plan.to_name)}` : title).replace(/'/g, "\\'");
+      const via = (plan.stops_snapshot || []).map(p => p.name).join('|');
+      const planData = JSON.stringify({
+        title: plan.title || title,
+        from: plan.from_name || '',
+        to: plan.to_name || '',
+        via,
+      }).replace(/"/g, '&quot;');
       return `
-        <div class="plan-card" data-action="open-plan" data-from-to="${fromTo.replace(/"/g, '&quot;')}">
+        <div class="plan-card" data-action="open-plan" data-plan="${planData}">
           <div class="plan-card-top">
             <div class="plan-card-title">${title}</div>
             <div class="plan-meta">
@@ -1558,6 +1651,34 @@
           ? `<div class="plan-route-h">${planRouteHtml(plan)}</div>`
           : `<div style="font-size:12px;color:var(--g600);">Route details unavailable</div>`}
         </div>`;
+    }
+
+    let _currentPlan = null;
+
+    function openPlanAction(planData) {
+      _currentPlan = planData;
+      const stops = planData.via ? planData.via.split('|').filter(Boolean) : [];
+      const routeParts = [planData.from, ...stops, planData.to].filter(Boolean);
+      document.getElementById('pa-plan-title').textContent = planData.title || 'Trip plan';
+      const routeEl = document.getElementById('pa-plan-route');
+      const PIN = `<svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>`;
+      routeEl.innerHTML = PIN + routeParts.map((p, i) =>
+        (i > 0 ? ' <span style="color:var(--g400)">›</span> ' : '') + shortName(p)
+      ).join('');
+      document.getElementById('pa-overlay').classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closePlanAction() {
+      document.getElementById('pa-overlay').classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    function planHomeUrl(plan) {
+      if (!plan.from || !plan.to) return '/home';
+      const params = new URLSearchParams({ from: plan.from, to: plan.to });
+      if (plan.via) params.set('via', plan.via);
+      return '/home?' + params.toString();
     }
 
     async function loadMyPlans() {
@@ -1792,7 +1913,35 @@
       if (a === 'export-data')     { showToast('Data export requested. Check your email.');                        return; }
       if (a === 'confirm-logout')  { confirmLogout();                                                              return; }
       if (a === 'delete-account')  { if (confirm('Are you sure? This cannot be undone.')) showToast('Account deletion requested.'); return; }
-      if (a === 'open-plan')       { showToast('Opening: ' + el.dataset.fromTo);                                   return; }
+      if (a === 'open-plan') {
+        try { openPlanAction(JSON.parse(el.dataset.plan)); } catch(err) { console.error('plan parse', err); }
+        return;
+      }
+      if (a === 'close-plan-action') {
+        if (e.target.id === 'pa-overlay') closePlanAction();
+        return;
+      }
+      if (a === 'plan-share') {
+        if (!_currentPlan) return;
+        const url = location.origin + planHomeUrl(_currentPlan);
+        const text = 'Check out my trip plan: ' + [_currentPlan.from, _currentPlan.to]
+          .filter(Boolean).map(p => shortName(p)).join(' → ');
+        if (navigator.share) {
+          navigator.share({ title: _currentPlan.title || 'Trip plan', text, url }).catch(() => {});
+        } else {
+          navigator.clipboard.writeText(url).then(() => {
+            showToast('Link copied to clipboard');
+            closePlanAction();
+          }).catch(() => showToast('Copy failed — ' + url));
+        }
+        return;
+      }
+      if (a === 'plan-open') {
+        if (!_currentPlan) return;
+        closePlanAction();
+        window.location.href = planHomeUrl(_currentPlan);
+        return;
+      }
     });
 
     /* ── Toggle checkboxes via change delegation ── */
@@ -1802,6 +1951,31 @@
     });
   </script>
   {% include "partials/_auth_script.html" %}
+
+  <!-- ══ PLAN ACTION POPUP ══ -->
+  <div class="pa-overlay" id="pa-overlay" data-action="close-plan-action">
+    <div class="pa-modal" id="pa-modal">
+      <div class="pa-handle"></div>
+      <div class="pa-plan-title" id="pa-plan-title"></div>
+      <div class="pa-plan-route" id="pa-plan-route"></div>
+      <div class="pa-actions">
+        <button class="pa-btn share" id="pa-share-btn" data-action="plan-share">
+          <div class="pa-btn-icon">
+            <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+          </div>
+          <div class="pa-btn-label">Share</div>
+          <div class="pa-btn-sub">WhatsApp, Messages…</div>
+        </button>
+        <button class="pa-btn open-map" id="pa-open-btn" data-action="plan-open">
+          <div class="pa-btn-icon">
+            <svg viewBox="0 0 24 24"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>
+          </div>
+          <div class="pa-btn-label">Open</div>
+          <div class="pa-btn-sub">Load on map</div>
+        </button>
+      </div>
+    </div>
+  </div>
 
   <!-- ══ LOGOUT CONFIRM ══ -->
   {% set lo_sub = "You'll be redirected to the home page. Your saved plans won't be affected." %}
