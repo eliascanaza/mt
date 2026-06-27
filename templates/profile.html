@@ -1625,11 +1625,33 @@
       const hasRoute = plan.from_name && plan.to_name;
       const title = (plan.title || (hasRoute ? `${shortName(plan.from_name)} trip` : 'Saved plan')).replace(/</g, '&lt;');
       const via = (plan.stops_snapshot || []).map(p => p.name).join('|');
+      // Include full stop data so home.html can reconstruct stops from stored
+      // coordinates without re-geocoding each place name.
       const planData = JSON.stringify({
         title: plan.title || title,
+        share_id: plan.share_id || '',
         from: plan.from_name || '',
+        from_lat: plan.from_lat,
+        from_lng: plan.from_lng,
         to: plan.to_name || '',
+        to_lat: plan.to_lat,
+        to_lng: plan.to_lng,
         via,
+        stops: (plan.stops_snapshot || []).map(p => ({
+          name:      p.name,
+          lat:       p.latitude,
+          lng:       p.longitude,
+          cat:       p.category || 'attraction',
+          tag:       p.tag || '',
+          emoji:     p.emoji || '📍',
+          desc:      p.description || '',
+          rating:    p.rating,
+          reviews:   p.reviews,
+          time:      p.drive_time || '—',
+          distance:  p.distance || '—',
+          distFrom:  p.dist_from || '',
+          tags:      p.tags || [],
+        })),
       }).replace(/"/g, '&quot;');
       return `
         <div class="plan-card" data-action="open-plan" data-plan="${planData}">
@@ -1678,6 +1700,11 @@
       if (!plan.from || !plan.to) return '/home';
       const params = new URLSearchParams({ from: plan.from, to: plan.to });
       if (plan.via) params.set('via', plan.via);
+      // Stash full stop objects in sessionStorage so home.html can restore
+      // them with exact coordinates rather than re-geocoding each name.
+      if (plan.stops && plan.stops.length) {
+        sessionStorage.setItem('pendingPlanStops', JSON.stringify(plan.stops));
+      }
       return '/home?' + params.toString();
     }
 
@@ -1923,9 +1950,12 @@
       }
       if (a === 'plan-share') {
         if (!_currentPlan) return;
-        const url = location.origin + planHomeUrl(_currentPlan);
-        const text = 'Check out my trip plan: ' + [_currentPlan.from, _currentPlan.to]
-          .filter(Boolean).map(p => shortName(p)).join(' → ');
+        const shareId = _currentPlan.share_id;
+        const url = shareId
+          ? location.origin + '/home?plan=' + encodeURIComponent(shareId)
+          : location.origin + planHomeUrl(_currentPlan);
+        const text = (_currentPlan.title || 'Trip plan') + ' — '
+          + [_currentPlan.from, _currentPlan.to].filter(Boolean).map(p => shortName(p)).join(' → ');
         if (navigator.share) {
           navigator.share({ title: _currentPlan.title || 'Trip plan', text, url }).catch(() => {});
         } else {
@@ -1934,6 +1964,33 @@
             closePlanAction();
           }).catch(() => showToast('Copy failed — ' + url));
         }
+        return;
+      }
+      if (a === 'plan-share-whatsapp') {
+        if (!_currentPlan) return;
+        const shareId = _currentPlan.share_id;
+        const url = shareId
+          ? location.origin + '/home?plan=' + encodeURIComponent(shareId)
+          : location.origin + planHomeUrl(_currentPlan);
+        const text = (_currentPlan.title || 'Trip plan') + ' — '
+          + [_currentPlan.from, _currentPlan.to].filter(Boolean).map(p => shortName(p)).join(' → ')
+          + ' ' + url;
+        const wa = document.createElement('a');
+        wa.href = 'https://wa.me/?text=' + encodeURIComponent(text);
+        wa.target = '_blank'; wa.rel = 'noopener noreferrer';
+        document.body.appendChild(wa); wa.click(); document.body.removeChild(wa);
+        return;
+      }
+      if (a === 'plan-copy-link') {
+        if (!_currentPlan) return;
+        const shareId = _currentPlan.share_id;
+        const url = shareId
+          ? location.origin + '/home?plan=' + encodeURIComponent(shareId)
+          : location.origin + planHomeUrl(_currentPlan);
+        navigator.clipboard.writeText(url).then(() => {
+          showToast('Link copied to clipboard');
+          closePlanAction();
+        }).catch(() => showToast('Copy failed — ' + url));
         return;
       }
       if (a === 'plan-open') {
@@ -1959,12 +2016,19 @@
       <div class="pa-plan-title" id="pa-plan-title"></div>
       <div class="pa-plan-route" id="pa-plan-route"></div>
       <div class="pa-actions">
-        <button class="pa-btn share" id="pa-share-btn" data-action="plan-share">
+        <button class="pa-btn share" data-action="plan-share-whatsapp">
           <div class="pa-btn-icon">
-            <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
           </div>
-          <div class="pa-btn-label">Share</div>
-          <div class="pa-btn-sub">WhatsApp, Messages…</div>
+          <div class="pa-btn-label">WhatsApp</div>
+          <div class="pa-btn-sub">Send via WhatsApp</div>
+        </button>
+        <button class="pa-btn share" data-action="plan-copy-link">
+          <div class="pa-btn-icon">
+            <svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+          </div>
+          <div class="pa-btn-label">Copy link</div>
+          <div class="pa-btn-sub">Share anywhere</div>
         </button>
         <button class="pa-btn open-map" id="pa-open-btn" data-action="plan-open">
           <div class="pa-btn-icon">

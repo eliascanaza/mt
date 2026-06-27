@@ -17,6 +17,7 @@ when MONGODB_URI isn't set.
 import os
 import json
 import re
+import uuid
 from datetime import datetime, timezone
 
 import certifi
@@ -60,11 +61,132 @@ def init_db():
     db.places.create_index("name")
     db.mt_places.create_index("city")
     db.saved_plans.create_index("user_id")
+    db.saved_plans.create_index("share_id")
     db.users.create_index("id", unique=True)
     db.users.create_index("google_sub", unique=True)
     db.users.create_index("email", unique=True)
     db.search_history.create_index("user_id")
     print("✅  Schema ready")
+
+
+# Fixed UUIDs for the curated plans shown on the main page.
+# These never change so index.html can hardcode the URLs.
+CURATED_PLAN_UUIDS = {
+    "tokyo-kyoto":         "11111111-0000-4000-8000-000000000001",
+    "athens-santorini":    "11111111-0000-4000-8000-000000000002",
+    "cusco-ollantaytambo": "11111111-0000-4000-8000-000000000003",
+    "capetown-knysna":     "11111111-0000-4000-8000-000000000004",
+    "rome-amalfi":         "11111111-0000-4000-8000-000000000005",
+    "cancun-chichen":      "11111111-0000-4000-8000-000000000006",
+}
+
+_CURATED_BASE_LIKES = {
+    CURATED_PLAN_UUIDS["tokyo-kyoto"]:         3_200_000,
+    CURATED_PLAN_UUIDS["athens-santorini"]:    2_700_000,
+    CURATED_PLAN_UUIDS["cusco-ollantaytambo"]: 1_400_000,
+    CURATED_PLAN_UUIDS["capetown-knysna"]:     4_100_000,
+    CURATED_PLAN_UUIDS["rome-amalfi"]:         5_800_000,
+    CURATED_PLAN_UUIDS["cancun-chichen"]:      2_300_000,
+}
+
+_CURATED_PLANS_DATA = [
+    {
+        "share_id": CURATED_PLAN_UUIDS["tokyo-kyoto"],
+        "title": "Tokyo → Kyoto",
+        "from_name": "Tokyo, Japan",   "from_lat": 35.6762, "from_lng": 139.6503,
+        "to_name":   "Kyoto, Japan",   "to_lat":   35.0116, "to_lng":  135.7681,
+        "transport_mode": "Train", "distance_km": 515, "duration_text": "2h 30m",
+        "stops_snapshot": [
+            {"name": "Hakone, Japan",  "latitude": 35.2330, "longitude": 139.1069, "category": "mountain", "emoji": "⛰️"},
+            {"name": "Osaka, Japan",   "latitude": 34.6937, "longitude": 135.5023, "category": "town",     "emoji": "🏘️"},
+        ],
+    },
+    {
+        "share_id": CURATED_PLAN_UUIDS["athens-santorini"],
+        "title": "Athens → Santorini",
+        "from_name": "Athens, Greece",    "from_lat": 37.9838, "from_lng": 23.7275,
+        "to_name":   "Santorini, Greece", "to_lat":   36.3932, "to_lng":  25.4615,
+        "transport_mode": "Plane", "distance_km": 270, "duration_text": "11h (ferry)",
+        "stops_snapshot": [
+            {"name": "Mykonos, Greece", "latitude": 37.4415, "longitude": 25.3285, "category": "beach", "emoji": "🏖️"},
+        ],
+    },
+    {
+        "share_id": CURATED_PLAN_UUIDS["cusco-ollantaytambo"],
+        "title": "Cusco → Ollantaytambo",
+        "from_name": "Cusco, Peru",         "from_lat": -13.5320, "from_lng": -71.9675,
+        "to_name":   "Ollantaytambo, Peru", "to_lat":  -13.2588, "to_lng":  -72.2626,
+        "transport_mode": "Train", "distance_km": 72, "duration_text": "2h",
+        "stops_snapshot": [
+            {"name": "Pisac, Peru", "latitude": -13.4147, "longitude": -71.8450, "category": "ancient", "emoji": "🏛️"},
+        ],
+    },
+    {
+        "share_id": CURATED_PLAN_UUIDS["capetown-knysna"],
+        "title": "Cape Town → Knysna",
+        "from_name": "Cape Town, South Africa", "from_lat": -33.9249, "from_lng": 18.4241,
+        "to_name":   "Knysna, South Africa",    "to_lat":  -34.0360, "to_lng":  23.0473,
+        "transport_mode": "Car", "distance_km": 490, "duration_text": "8h",
+        "stops_snapshot": [
+            {"name": "Hermanus, South Africa",  "latitude": -34.4187, "longitude": 19.2356, "category": "beach",  "emoji": "🏖️"},
+            {"name": "Mossel Bay, South Africa", "latitude": -34.1831, "longitude": 22.1396, "category": "beach",  "emoji": "🏖️"},
+        ],
+    },
+    {
+        "share_id": CURATED_PLAN_UUIDS["rome-amalfi"],
+        "title": "Rome → Amalfi Coast",
+        "from_name": "Rome, Italy",         "from_lat": 41.9028, "from_lng": 12.4964,
+        "to_name":   "Amalfi Coast, Italy", "to_lat":   40.6340, "to_lng":  14.6028,
+        "transport_mode": "Train", "distance_km": 280, "duration_text": "5h",
+        "stops_snapshot": [
+            {"name": "Naples, Italy",  "latitude": 40.8518, "longitude": 14.2681, "category": "town",   "emoji": "🏘️"},
+            {"name": "Pompeii, Italy", "latitude": 40.7461, "longitude": 14.4989, "category": "ancient","emoji": "🏛️"},
+        ],
+    },
+    {
+        "share_id": CURATED_PLAN_UUIDS["cancun-chichen"],
+        "title": "Cancún → Chichén Itzá",
+        "from_name": "Cancún, Mexico",       "from_lat": 21.1619, "from_lng": -86.8515,
+        "to_name":   "Chichén Itzá, Mexico", "to_lat":  20.6843, "to_lng":  -88.5678,
+        "transport_mode": "Car", "distance_km": 200, "duration_text": "3h",
+        "stops_snapshot": [
+            {"name": "Tulum, Mexico",      "latitude": 20.2114, "longitude": -87.4654, "category": "ancient", "emoji": "🏛️"},
+            {"name": "Valladolid, Mexico", "latitude": 20.6894, "longitude": -88.2020, "category": "town",    "emoji": "🏘️"},
+        ],
+    },
+]
+
+
+def ensure_curated_plans():
+    """Upsert the six curated homepage plans by share_id.
+    Safe to call on every startup — never touches user-created plans.
+    Likes use $setOnInsert so the running count is never reset."""
+    db = get_db()
+    for plan in _CURATED_PLANS_DATA:
+        db.saved_plans.update_one(
+            {"share_id": plan["share_id"]},
+            {
+                "$set": {
+                    **plan,
+                    "id": 0, "user_id": 0, "user_email": "curated@exploremore.app",
+                    "notes": "", "created_at": datetime.now(timezone.utc),
+                },
+                "$setOnInsert": {"likes": _CURATED_BASE_LIKES.get(plan["share_id"], 0)},
+            },
+            upsert=True,
+        )
+
+
+def like_plan(share_id: str) -> int:
+    """Increment the likes counter for a plan. Returns the new likes count."""
+    db = get_db()
+    doc = db.saved_plans.find_one_and_update(
+        {"share_id": share_id},
+        {"$inc": {"likes": 1}},
+        return_document=True,
+        projection={"likes": 1},
+    )
+    return doc["likes"] if doc else 0
 
 
 def _next_id(db, collection: str) -> int:
@@ -920,21 +1042,26 @@ def save_full_plan(title: str, from_name: str, from_lat: float, from_lng: float,
                     to_name: str, to_lat: float, to_lng: float,
                     user_id: int = 1111, user_email: str = "test@gmail.com",
                     distance_km: int = None, duration_text: str = None,
-                    transport_mode: str = None, places: list = None, notes: str = ""):
+                    transport_mode: str = None, places: list = None, notes: str = "",
+                    trip_start: str = None, trip_end: str = None):
     """Saves a plan built from a live search: the real from/to points and the
     Google Maps markers (tourist places, as {name, latitude, longitude}) found
-    along that route — associated with the given user."""
+    along that route — associated with the given user.
+    Returns (plan_id, share_id) where share_id is a UUID for public sharing."""
     db = get_db()
     new_id = _next_id(db, "saved_plans")
+    share_id = str(uuid.uuid4())
     db.saved_plans.insert_one({
-        "id": new_id, "user_id": user_id, "user_email": user_email, "title": title, "notes": notes,
+        "id": new_id, "share_id": share_id,
+        "user_id": user_id, "user_email": user_email, "title": title, "notes": notes,
         "from_name": from_name, "from_lat": from_lat, "from_lng": from_lng,
         "to_name": to_name, "to_lat": to_lat, "to_lng": to_lng,
         "distance_km": distance_km, "duration_text": duration_text,
         "transport_mode": transport_mode, "stops_snapshot": places or [],
-        "created_at": datetime.now(timezone.utc),
+        "trip_start": trip_start, "trip_end": trip_end,
+        "likes": 0, "created_at": datetime.now(timezone.utc),
     })
-    return new_id
+    return new_id, share_id
 
 
 def get_plans_for_user(user_id: int):
@@ -946,6 +1073,18 @@ def get_plans_for_user(user_id: int):
         d["stops_snapshot"] = d.get("stops_snapshot") or []
         plans.append(d)
     return plans
+
+
+def get_plan_by_share_id(share_id: str):
+    """Return a plan document by its public share UUID, or None if not found."""
+    db = get_db()
+    d = db.saved_plans.find_one({"share_id": share_id})
+    if not d:
+        return None
+    d = _strip_id(d)
+    d["created_at"] = _iso(d.get("created_at"))
+    d["stops_snapshot"] = d.get("stops_snapshot") or []
+    return d
 
 
 # Defaults shown by the static profile.html form fields before a user has

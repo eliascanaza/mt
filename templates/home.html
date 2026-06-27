@@ -3607,6 +3607,44 @@
       border-color: #1d6ff3;
     }
 
+    .sp-date-row {
+      padding: 0 28px 24px;
+    }
+
+    .sp-date-row label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--g600);
+      margin-bottom: 6px;
+      letter-spacing: .02em;
+      text-transform: uppercase;
+    }
+
+    .sp-date-pair {
+      display: flex;
+      gap: 10px;
+    }
+
+    .sp-date-pair input[type="date"] {
+      flex: 1;
+      min-width: 0;
+      padding: 10px 10px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--r-md);
+      font-family: var(--font);
+      font-size: 14px;
+      color: var(--black);
+      outline: none;
+      box-sizing: border-box;
+      transition: border-color .15s;
+      background: #fff;
+    }
+
+    .sp-date-pair input[type="date"]:focus {
+      border-color: #1d6ff3;
+    }
+
     .sp-confirm {
       color: #1d6ff3;
     }
@@ -4467,6 +4505,14 @@
         <label for="sp-name-input">Plan name</label>
         <input id="sp-name-input" type="text" placeholder="e.g. Patagonia road trip" maxlength="60" />
       </div>
+      <div class="sp-date-row">
+        <label>Trip dates <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--g400)">(optional)</span></label>
+        <div class="sp-date-pair">
+          <input type="date" id="sp-date-start" placeholder="From" />
+          <span> → </span>
+          <input type="date" id="sp-date-end" placeholder="To" />
+        </div>
+      </div>
       <div class="lo-actions">
         <button class="lo-cancel" id="sp-cancel-btn" data-action="close-save-plan">Cancel</button>
         <button class="lo-confirm sp-confirm" id="sp-confirm-btn" data-action="confirm-save-plan">Save</button>
@@ -4732,6 +4778,17 @@
     // When a plan deep-link includes ?via=Place1|Place2, these names are
     // geocoded and used as the route stops instead of running the auto-search.
     let pendingViaStops = [];
+
+    // Full stop objects from a saved plan (stashed in sessionStorage by the
+    // profile page). When present, stops are restored directly using their
+    // stored coordinates instead of re-geocoding each name.
+    let pendingViaStopsFull = (() => {
+      try {
+        const raw = sessionStorage.getItem('pendingPlanStops');
+        if (raw) { sessionStorage.removeItem('pendingPlanStops'); return JSON.parse(raw); }
+      } catch (e) {}
+      return [];
+    })();
 
     const SVG_STAR = `<svg viewBox="0 0 24 24" style="width:10px;height:10px;fill:var(--black);stroke:none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`;
     const SVG_STAR_MD = `<svg viewBox="0 0 24 24" style="width:11px;height:11px;fill:var(--black);stroke:none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`;
@@ -5327,38 +5384,35 @@
     // Landmark icon lookup for route-stop and nearby-place markers.
     // Keys are lowercase substrings matched against place.name; values are
     // paths relative to /assets/img/icons/markers/ (no leading slash, no .png).
-    // top10/ = worldwide Top10 icons; top20/ = extended famous-landmark icons.
     const LANDMARK_ICON = {
-      // ── top20/ ───────────────────────────────────────────────────────────
-      'louvre': 'top20/louvre-pyramid',
-      "st. peter's": 'top20/st-peters-basilica',
-      'saint peter': 'top20/st-peters-basilica',
-      'niagara': 'top20/niagara-falls',
-      'temple of heaven': 'top20/temple-of-heaven',
-      'las vegas': 'top20/las-vegas',
-      'christ the redeemer': 'top20/christ-the-redeemer',
-      'corcovado': 'top20/christ-the-redeemer',
-      'acropolis': 'top20/acropolis',
-      'parthenon': 'top20/acropolis',
-      'versailles': 'top20/versailles',
-      'chichen itza': 'top20/chichen-itza',
-      'chichén itzá': 'top20/chichen-itza',
-      // ── top10/ ───────────────────────────────────────────────────────────
-      'eiffel': 'top10/eiffel-tower',
-      'colosseum': 'top10/colosseum',
-      'coliseum': 'top10/colosseum',
-      'taj mahal': 'top10/taj-mahal',
-      'statue of liberty': 'top10/statue-of-liberty',
-      'machu picchu': 'top10/machu-picchu',
-      'great wall': 'top10/great-wall-of-china',
-      'pyramids of giza': 'top10/pyramids-of-giza',
-      'pyramid of giza': 'top10/pyramids-of-giza',
-      'great pyramid': 'top10/pyramids-of-giza',
-      'sphinx': 'top10/pyramids-of-giza',
-      'times square': 'top10/times-square',
-      'kyoto': 'top10/kyoto-temples',
-      'fushimi inari': 'top10/kyoto-temples',
-      'grand bazaar': 'top10/grand-bazaar',
+      'louvre': 'top/louvre-pyramid',
+      "st. peter's": 'top/st-peters-basilica',
+      'saint peter': 'top/st-peters-basilica',
+      'niagara': 'top/niagara-falls',
+      'temple of heaven': 'top/temple-of-heaven',
+      'las vegas': 'top/las-vegas',
+      'christ the redeemer': 'top/christ-the-redeemer',
+      'corcovado': 'top/christ-the-redeemer',
+      'acropolis': 'top/acropolis',
+      'parthenon': 'top/acropolis',
+      'versailles': 'top/versailles',
+      'chichen itza': 'top/chichen-itza',
+      'chichén itzá': 'top/chichen-itza',
+      'eiffel': 'top/eiffel-tower',
+      'colosseum': 'top/colosseum',
+      'coliseum': 'top/colosseum',
+      'taj mahal': 'top/taj-mahal',
+      'statue of liberty': 'top/statue-of-liberty',
+      'machu picchu': 'top/machu-picchu',
+      'great wall': 'top/great-wall-of-china',
+      'pyramids of giza': 'top/pyramids-of-giza',
+      'pyramid of giza': 'top/pyramids-of-giza',
+      'great pyramid': 'top/pyramids-of-giza',
+      'sphinx': 'top/pyramids-of-giza',
+      'times square': 'top/times-square',
+      'kyoto': 'top/kyoto-temples',
+      'fushimi inari': 'top/kyoto-temples',
+      'grand bazaar': 'top/grand-bazaar',
     };
 
     // Category → marker image file inside /assets/img/icons/markers/general/.
@@ -5461,6 +5515,18 @@
       return `<img src="/assets/img/icons/${file}.png" alt="${mode}" />`;
     }
 
+    // Returns the landmark icon src if the place name matches LANDMARK_ICON, or
+    // null when no match exists (caller keeps the default marker).
+    function resolveLandmarkIconSrc(name) {
+      const nameLower = (name || '').toLowerCase();
+      const key = Object.keys(LANDMARK_ICON).find(k => nameLower.includes(k));
+      return key ? `/assets/img/icons/markers/${LANDMARK_ICON[key]}.png` : null;
+    }
+
+    // True while FROM.name resolves to a known landmark — prevents the
+    // transport-mode icon from overwriting the landmark icon on mode change.
+    let fromIsLandmark = false;
+
     function requestRoute(mode, { useStops = true, onResult } = {}) {
       const routeStops = mode === 'Plane' || !useStops ? [] : visibleStopsForFilter();
       // Only safe to let Directions reorder the stops (and write that order
@@ -5519,9 +5585,24 @@
     const fromMarker = new AdvancedMarkerElement({ position: toLatLng(FROM.coord), content: fe });
 
     // Keeps the FROM marker's icon in sync with the "Travel by" selection.
+    // Skipped when FROM is a known landmark — landmark icon takes priority.
     function updateFromMarkerIcon(mode) {
+      if (fromIsLandmark) return;
       const wrap = fe.querySelector('.m-start');
       if (wrap) wrap.innerHTML = fromMarkerIconHtml(mode);
+    }
+
+    // Swaps the TO marker between the default pin and a landmark icon.
+    function updateToMarkerIcon(landmarkSrc) {
+      const wrap = te.querySelector('.m-end');
+      if (!wrap) return;
+      if (landmarkSrc) {
+        wrap.style.cssText = 'background:none;border:none;box-shadow:none;width:36px;height:36px';
+        wrap.innerHTML = `<img src="${landmarkSrc}" alt="" style="width:36px;height:36px;object-fit:contain;filter:drop-shadow(0 2px 4px rgba(0,0,0,.35))">`;
+      } else {
+        wrap.style.cssText = '';
+        wrap.innerHTML = `<svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:#fff;stroke:none"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z"/></svg>`;
+      }
     }
 
     const te = document.createElement('div');
@@ -6226,7 +6307,8 @@
           var parts = [s.summary];
           if (s.what_to_do && s.what_to_do.length) parts.push(section('What to do', s.what_to_do));
           if (s.what_to_avoid && s.what_to_avoid.length) parts.push(section('What to avoid', s.what_to_avoid));
-          if (s.traveler_quotes && s.traveler_quotes.length) parts.push(section('What other travelers say', s.traveler_quotes.map(function(q) { return '“' + q + '”'; })));
+          if (s.how_to_get_there && s.how_to_get_there.length) parts.push(section('How to get there', s.how_to_get_there));
+          if (s.traveler_quotes && s.traveler_quotes.length) parts.push(section('What other travelers say', s.traveler_quotes.map(function(q) { return '”' + q + '”'; })));
           targetEl.innerHTML = parts.join('<br><br>');
         })
         .catch(function() { targetEl.innerHTML = ''; });
@@ -6450,7 +6532,7 @@
         el.className = 'ww-marker-wrap';
         const shortName = item.n.split(',')[0].split('·')[0].trim();
         const iconFile = WORLDWIDE_MARKER_ICON[shortName];
-        const iconSrc = iconFile ? `/assets/img/icons/markers/top10/${iconFile}.png` : MARKER_ICON_SRC;
+        const iconSrc = iconFile ? `/assets/img/icons/markers/top/${iconFile}.png` : MARKER_ICON_SRC;
         el.innerHTML = `<div class="ww-marker-icon"><img src="${iconSrc}" alt=""><span class="ww-marker-badge">${i + 1}</span></div><div class="ww-marker-lbl">${shortName}</div>`;
         el.addEventListener('click', e => {
           e.stopPropagation();
@@ -6947,6 +7029,10 @@
       fromMarker.position = toLatLng(FROM.coord);
       fromMarker.map = map;
       fe.querySelector('.m-lbl').textContent = fromVal;
+      const _fromLandmarkSrc = resolveLandmarkIconSrc(fromVal);
+      fromIsLandmark = !!_fromLandmarkSrc;
+      const _fromWrap = fe.querySelector('.m-start');
+      if (_fromWrap) _fromWrap.innerHTML = _fromLandmarkSrc ? `<img src="${_fromLandmarkSrc}" alt="${fromVal}">` : fromMarkerIconHtml(currentTransportMode);
       currentFrom = fromVal;
       PLACE_DATA.from.name = fromVal;
 
@@ -6976,6 +7062,7 @@
         toMarker.position = toLatLng(TO.coord);
         toMarker.map = map;
         te.querySelector('.m-lbl').textContent = toVal;
+        updateToMarkerIcon(resolveLandmarkIconSrc(toVal));
         currentTo = toVal;
         PLACE_DATA.to.name = toVal;
         hasRoute = true;
@@ -7000,11 +7087,31 @@
                 distance_km: Math.round(routeMeters / 1000),
               });
 
-              // If the deep-link specified via stops (from a plan card), geocode
-              // them and use those as the route stops. Otherwise search Google
-              // Places for tourist spots along the route.
-              const _via = pendingViaStops.splice(0);
-              if (_via.length) {
+              // If the deep-link came from a saved plan, restore its stops.
+              // Priority: full stop objects from sessionStorage (exact coords,
+              // no geocoding). Fallback: geocode names from ?via= param.
+              const _viaFull = pendingViaStopsFull.splice(0);
+              const _via     = pendingViaStops.splice(0);
+              if (_viaFull.length) {
+                _stopsPool = _viaFull.map((s, i) => ({
+                  id: i + 1,
+                  emoji:   s.emoji   || '📍',
+                  name:    s.name,
+                  cat:     s.cat     || 'attraction',
+                  tag:     s.tag     || '',
+                  desc:    s.desc    || s.name,
+                  rating:  s.rating  || '—',
+                  reviews: s.reviews || '—',
+                  loc:     s.desc    || s.name,
+                  alt: '—', altNote: 'Along the route', temp: '—',
+                  time:     s.time     || '—',
+                  distance: s.distance || '—',
+                  distFrom: s.distFrom || '',
+                  bg:    STOP_BGS[i % STOP_BGS.length],
+                  coord: [parseFloat(s.lng), parseFloat(s.lat)],
+                  tags:  s.tags || [],
+                }));
+              } else if (_via.length) {
                 const viaGeos = await Promise.all(_via.map(name => geocodePlace(name).catch(() => null)));
                 _stopsPool = viaGeos
                   .filter(Boolean)
@@ -7060,6 +7167,10 @@
         document.getElementById('transport-box').style.display = 'none';
         hidePlacesRangeBox();
         toMarker.map = null;
+        updateToMarkerIcon(null); // reset TO pin to default for next search
+        fromIsLandmark = false;
+        const _fromResetWrap = fe.querySelector('.m-start');
+        if (_fromResetWrap) _fromResetWrap.innerHTML = fromMarkerIconHtml(currentTransportMode);
         clearRoutePolylines();
         STOPS = [];
         lastRoutePath = null;
@@ -7516,6 +7627,8 @@
         return;
       }
       document.getElementById('sp-name-input').value = '';
+      document.getElementById('sp-date-start').value = '';
+      document.getElementById('sp-date-end').value   = '';
       openModal('sp-modal');
       setTimeout(() => document.getElementById('sp-name-input').focus(), 50);
     }
@@ -7523,19 +7636,30 @@
     async function confirmSavePlan() {
       const name = document.getElementById('sp-name-input').value.trim();
       if (!name) { document.getElementById('sp-name-input').focus(); return; }
+      const tripStart = document.getElementById('sp-date-start').value || null;
+      const tripEnd   = document.getElementById('sp-date-end').value   || null;
       closeSavePlan();
 
       const distanceText = document.getElementById('route-distance')?.textContent || '';
       const distance_km = parseInt(distanceText.replace(/[^\d]/g, ''), 10) || null;
       const duration_text = document.getElementById('route-duration')?.textContent || null;
 
-      // Every marker currently on the map (the tourist stops found along the route),
-      // as plain {name, latitude, longitude} — not the internal [lng,lat] coord pairs.
+      // Full snapshot of each stop the user selected — coord stored as
+      // explicit latitude/longitude rather than the internal [lng,lat] pair.
       const places = STOPS.map(s => ({
-        name: s.name,
-        latitude: s.coord[1],
-        longitude: s.coord[0],
-        rating: s.rating,
+        name:        s.name,
+        latitude:    s.coord[1],
+        longitude:   s.coord[0],
+        rating:      s.rating,
+        reviews:     s.reviews,
+        category:    s.cat,
+        tag:         s.tag,
+        emoji:       s.emoji,
+        description: s.desc || s.loc || '',
+        drive_time:  s.time,
+        distance:    s.distance,
+        dist_from:   s.distFrom,
+        tags:        s.tags || [],
       }));
 
       try {
@@ -7552,10 +7676,14 @@
             distance_km, duration_text,
             transport_mode: currentTransportMode,
             places,
+            trip_start: tripStart,
+            trip_end:   tripEnd,
           }),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to save plan');
+        // Stash the share link so it's ready if the user opens the profile share sheet.
+        if (data.share_id) sessionStorage.setItem('lastPlanShareId', data.share_id);
         showToast(`Plan "${name}" saved!`);
       } catch (err) {
         showToast(`Couldn't save plan — ${err.message}`);
@@ -7572,6 +7700,47 @@
       showWorldwideOnMap();
     } else if (deepLinkParams.get('view') === 'top10country') {
       openCountrySearch();
+    } else if (deepLinkParams.get('plan')) {
+      // Shared plan UUID — fetch from DB and restore the full route + stops.
+      (async () => {
+        const shareId = deepLinkParams.get('plan');
+        showLoadingToast('Loading shared plan…');
+        try {
+          const res = await fetch('/api/plan/' + encodeURIComponent(shareId));
+          const json = await res.json();
+          if (!res.ok || !json.plan) throw new Error(json.error || 'Plan not found');
+          const plan = json.plan;
+          _planLikesFromDB = typeof plan.likes === 'number' ? plan.likes : null;
+          _planTitleFromDB = plan.title || null;
+          document.getElementById('from-input').value = plan.from_name || '';
+          document.getElementById('to-input').value   = plan.to_name   || '';
+          const stops = plan.stops_snapshot || [];
+          if (stops.length) {
+            pendingViaStopsFull = stops.map(p => ({
+              name:     p.name,
+              lat:      p.latitude,
+              lng:      p.longitude,
+              cat:      p.category  || 'attraction',
+              tag:      p.tag       || '',
+              emoji:    p.emoji     || '📍',
+              desc:     p.description || '',
+              rating:   p.rating,
+              reviews:  p.reviews,
+              time:     p.drive_time || '—',
+              distance: p.distance   || '—',
+              distFrom: p.dist_from  || '',
+              tags:     p.tags       || [],
+            }));
+          } else {
+            pendingViaStops = stops.map(p => p.name).filter(Boolean);
+          }
+          hideLoadingToast();
+          doSearch();
+        } catch (err) {
+          hideLoadingToast();
+          showToast('Could not load shared plan');
+        }
+      })();
     } else if (deepLinkParams.get('from') && deepLinkParams.get('to')) {
       document.getElementById('from-input').value = deepLinkParams.get('from');
       document.getElementById('to-input').value = deepLinkParams.get('to');
@@ -7587,21 +7756,23 @@
 
     /* ── Plan like bubble ── */
     const PLAN_BASE_LIKES = {
-      'tokyo-kyoto':        3200000,
-      'athens-santorini':   2700000,
-      'cusco-ollantaytambo':1400000,
-      'capetown-knysna':    4100000,
-      'rome-amalfi':        5800000,
-      'cancun-chichen':     2300000,
+      '11111111-0000-4000-8000-000000000001': 3200000,
+      '11111111-0000-4000-8000-000000000002': 2700000,
+      '11111111-0000-4000-8000-000000000003': 1400000,
+      '11111111-0000-4000-8000-000000000004': 4100000,
+      '11111111-0000-4000-8000-000000000005': 5800000,
+      '11111111-0000-4000-8000-000000000006': 2300000,
     };
     const PLAN_TITLES = {
-      'tokyo-kyoto':        'Tokyo → Kyoto',
-      'athens-santorini':   'Athens → Santorini',
-      'cusco-ollantaytambo':'Cusco → Ollantaytambo',
-      'capetown-knysna':    'Cape Town → Knysna',
-      'rome-amalfi':        'Rome → Amalfi Coast',
-      'cancun-chichen':     'Cancún → Chichén Itzá',
+      '11111111-0000-4000-8000-000000000001': 'Tokyo → Kyoto',
+      '11111111-0000-4000-8000-000000000002': 'Athens → Santorini',
+      '11111111-0000-4000-8000-000000000003': 'Cusco → Ollantaytambo',
+      '11111111-0000-4000-8000-000000000004': 'Cape Town → Knysna',
+      '11111111-0000-4000-8000-000000000005': 'Rome → Amalfi Coast',
+      '11111111-0000-4000-8000-000000000006': 'Cancún → Chichén Itzá',
     };
+    let _planLikesFromDB   = null;
+    let _planTitleFromDB   = null;
 
     function _fmtLikes(n) {
       if (n >= 1000000) return (n / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
@@ -7611,7 +7782,7 @@
 
     function showPlanLikeBubble(planKey) {
       if (document.getElementById('plan-like-bubble')) return;
-      const base  = PLAN_BASE_LIKES[planKey] || 0;
+      const base  = _planLikesFromDB !== null ? _planLikesFromDB : (PLAN_BASE_LIKES[planKey] || 0);
       const extra = parseInt(localStorage.getItem('plan_likes_' + planKey) || '0', 10);
       let total   = base + extra;
       let liked   = !!parseInt(localStorage.getItem('plan_liked_' + planKey) || '0', 10);
@@ -7625,7 +7796,7 @@
         <button class="plb-dismiss" id="plb-dismiss" aria-label="Dismiss">&times;</button>
         <div class="plb-heart-wrap${liked ? ' liked' : ''}" id="plb-heart-wrap">${SVG_HEART}</div>
         <div class="plb-text">
-          <div class="plb-label">${PLAN_TITLES[planKey] || 'This route'}</div>
+          <div class="plb-label">${_planTitleFromDB || PLAN_TITLES[planKey] || 'This route'}</div>
           <div class="plb-sub" id="plb-sub">${_fmtLikes(total)} likes</div>
         </div>
         <button class="plb-btn${liked ? ' liked' : ''}" id="plb-btn">${SVG_HEART}${liked ? 'Liked' : 'Like'}</button>`;
@@ -7637,18 +7808,18 @@
         if (!CURRENT_USER) { openSignIn(); return; }
         if (this.classList.contains('liked')) return;
         total += 1;
-        const newExtra = extra + 1;
-        localStorage.setItem('plan_likes_' + planKey, newExtra);
+        localStorage.setItem('plan_likes_' + planKey, extra + 1);
         localStorage.setItem('plan_liked_' + planKey, '1');
         document.getElementById('plb-sub').textContent = _fmtLikes(total) + ' likes';
         this.classList.add('liked');
         this.innerHTML = SVG_HEART + 'Liked';
         document.getElementById('plb-heart-wrap').classList.add('liked');
+        fetch('/api/plan/' + encodeURIComponent(planKey) + '/like', { method: 'POST' });
       });
     }
 
     const _planKey = deepLinkParams.get('plan');
-    if (_planKey && PLAN_BASE_LIKES[_planKey]) {
+    if (_planKey) {
       setTimeout(() => showPlanLikeBubble(_planKey), 60000);
     }
 

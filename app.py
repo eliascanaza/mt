@@ -350,6 +350,7 @@ class _TravelerSummary(BaseModel):
     summary: str
     what_to_do: List[str]
     what_to_avoid: List[str]
+    how_to_get_there: List[str]
     traveler_quotes: List[str]
 
 
@@ -357,7 +358,7 @@ _traveler_summary_cache: dict = {}
 
 
 def _get_traveler_summary(name: str, rating: str, cat: str) -> dict:
-    cache_key = f"{name}|{cat}"
+    cache_key = f"{name}|{cat}|v2"
     if cache_key in _traveler_summary_cache:
         return _traveler_summary_cache[cache_key]
     if not _gemini_client:
@@ -370,6 +371,7 @@ def _get_traveler_summary(name: str, rating: str, cat: str) -> dict:
         f"summary (2 engaging sentences about why this place is special and what makes it worth visiting), "
         f"what_to_do (exactly 4 practical, place-specific tips that only apply to {name}), "
         f"what_to_avoid (exactly 3 practical warnings visitors should know about {name}), "
+        f"how_to_get_there (exactly 3 concise transport options to reach {name} from the nearest cities or airports — e.g. 'Fly into X then take a 2-hour bus'), "
         f"traveler_quotes (exactly 3 short authentic first-person quotes from imagined past visitors — "
         f"under 20 words each, specific to this destination, not generic praise)."
     )
@@ -1286,7 +1288,7 @@ def api_save_plan_full():
 
     session_user = db.get_user_by_id(session["user_id"]) if session.get("user_id") else None
 
-    plan_id = db.save_full_plan(
+    plan_id, share_id = db.save_full_plan(
         title=data["title"],
         from_name=data["from_name"], from_lat=float(data["from_lat"]), from_lng=float(data["from_lng"]),
         to_name=data["to_name"], to_lat=float(data["to_lat"]), to_lng=float(data["to_lng"]),
@@ -1297,8 +1299,25 @@ def api_save_plan_full():
         transport_mode=data.get("transport_mode"),
         places=data.get("places", []),
         notes=data.get("notes", ""),
+        trip_start=data.get("trip_start"),
+        trip_end=data.get("trip_end"),
     )
-    return jsonify({"ok": True, "message": "Plan saved", "plan_id": plan_id}), 201
+    return jsonify({"ok": True, "message": "Plan saved", "plan_id": plan_id, "share_id": share_id}), 201
+
+
+# ── Public plan lookup by share UUID ─────────────────────────────────────────
+@app.route("/api/plan/<share_id>", methods=["GET"])
+def api_get_plan_by_share_id(share_id):
+    plan = db.get_plan_by_share_id(share_id)
+    if not plan:
+        return jsonify({"error": "Plan not found"}), 404
+    return jsonify({"plan": plan})
+
+
+@app.route("/api/plan/<share_id>/like", methods=["POST"])
+def api_like_plan(share_id):
+    new_count = db.like_plan(share_id)
+    return jsonify({"likes": new_count})
 
 
 # ── Typical food ────────────────────────────────────────────────────────────
@@ -1471,6 +1490,7 @@ def health():
 # destroy real user data (saved_plans) on every restart/redeploy. Run it
 # manually once (`python3 database.py`) to load the reference/demo data.
 db.init_db()
+db.ensure_curated_plans()
 
 if __name__ == "__main__":
     print("\n🚀  exploreMore server starting at http://127.0.0.1:5004")

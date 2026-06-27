@@ -1788,7 +1788,12 @@
       </div>
 
       <div class="dest-grid">
-        <a class="dest-card" href="#" data-action="open-trip-modal" data-trip="tokyo-kyoto">
+        <a class="dest-card" href="#" data-action="open-trip-modal"
+           data-url="/home?plan=11111111-0000-4000-8000-000000000001"
+           data-title="Tokyo → Kyoto" data-meta="Japan · 8h trip"
+           data-image="/assets/places/top/kyoto.jpg"
+           data-best-time="Mar – May, Oct – Nov" data-transport="Bullet Train" data-budget="$$–$$$"
+           data-places='["Tokyo","Hakone","Osaka","Kyoto"]'>
           <div class="dest-img">
             <div class="dest-img-half from" style="background-image:url('/assets/places/trips/tokyo.jpg')"></div>
             <div class="dest-img-half to" style="background-image:url('/assets/places/top/kyoto.jpg')"></div>
@@ -1812,7 +1817,12 @@
           </div>
         </a>
 
-        <a class="dest-card" href="#" data-action="open-trip-modal" data-trip="athens-santorini">
+        <a class="dest-card" href="#" data-action="open-trip-modal"
+           data-url="/home?plan=11111111-0000-4000-8000-000000000002"
+           data-title="Athens → Santorini" data-meta="Greece · 11h trip"
+           data-image="/assets/places/top/santorini.jpg"
+           data-best-time="Jun – Sep" data-transport="Ferry or Flight" data-budget="$$–$$$"
+           data-places='["Athens","Mykonos","Santorini"]'>
           <div class="dest-img">
             <div class="dest-img-half from" style="background-image:url('/assets/places/trips/athens.jpg')"></div>
             <div class="dest-img-half to" style="background-image:url('/assets/places/top/santorini.jpg')"></div>
@@ -1837,7 +1847,12 @@
           </div>
         </a>
 
-        <a class="dest-card" href="#" data-action="open-trip-modal" data-trip="cusco-ollantaytambo">
+        <a class="dest-card" href="#" data-action="open-trip-modal"
+           data-url="/home?plan=11111111-0000-4000-8000-000000000003"
+           data-title="Cusco → Ollantaytambo" data-meta="Peru · 2h trip"
+           data-image="/assets/places/top/machu-picchu.jpg"
+           data-best-time="May – Sep" data-transport="Train or Bus" data-budget="$–$$"
+           data-places='["Cusco","Pisac","Ollantaytambo"]'>
           <div class="dest-img">
             <div class="dest-img-half from" style="background-image:url('/assets/places/trips/cusco.jpg')"></div>
             <div class="dest-img-half to" style="background-image:url('/assets/places/top/machu-picchu.jpg')"></div>
@@ -1862,7 +1877,12 @@
           </div>
         </a>
 
-        <a class="dest-card" href="#" data-action="open-trip-modal" data-trip="capetown-knysna">
+        <a class="dest-card" href="#" data-action="open-trip-modal"
+           data-url="/home?plan=11111111-0000-4000-8000-000000000004"
+           data-title="Cape Town → Knysna" data-meta="South Africa · 8h trip"
+           data-image="/assets/places/trips/knysna.jpg"
+           data-best-time="Oct – Apr" data-transport="Self-drive" data-budget="$$–$$$"
+           data-places='["Cape Town","Hermanus","Mossel Bay","Knysna"]'>
           <div class="dest-img">
             <div class="dest-img-half from" style="background-image:url('/assets/places/cape-town.jpg')"></div>
             <div class="dest-img-half to" style="background-image:url('/assets/places/trips/knysna.jpg')"></div>
@@ -1886,7 +1906,12 @@
           </div>
         </a>
 
-        <a class="dest-card" href="#" data-action="open-trip-modal" data-trip="rome-amalfi">
+        <a class="dest-card" href="#" data-action="open-trip-modal"
+           data-url="/home?plan=11111111-0000-4000-8000-000000000005"
+           data-title="Rome → Amalfi Coast" data-meta="Italy · 5h trip"
+           data-image="/assets/places/top/amalfi-coast.jpg"
+           data-best-time="May – Oct" data-transport="Train + Ferry" data-budget="$$$"
+           data-places='["Rome","Naples","Pompeii","Amalfi Coast"]'>
           <div class="dest-img">
             <div class="dest-img-half from" style="background-image:url('/assets/places/trips/rome.jpg')"></div>
             <div class="dest-img-half to" style="background-image:url('/assets/places/top/amalfi-coast.jpg')"></div>
@@ -1910,7 +1935,12 @@
           </div>
         </a>
 
-        <a class="dest-card" href="#" data-action="open-trip-modal" data-trip="cancun-chichen">
+        <a class="dest-card" href="#" data-action="open-trip-modal"
+           data-url="/home?plan=11111111-0000-4000-8000-000000000006"
+           data-title="Cancún → Chichén Itzá" data-meta="Mexico · 3h trip"
+           data-image="/assets/places/top/chichen-itza.jpg"
+           data-best-time="Nov – Apr" data-transport="Bus or Car" data-budget="$–$$"
+           data-places='["Cancún","Tulum","Valladolid","Chichén Itzá"]'>
           <div class="dest-img">
             <div class="dest-img-half from" style="background-image:url('/assets/places/trips/cancun.jpg')"></div>
             <div class="dest-img-half to" style="background-image:url('/assets/places/top/chichen-itza.jpg')"></div>
@@ -2499,78 +2529,29 @@
       }
     }
 
-    const TRIP_DATA = {
-      'tokyo-kyoto': {
-        title: 'Tokyo → Kyoto', meta: 'Japan · 8h trip',
-        image: '/assets/places/top/kyoto.jpg',
-        tags: ['Culture', 'History', 'Food'],
-        bestTime: 'Mar – May, Oct – Nov', transport: 'Bullet Train', budget: '$$–$$$',
-        places: ['Tokyo', 'Hakone', 'Osaka', 'Kyoto'],
-        url: '/home?from=Tokyo%2C%20Japan&to=Kyoto%2C%20Japan&via=Hakone%2C%20Japan%7COsaka%2C%20Japan&plan=tokyo-kyoto'
-      },
-      'athens-santorini': {
-        title: 'Athens → Santorini', meta: 'Greece · 11h trip',
-        image: '/assets/places/top/santorini.jpg',
-        tags: ['Beach', 'Culture', 'History'],
-        bestTime: 'Jun – Sep', transport: 'Ferry or Flight', budget: '$$–$$$',
-        places: ['Athens', 'Mykonos', 'Santorini'],
-        url: '/home?from=Athens%2C%20Greece&to=Santorini%2C%20Greece&via=Mykonos%2C%20Greece&plan=athens-santorini'
-      },
-      'cusco-ollantaytambo': {
-        title: 'Cusco → Ollantaytambo', meta: 'Peru · 2h trip',
-        image: '/assets/places/top/machu-picchu.jpg',
-        tags: ['Adventure', 'History', 'Nature'],
-        bestTime: 'May – Sep', transport: 'Train or Bus', budget: '$–$$',
-        places: ['Cusco', 'Pisac', 'Ollantaytambo'],
-        url: '/home?from=Cusco%2C%20Peru&to=Ollantaytambo%2C%20Peru&via=Pisac%2C%20Peru&plan=cusco-ollantaytambo'
-      },
-      'capetown-knysna': {
-        title: 'Cape Town → Knysna', meta: 'South Africa · 8h trip',
-        image: '/assets/places/trips/knysna.jpg',
-        tags: ['Nature', 'Wildlife', 'Adventure'],
-        bestTime: 'Oct – Apr', transport: 'Self-drive', budget: '$$–$$$',
-        places: ['Cape Town', 'Hermanus', 'Mossel Bay', 'Knysna'],
-        url: '/home?from=Cape%20Town%2C%20South%20Africa&to=Knysna%2C%20South%20Africa&via=Hermanus%2C%20South%20Africa%7CMossel%20Bay%2C%20South%20Africa&plan=capetown-knysna'
-      },
-      'rome-amalfi': {
-        title: 'Rome → Amalfi Coast', meta: 'Italy · 5h trip',
-        image: '/assets/places/top/amalfi-coast.jpg',
-        tags: ['Culture', 'Beach', 'Food'],
-        bestTime: 'May – Oct', transport: 'Train + Ferry', budget: '$$$',
-        places: ['Rome', 'Naples', 'Pompeii', 'Amalfi Coast'],
-        url: '/home?from=Rome%2C%20Italy&to=Amalfi%20Coast%2C%20Italy&via=Naples%2C%20Italy%7CPompeii%2C%20Italy&plan=rome-amalfi'
-      },
-      'cancun-chichen': {
-        title: 'Cancún → Chichén Itzá', meta: 'Mexico · 3h trip',
-        image: '/assets/places/top/chichen-itza.jpg',
-        tags: ['History', 'Culture', 'Adventure'],
-        bestTime: 'Nov – Apr', transport: 'Bus or Car', budget: '$–$$',
-        places: ['Cancún', 'Tulum', 'Valladolid', 'Chichén Itzá'],
-        url: '/home?from=Canc%C3%BAn%2C%20Mexico&to=Chich%C3%A9n%20Itz%C3%A1%2C%20Mexico&via=Tulum%2C%20Mexico%7CValladolid%2C%20Mexico&plan=cancun-chichen'
-      }
-    };
-    const TAG_COLORS = {
-      Culture: ['#eff6ff', '#1d4ed8'], History: ['#fef3c7', '#92400e'],
-      Food: ['#fff7ed', '#c2410c'], Nature: ['#f0fdf4', '#166534'],
-      Adventure: ['#e0f2fe', '#0369a1'], Beach: ['#ecfeff', '#0e7490'],
-      Wildlife: ['#faf5ff', '#7e22ce']
-    };
-    function openTripModal(key) {
-      const t = TRIP_DATA[key];
-      document.getElementById('tp-img').src = t.image;
-      document.getElementById('tp-img').alt = t.title;
-      document.getElementById('tp-title').textContent = t.title;
-      document.getElementById('tp-meta').textContent = t.meta;
-      document.getElementById('tp-btn').href = t.url;
+    function openTripModal(el) {
+      const url       = el.dataset.url;
+      const title     = el.dataset.title     || '';
+      const meta      = el.dataset.meta      || '';
+      const image     = el.dataset.image     || '';
+      const bestTime  = el.dataset.bestTime  || '';
+      const transport = el.dataset.transport || '';
+      const budget    = el.dataset.budget    || '';
+      const places    = JSON.parse(el.dataset.places || '[]');
+      document.getElementById('tp-img').src = image;
+      document.getElementById('tp-img').alt = title;
+      document.getElementById('tp-title').textContent = title;
+      document.getElementById('tp-meta').textContent = meta;
+      document.getElementById('tp-btn').href = url;
       document.getElementById('tp-info').innerHTML =
-        `<div class="tp-info-item"><div class="tp-info-lbl">Best time</div><div class="tp-info-val">${t.bestTime}</div></div>` +
-        `<div class="tp-info-item"><div class="tp-info-lbl">Transport</div><div class="tp-info-val">${t.transport}</div></div>` +
-        `<div class="tp-info-item"><div class="tp-info-lbl">Budget</div><div class="tp-info-val">${t.budget}</div></div>`;
-      const labels = ['Starting point', ...Array(t.places.length - 2).fill('Via stop'), 'Final destination'];
-      document.getElementById('tp-places').innerHTML = t.places.map((name, i) => `
+        `<div class="tp-info-item"><div class="tp-info-lbl">Best time</div><div class="tp-info-val">${bestTime}</div></div>` +
+        `<div class="tp-info-item"><div class="tp-info-lbl">Transport</div><div class="tp-info-val">${transport}</div></div>` +
+        `<div class="tp-info-item"><div class="tp-info-lbl">Budget</div><div class="tp-info-val">${budget}</div></div>`;
+      const labels = ['Starting point', ...Array(Math.max(0, places.length - 2)).fill('Via stop'), 'Final destination'];
+      document.getElementById('tp-places').innerHTML = places.map((name, i) => `
         <div class="tp-stop">
           <div class="tp-node"><div class="tp-dot"></div><div class="tp-connector"></div></div>
-          <div class="tp-stop-info"><div class="tp-stop-name">${name}</div><div class="tp-stop-label">${labels[i]}</div></div>
+          <div class="tp-stop-info"><div class="tp-stop-name">${name}</div><div class="tp-stop-label">${labels[i] || ''}</div></div>
         </div>`).join('');
       document.getElementById('tp-overlay').classList.add('open');
       document.body.style.overflow = 'hidden';
@@ -2665,7 +2646,7 @@
       var el = e.target.closest('[data-action]');
       if (!el) return;
       var a = el.dataset.action;
-      if (a === 'open-trip-modal')  { e.preventDefault(); openTripModal(el.dataset.trip); return; }
+      if (a === 'open-trip-modal')  { e.preventDefault(); openTripModal(el); return; }
       if (a === 'close-trip-modal') { closeTripModal(); return; }
       if (a === 'open-sign-in')     { openSignIn();     return; }
       if (a === 'hero-explore')     { heroExplore();    return; }
